@@ -207,10 +207,10 @@ if __name__ == "__main__":
         params_ = fixed_params | grid_params_
 
         # set cloudy metallicity parameter to the stellar metallicity
-        if 'metallicity' in incident_grid.axes:
-            params_['Z'] = incident_params_['metallicity']
-        elif 'log10metallicity' in incident_grid.axes:
-            params_['Z'] = 10**incident_params_['log10metallicity']
+        if 'metallicity' in grid_params_.keys():
+            params_['Z'] = grid_params_['metallicity']
+        elif 'log10metallicity' in grid_params_.keys():
+            params_['Z'] = 10**grid_params_['log10metallicity']
         
         # create abundances object
         abundances = Abundances(params_['Z'], d2m=params_['d2m'], alpha=params_['alpha'], N=params_['N'], C=params_['C'])
