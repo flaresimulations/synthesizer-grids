@@ -50,7 +50,7 @@ def check_cloudy_runs(grid_name, synthesizer_data_dir, replace=False, files_to_c
     """
 
     # open the new grid
-    with h5py.File(f'{synthesizer_data_dir}/grids/{grid_name}.hdf5', 'r') as hf:
+    with h5py.File(f'{synthesizer_data_dir}/grids/dev/{grid_name}.hdf5', 'r') as hf:
 
         # Get the properties of the grid including the dimensions etc.
         axes, n_axes, shape, n_models, mesh, model_list, index_list = get_grid_properties_hf(hf)
@@ -119,7 +119,7 @@ def add_spectra(grid_name, synthesizer_data_dir):
     spec_names = ['incident', 'transmitted', 'nebular', 'linecont']
 
     # open the new grid
-    with h5py.File(f'{synthesizer_data_dir}/grids/{grid_name}.hdf5', 'a') as hf:
+    with h5py.File(f'{synthesizer_data_dir}/grids/dev/{grid_name}.hdf5', 'a') as hf:
 
        
         # Get the properties of the grid including the dimensions etc.
@@ -192,7 +192,7 @@ def add_lines(grid_name, synthesizer_data_dir, line_type = 'linelist', lines_to_
     """
 
     # open the new grid
-    with h5py.File(f'{synthesizer_data_dir}/grids/{grid_name}.hdf5', 'a') as hf:
+    with h5py.File(f'{synthesizer_data_dir}/grids/dev/{grid_name}.hdf5', 'a') as hf:
 
         
         # Get the properties of the grid including the dimensions etc.

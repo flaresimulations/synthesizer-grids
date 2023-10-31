@@ -19,7 +19,7 @@ from synthesizer.cloudy import create_cloudy_input, ShapeCommands
 from utils import apollo_submission_script, get_grid_properties
 
 
-def load_grid_params(param_file='c17.03', dir = 'params'):
+def load_grid_params(param_file='c17.03-sps', dir = 'params'):
     """
     parameters from a single param_file
 
@@ -71,7 +71,7 @@ if __name__ == "__main__":
     parser.add_argument("-incident_grid", type=str, required=True) 
 
     # the cloudy parameters, including any grid axes
-    parser.add_argument("-cloudy_params", type=str, required=False, default='c17.03') 
+    parser.add_argument("-cloudy_params", type=str, required=False, default='c17.03-sps') 
 
     # path to cloudy directory (not executable; this is assumed to {cloudy}/{cloudy_version}/source/cloudy.ext)
     parser.add_argument("-cloudy_path", type=str, required=True) 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
 
     # open the parent incident grid
-    incident_grid = Grid(args.incident_grid, grid_dir=f'{args.synthesizer_data_dir}/grids')
+    incident_grid = Grid(args.incident_grid, grid_dir=f'{args.synthesizer_data_dir}/grids/dev/')
 
 
     # get name of new grid (concatenation of incident_grid and cloudy parameter file)
