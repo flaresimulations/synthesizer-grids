@@ -13,17 +13,22 @@ synthesizer_data_dir = '/Users/sw376/Dropbox/Research/data/synthesizer/'
 model_name = 'feltre16'
 
 
+# axes = ['alpha', 'metallicity']
 axes = ['alpha']
 
 axes_descriptions = {}
 axes_descriptions['alpha'] = 'X-ray - UV power-law slope'
+# axes_descriptions['metallicity'] = 'gas phase metallicity'
 
 axes_units = {}
 axes_units['alpha'] = 'dimensionless'
+# axes_units['metallicity'] = 'dimensionless'
 
 axes_values = {}
 axes_values['alpha'] = np.arange(-2.0, -1.0, 0.2)
-
+# axes_values['metallicity'] = [0.00001, 0.00003, 0.0001,
+#                               0.0003, 0.001, 0.003, 0.01, 0.03]
+# axes_values['alpha'] = [-2.0]
 
 # the shape of the grid (useful for creating outputs)
 axes_shape = list([len(axes_values[axis]) for axis in axes])
@@ -32,19 +37,19 @@ print(axes_shape)
 # define edges
 edges_lam = [10.0, 2500.0, 100000.0, 1000000.0] * Angstrom  # Angstrom
 edges_nu = c / edges_lam
-edges = edges_nu.to('Hz').value
+edges = edges_nu.to('THz').value
 
 # define wavelength and frequency grid
 lam = np.arange(edges_lam.value[0], edges_lam.value[-1], 10.) * Angstrom
 nu = c / lam
-x = nu.to('Hz').value
+x = nu.to('THz').value
 
 # define indices
 indices = [None, -0.5, 2.0]
 
 
 # filename
-filename = f'{synthesizer_data_dir}/grids/{model_name}.hdf5'
+filename = f'{synthesizer_data_dir}/grids/dev/{model_name}.hdf5'
 
 # open the new grid
 with h5py.File(filename, 'w') as hf:
@@ -66,9 +71,12 @@ with h5py.File(filename, 'w') as hf:
     spec = np.zeros((*axes_shape, len(lam)))
     
     for i, alpha in enumerate(axes_values['alpha']):
-
         indices[0] = alpha
-        spec[i] = broken_power_law(x, edges, indices)
+        lnu = broken_power_law(x, edges[::-1], indices[::-1])
+        spec[i] = lnu
+        
+        # for j, metallicity in enumerate(axes_values['metallicity']):
+        #     spec[i, j] = lnu
 
 
     # save wavelength dataset

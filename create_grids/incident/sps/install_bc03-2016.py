@@ -293,7 +293,7 @@ if __name__ == "__main__":
         print(synthesizer_model_name)
 
         # this is the full path to the ultimate HDF5 grid file
-        out_filename = f'{synthesizer_data_dir}/grids/{synthesizer_model_name}.hdf5'
+        out_filename = f'{synthesizer_data_dir}/grids/dev/{synthesizer_model_name}.hdf5'
 
         make_grid(variant, synthesizer_data_dir, out_filename)
 

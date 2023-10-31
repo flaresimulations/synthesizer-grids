@@ -263,7 +263,7 @@ if __name__ == "__main__":
 
     synthesizer_data_dir = args.synthesizer_data_dir
    
-    grid_dir = f'{synthesizer_data_dir}/grids'
+    grid_dir = f'{synthesizer_data_dir}/grids/dev'
 
     model = {'sps_name': 'bc03',
              'sps_version': False,

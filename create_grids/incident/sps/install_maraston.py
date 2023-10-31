@@ -54,7 +54,7 @@ def make_grid(model, imf, hr_morphology):
     print(synthesizer_model_name)
 
     # Define output
-    out_filename = f'{synthesizer_data_dir}/grids/{synthesizer_model_name}.hdf5'
+    out_filename = f'{synthesizer_data_dir}/grids/dev/{synthesizer_model_name}.hdf5'
 
     # NOTE THE LOWEST METALLICITY MODEL DOES NOT HAVE YOUNG AGES so don't use
     metallicities = np.array([0.001, 0.01, 0.02, 0.04])  # array of avialable metallicities
@@ -128,7 +128,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     synthesizer_data_dir = args.synthesizer_data_dir
-    grid_dir = f'{synthesizer_data_dir}/grids'
 
     model_name = 'maraston'
 

@@ -200,7 +200,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     synthesizer_data_dir = args.synthesizer_data_dir
-    grid_dir = f'{synthesizer_data_dir}/grids'
+    grid_dir = f'{synthesizer_data_dir}/grids/dev'
 
     original_model_names = [
         'bpass_v2.2.1_imf_chab100',

@@ -114,7 +114,7 @@ if __name__ == "__main__":
 
     synthesizer_data_dir = args.synthesizer_data_dir
    
-    grid_dir = f'{synthesizer_data_dir}/grids'
+    grid_dir = f'{synthesizer_data_dir}/grids/dev'
     
     default_model = {'sps_name': 'fsps',
                      

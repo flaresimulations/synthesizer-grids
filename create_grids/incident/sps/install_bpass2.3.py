@@ -231,7 +231,7 @@ def make_full_grid(original_model_name, bs = 'bin'):
     print(synthesizer_model_name)
 
     # this is the full path to the ultimate HDF5 grid file
-    out_filename = f'{synthesizer_data_dir}/grids/{synthesizer_model_name}.hdf5'
+    out_filename = f'{synthesizer_data_dir}/grids/dev/{synthesizer_model_name}.hdf5'
 
     # input directory
     input_dir = f'{synthesizer_data_dir}/input_files/bpass/{model["original_model_name"]}/'
