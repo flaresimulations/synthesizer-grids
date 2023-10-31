@@ -19,9 +19,6 @@ def broken_power_law(x, edges, indices, norms=False, normalise=True):
     
     """
 
-    print(edges)
-    print(indices)
-
     y = np.zeros(len(x))
 
     # if normalisations not calculated, go ahead an
@@ -41,11 +38,14 @@ def broken_power_law(x, edges, indices, norms=False, normalise=True):
     # now construct spectra
     for e1, e2, ind, norm in zip(edges[0:], edges[1:], indices, norms):
         # identify indices within the wavelength range
+
         s = (x >= e1) & (x < e2)
-        y[s] = norm * y[s] ** ind
+
+        print(e1,e2,ind,norm,np.sum(s))
+        y[s] = norm * x[s] ** ind
 
     # normalise
     if normalise:
-        y /= np.trapz(y, x=x)
+        y /= np.trapz(y[::-1], x=x[::-1])
 
     return y
