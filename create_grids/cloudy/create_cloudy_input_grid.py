@@ -251,7 +251,7 @@ if __name__ == "__main__":
         lam = incident_grid.lam # AA
 
         # get luminosity 
-        lnu = incident_grid.spectra['stellar'][incident_grid_point]
+        lnu = incident_grid.spectra['incident'][incident_grid_point]
 
         # this returns the relevant shape commands, in this case for a tabulated SED
         shape_commands = ShapeCommands.table_sed(str(i+1), lam, lnu,  output_dir=output_dir)
