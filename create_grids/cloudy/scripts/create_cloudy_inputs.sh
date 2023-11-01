@@ -15,6 +15,6 @@ do
   params=${arrIN[1]}
   printf '%s\n' "$sps"
   printf '%s\n' "$params"
-  echo python3 create_cloudy_input_grid.py -synthesizer_data_dir $synthesizer_dir -machine $machine -incident_grid $incident  -cloudy_grid $params  -cloudy_path $c
-  python3 create_cloudy_input_grid.py -synthesizer_data_dir $synthesizer_dir -machine $machine -incident_grid $incident  -cloudy_grid $params  -cloudy_path $c
+  echo python3 create_cloudy_input_grid.py -synthesizer_data_dir $synthesizer_dir -machine $machine -incident_grid $incident  -cloudy_params $params  -cloudy_path $c
+  python3 create_cloudy_input_grid.py -synthesizer_data_dir $synthesizer_dir -machine $machine -incident_grid $incident  -cloudy_params $params  -cloudy_path $c
 done < scripts/incident.txt
