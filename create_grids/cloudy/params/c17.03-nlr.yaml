@@ -12,7 +12,6 @@ cosmic_rays: true  # flag for inclusion of cosmic ray heating
 covering_factor: 1.0  #
 d2m: 0.3  # dust to metals ratio in the cloud
 log10n_H: 4  # log hydrogen density
-log10radius: -2  # log of the radius of the cloud, in parsecs
 stop_T: 500  # stopping temperature
 stop_efrac: -2  # limiting ratio of electron to H densities
 turbulence: 100 # turbulence
