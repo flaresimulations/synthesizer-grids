@@ -14,8 +14,6 @@ import yaml
 
 from synthesizer.utils import read_params
 from synthesizer.photoionisation import cloudy17 as cloudy
-
-read_wavelength, read_continuum, read_lines, read_linelist
 from synthesizer.sed import calculate_Q
 
 from utils import get_grid_properties
