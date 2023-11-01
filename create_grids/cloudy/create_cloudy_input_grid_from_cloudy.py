@@ -18,7 +18,7 @@ import h5py
 from unyt import Angstrom
 
 # synthesizer modules
-from synthesizer.cloudy import create_cloudy_input, ShapeCommands
+from synthesizer.photoionisation import cloudy17 as cloudy
 from synthesizer.abundances import Abundances
 
 # local modules
@@ -162,7 +162,7 @@ if __name__ == "__main__":
 
                 # create shape commands
                 TBB = 10**params['log10T']
-                shape_commands = ShapeCommands.cloudy_agn(TBB,
+                shape_commands = cloudy.ShapeCommands.cloudy_agn(TBB,
                                                           aox=params['aox'],
                                                           auv=params['auv'],
                                                           ax=params['ax'])
@@ -178,7 +178,7 @@ if __name__ == "__main__":
                 lnu = Feltre16.intrinsic(lam, alpha=params['aalpha'])
 
                 # create shape commands
-                shape_commands = ShapeCommands.table_sed(str(i), lam, lnu,
+                shape_commands = cloudy.ShapeCommands.table_sed(str(i), lam, lnu,
                                                          output_dir=output_dir)
 
             else:

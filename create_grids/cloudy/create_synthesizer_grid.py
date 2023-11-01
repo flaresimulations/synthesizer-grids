@@ -13,7 +13,9 @@ import h5py
 import yaml
 
 from synthesizer.utils import read_params
-from synthesizer.cloudy import read_wavelength, read_continuum, read_lines, read_linelist
+from synthesizer.photoionisation import cloudy17 as cloudy
+
+read_wavelength, read_continuum, read_lines, read_linelist
 from synthesizer.sed import calculate_Q
 
 from utils import get_grid_properties
@@ -126,7 +128,7 @@ def add_spectra(grid_name, synthesizer_data_dir):
         axes, n_axes, shape, n_models, mesh, model_list, index_list = get_grid_properties_hf(hf)
 
         # read first spectra from the first grid point to get length and wavelength grid
-        lam = read_wavelength(f"{synthesizer_data_dir}/cloudy/{grid_name}/1")
+        lam = cloudy.read_wavelength(f"{synthesizer_data_dir}/cloudy/{grid_name}/1")
 
         if 'spectra' in hf:
             del hf['spectra']
@@ -154,7 +156,7 @@ def add_spectra(grid_name, synthesizer_data_dir):
             infile = f"{synthesizer_data_dir}/cloudy/{grid_name}/{i+1}"
 
             # read the continuum file containing the spectra 
-            spec_dict = read_continuum(infile, return_dict=True)
+            spec_dict = cloudy.read_continuum(infile, return_dict=True)
 
             # calculate Q for the output spectra and use this to calculate the normalisation
             Q = calculate_Q(lam, spec_dict['incident'],
@@ -214,7 +216,7 @@ def add_lines(grid_name, synthesizer_data_dir, line_type = 'linelist', lines_to_
 
         if line_type == 'linelist':
             infile = f"{synthesizer_data_dir}/cloudy/{grid_name}/1"
-            lines_to_include, _, _ = read_linelist(infile)
+            lines_to_include, _, _ = cloudy.read_linelist(infile)
             # print(lines_to_include)
 
 
@@ -243,7 +245,7 @@ def add_lines(grid_name, synthesizer_data_dir, line_type = 'linelist', lines_to_
 
             if line_type == 'lines':
 
-                id, blend, wavelength, intrinsic, luminosity = read_lines(infile)
+                id, blend, wavelength, intrinsic, luminosity = cloudy.read_lines(infile)
 
                 # identify lines we want to keep
                 s = np.nonzero(np.in1d(id, np.array(lines_to_include)))[0]
@@ -255,7 +257,7 @@ def add_lines(grid_name, synthesizer_data_dir, line_type = 'linelist', lines_to_
 
             elif line_type == 'linelist':
                 
-                id, wavelength, luminosity = read_linelist(infile)
+                id, wavelength, luminosity = cloudy.read_linelist(infile)
 
         
             for id_, wavelength_, luminosity_ in zip(id, wavelength, luminosity):
@@ -314,7 +316,7 @@ if __name__ == "__main__":
     include_spectra = args.include_spectra
 
     # check cloudy runs
-    failed_list = check_cloudy_runs(grid_name, synthesizer_data_dir, replace = args.replace)
+    failed_list = check_cloudy_runs(grid_name, synthesizer_data_dir, replace=args.replace)
 
     print(failed_list)
 
@@ -325,7 +327,7 @@ if __name__ == "__main__":
         print(f'  qsub -t 1:{len(failed_list)}  run_grid.job')
 
         # replace input_names with list of failed runs
-        with open(f"{synthesizer_data_dir}/cloudy/{grid_name}/input_names.txt", "w") as myfile:
+        with open(f"{synthesizer_data_dir}/cloudy/{grid_name}/input_names.txt","w") as myfile:
             myfile.write('\n'.join(map(str, failed_list)))
 
     #if not failed, go ahead and add spectra and lines
