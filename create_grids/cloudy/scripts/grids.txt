@@ -1,3 +1,3 @@
-agnsed_cloudy-c17.03-blr
-agnsed_cloudy-c17.03-nlr
+agnsed-isotropic_cloudy-c17.03-blr
+agnsed-isotropic_cloudy-c17.03-nlr
 
