@@ -17,7 +17,7 @@ log10n_H: 4  # log hydrogen density
 turbulence: 100 # turbulence
 z: 0.0  # redshift
 geometry: planeparallel
-grains: true # include grains
+grains: false # include grains
 resolution: 1.0 # energy resolution relative to the default
 output_cont: true
 output_linelist: linelist.dat
