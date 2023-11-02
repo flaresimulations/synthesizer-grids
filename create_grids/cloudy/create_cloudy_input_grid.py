@@ -170,8 +170,8 @@ if __name__ == "__main__":
 
             # if there are no additional axes simply copy over the incident
             # log10Q
-            if hf.attrs['incident_axes'] == hf.attrs['axes']: 
-
+            if len(axes) == len(hf.attrs['incident_axes']): 
+            
                 hf_incident.copy('log10Q', hf) 
 
             # else we need to expand the axis
