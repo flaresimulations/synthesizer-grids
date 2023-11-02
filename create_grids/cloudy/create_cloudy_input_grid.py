@@ -163,8 +163,34 @@ if __name__ == "__main__":
             # add attribute with the original incident grid axes 
             hf.attrs['incident_axes'] = hf_incident.attrs['axes']
 
-            # copy log10Q over
-            hf_incident.copy('log10Q', hf) 
+            # we want to copy over log10Q from the incident grid to allow us to
+            # normalise the cloudy outputs. However, the axes of the incident 
+            # grid may be different from the cloudy grid due to additional 
+            # parameters, in which we need to extend the axes of log10Q
+
+            # if there are no additional axes simply copy over the incident
+            # log10Q
+            if hf.attrs['incident_axes'] == hf.attrs['axes']: 
+
+                hf_incident.copy('log10Q', hf) 
+
+            # else we need to expand the axis
+            else:
+
+                # this is amount by which we need to expand 
+                expansion = int(np.product(shape) / np.product(hf_incident['log10Q/HI'].shape))
+
+                # loop over ions
+                for ion in hf_incident['log10Q'].keys():
+
+                    # get the incident log10Q array
+                    log10Q_incident = hf_incident[f'log10Q/{ion}'][()]
+
+                    # create new array with repeated elements
+                    log10Q = np.repeat(log10Q_incident, expansion, axis=-1)
+
+                    # reshape array to match new shape and save
+                    hf[f'log10Q/{ion}'] = np.reshape(log10Q, shape)
 
         # add attribute with full grid axes
         hf.attrs['axes'] = axes

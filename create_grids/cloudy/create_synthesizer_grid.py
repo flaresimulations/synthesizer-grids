@@ -2,20 +2,20 @@
 This reads in a cloudy grid of models
 
 """
-from astropy.io import ascii
-from scipy import integrate
+
 import os
 import shutil
 from unyt import eV
 import argparse
 import numpy as np
 import h5py
-import yaml
 
+# synthesizer modules
 from synthesizer.utils import read_params
 from synthesizer.photoionisation import cloudy17 as cloudy
 from synthesizer.sed import calculate_Q
 
+# local modukes
 from utils import get_grid_properties
 
 
@@ -35,7 +35,10 @@ def get_grid_properties_hf(hf, verbose=True):
 
 
 
-def check_cloudy_runs(grid_name, synthesizer_data_dir, replace=False, files_to_check = ['cont', 'elin']):
+def check_cloudy_runs(grid_name,
+                      synthesizer_data_dir,
+                      replace=False,
+                      files_to_check=['cont', 'elin']):
     """
     Check that all the cloudy runs have run properly
 
@@ -91,7 +94,6 @@ def check_cloudy_runs(grid_name, synthesizer_data_dir, replace=False, files_to_c
         if replace:
             failed_list = []
 
-
         return failed_list
 
 
@@ -121,9 +123,8 @@ def add_spectra(grid_name, synthesizer_data_dir):
     # open the new grid
     with h5py.File(f'{synthesizer_data_dir}/grids/dev/{grid_name}.hdf5', 'a') as hf:
 
-       
         # Get the properties of the grid including the dimensions etc.
-        axes, n_axes, shape, n_models, mesh, model_list, index_list = get_grid_properties_hf(hf)
+        axes, n_axes, shape, n_models, mesh, model_list, index_list = get_grid_properties_hf(hf, verbose=False)
 
         # read first spectra from the first grid point to get length and wavelength grid
         lam = cloudy.read_wavelength(f"{synthesizer_data_dir}/cloudy/{grid_name}/1")
@@ -157,10 +158,11 @@ def add_spectra(grid_name, synthesizer_data_dir):
             spec_dict = cloudy.read_continuum(infile, return_dict=True)
 
             # calculate Q for the output spectra and use this to calculate the normalisation
-            Q = calculate_Q(lam, spec_dict['incident'],
-                        ionisation_energy=13.6 * eV)
+            Q = calculate_Q(lam,
+                            spec_dict['incident'],
+                            ionisation_energy=13.6 * eV)
             
-            # calcualte normalisation
+            # calculate normalisation
             normalisation = hf['log10Q/HI'][indices] - np.log10(Q)
 
             # save normalisation for later use (rescaling lines)
