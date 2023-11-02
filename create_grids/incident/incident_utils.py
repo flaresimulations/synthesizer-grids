@@ -7,7 +7,7 @@ import sys
 import h5py
 import numpy as np
 from synthesizer.sed import calculate_Q
-from synthesizer.cloudy import Ions
+from synthesizer.photoionisation import Ions
 from unyt import unyt_quantity
 
 # import functions from grid_utils module

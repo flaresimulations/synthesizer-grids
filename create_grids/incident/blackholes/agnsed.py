@@ -60,7 +60,7 @@ with h5py.File(filename, 'w') as hf:
 
     # initialise default model, to get wavelength grid
     dagn = relagn() 
-    lam = dagn.wave_grid
+    lam = dagn.wave_grid[::-1]
 
     # save wavelength dataset
     hf['spectra/wavelength'] = lam
@@ -81,7 +81,7 @@ with h5py.File(filename, 'w') as hf:
                 # lnu = dagn.get_totSED(rel=True) # relativistic
                 lnu = dagn.get_totSED(rel=False) # non-relativistic
 
-                spec[i,j,k] = lnu
+                spec[i,j,k] = lnu[::-1]
 
     # save incident spectrum grid
     hf['spectra/incident'] = spec

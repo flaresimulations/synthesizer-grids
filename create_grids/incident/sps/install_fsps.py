@@ -131,22 +131,22 @@ if __name__ == "__main__":
 
     models = []
 
-    models += [{}]  # default model
+    # models += [{}]  # default model
 
-    # # chabrier
-    models += [{'imf_type': 'chabrier03', 'imf_masses': [0.08, 120], 'imf_slopes': []},  # chabrier03
-               ]
+    # # # chabrier
+    # models += [{'imf_type': 'chabrier03', 'imf_masses': [0.08, 120], 'imf_slopes': []},  # chabrier03
+    #            ]
 
     # different high-mass slopes
-    models += [{'imf_slopes': [1.3, 2.3, a3]} for a3 in np.arange(2.8, 3.01, 0.1)]
+    models += [{'imf_slopes': [1.3, 2.3, a3]} for a3 in np.arange(1.5, 3.01, 0.1)]
 
-    # different high-mass cut-offs
-    models += [{'imf_type': 'chabrier03', 'imf_masses': [0.08, hmc]}
-               for hmc in [1, 2, 5, 10, 20, 50, 100]]
+    # # different high-mass cut-offs
+    # models += [{'imf_type': 'chabrier03', 'imf_masses': [0.08, hmc]}
+    #            for hmc in [1, 2, 5, 10, 20, 50, 100]]
 
-    # different low-mass cut-offs
-    models += [{'imf_type': 'chabrier03', 'imf_masses': [lmc, 120]}
-               for lmc in [0.5, 1, 2, 5, 10, 20, 50]]
+    # # different low-mass cut-offs
+    # models += [{'imf_type': 'chabrier03', 'imf_masses': [lmc, 120]}
+    #            for lmc in [0.5, 1, 2, 5, 10, 20, 50]]
 
     for model_ in models:
 
