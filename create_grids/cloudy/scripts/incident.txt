@@ -1,2 +1,2 @@
-agnsed-isotropic c17.03-blr
-agnsed-isotropic c17.03-nlr
+agnsed c17.03-blr
+agnsed c17.03-nlr
