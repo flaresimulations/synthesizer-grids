@@ -1,2 +1,2 @@
 # synthesizer-grids
-Package for generating synthesiser grids
+Package for generating synthesizer grids
