@@ -242,7 +242,7 @@ if __name__ == "__main__":
         
         # create abundances object
         abundances = Abundances(
-            params_['metallicity'],
+            metallicity=params_['metallicity'],
             dust_to_metal_ratio=params_['dust_to_metal_ratio'],
             alpha=params_['alpha'],
             nitrogen_abundance=params_['nitrogen_abundance'],
