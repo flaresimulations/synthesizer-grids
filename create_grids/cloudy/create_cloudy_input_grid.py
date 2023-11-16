@@ -241,10 +241,10 @@ if __name__ == "__main__":
             params_['Z'] = 10**grid_params_['log10metallicity']
         
         # create abundances object
-        abundances = Abundances(params_['Z'], d2m=params_['d2m'], alpha=params_['alpha'], N=params_['N'], C=params_['C'])
+        abundances = Abundances(params_['Z'], d2m=params_['dust_to_metal_ratio'], alpha=params_['alpha'], N=params_['N'], C=params_['C'])
 
         # if reference U model is used
-        if params_['U_model'] == 'ref':
+        if params_['ionisation_parameter_model'] == 'ref':
 
             # calculate the difference between the reference log10Q (LyC continuum luminosity) and the current grid point
             delta_log10Q = incident_grid.log10Q['HI'][incident_grid_point] - incident_grid.log10Q['HI'][incident_ref_grid_point]
@@ -252,28 +252,28 @@ if __name__ == "__main__":
             # for spherical geometry the effective log10U is this
             if params_['geometry'] == 'spherical':
 
-                log10U = params_['log10U_ref'] + (1/3) * delta_log10Q
+                log10U = params_['ionisation_parameter_ref'] + (1/3) * delta_log10Q
 
             # for plane-parallel geometry the effective just scales with log10Q
             elif params_['geometry'] == 'planeparallel':
 
-                log10U = params_['log10U_ref'] + delta_log10Q
+                log10U = params_['ionisation_parameter_ref'] + delta_log10Q
 
             else:
 
                 print(f"ERROR: do not understand geometry choice: {params_['geometry']}")
 
         # if fixed U model is used
-        elif params_['U_model'] == 'fixed':
+        elif params_['ionisation_parameter_model'] == 'fixed':
 
-            log10U = params_['log10U']
+            log10U = params_['ionisation_parameter']
 
         else:
 
             print(f"ERROR: do not understand U model choice: {params_['U_model']}")
 
         # set log10U to provide cloudy
-        params_['log10U'] = float(log10U)
+        params_['ionisation_parameter'] = float(log10U)
 
         # get wavelength
         lam = incident_grid.lam # AA
