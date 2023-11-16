@@ -126,14 +126,14 @@ if __name__ == "__main__":
             print(k,v)
 
     # if the U model is the reference model (i.e. not fixed) save the grid point for the reference values
-    if fixed_params['U_model'] == 'ref':
+    if fixed_params['ionisation_parameter_model'] == 'ref':
 
         # get the indices of the reference grid point (this is used by the reference model)
-        incident_ref_grid_point = incident_grid.get_grid_point([fixed_params[k+'_ref'] for k in incident_grid.axes])
+        incident_ref_grid_point = incident_grid.get_grid_point([fixed_params['reference_'+k] for k in incident_grid.axes])
 
         # add these to the parameter file
         for k, i in zip(incident_grid.axes, incident_ref_grid_point):
-            fixed_params[k+'_ref_index'] = i
+            fixed_params['reference_'+k+'_index'] = i
 
     # combine all parameters
     params = fixed_params | grid_params
@@ -236,9 +236,9 @@ if __name__ == "__main__":
 
         # set cloudy metallicity parameter to the stellar metallicity
         if 'metallicity' in grid_params_.keys():
-            params_['Z'] = grid_params_['metallicity']
+            params_['metallicity'] = grid_params_['metallicity']
         elif 'log10metallicity' in grid_params_.keys():
-            params_['Z'] = 10**grid_params_['log10metallicity']
+            params_['metallicity'] = 10**grid_params_['log10metallicity']
         
         # create abundances object
         abundances = Abundances(params_['Z'], d2m=params_['dust_to_metal_ratio'], alpha=params_['alpha'], N=params_['N'], C=params_['C'])
@@ -252,12 +252,12 @@ if __name__ == "__main__":
             # for spherical geometry the effective log10U is this
             if params_['geometry'] == 'spherical':
 
-                log10U = params_['ionisation_parameter_ref'] + (1/3) * delta_log10Q
+                log10U = params_['reference_ionisation_parameter'] + (1/3) * delta_log10Q
 
             # for plane-parallel geometry the effective just scales with log10Q
             elif params_['geometry'] == 'planeparallel':
 
-                log10U = params_['ionisation_parameter_ref'] + delta_log10Q
+                log10U = params_['reference_ionisation_parameter'] + delta_log10Q
 
             else:
 
@@ -270,7 +270,7 @@ if __name__ == "__main__":
 
         else:
 
-            print(f"ERROR: do not understand U model choice: {params_['U_model']}")
+            print(f"ERROR: do not understand U model choice: {params_['ionisation_parameter_model']}")
 
         # set log10U to provide cloudy
         params_['ionisation_parameter'] = float(log10U)
