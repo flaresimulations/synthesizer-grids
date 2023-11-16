@@ -5,8 +5,8 @@ reference_ionisation_parameter_ref: -2  # value of ionisation parameter at refer
 reference_log10age: 6.0  # log10(age/year) at which to set reference ionisation parameter, for U_model='ref'
 reference_metallicity: 0.01  # metallicity at which to set reference ionisation parameter, for U_model='ref'
 alpha: 0.0  # alpha element enhancement
-nitrogen_to_oxygen_ratio: Dopita2006 # scaling for Nitrogen, either float relative to Solar or string defining the in-built function to use
-carbon_to_oxygen_ratio: Dopita2006 # scaling for Carbon, either float relative to Solar or string defining the in-built function to use
+nitrogen_abundance: Dopita2006 # scaling for Nitrogen, either float relative to Solar or string defining the in-built function to use
+carbon_abundance: Dopita2006 # scaling for Carbon, either float relative to Solar or string defining the in-built function to use
 cloudy_version: c17.03
 cosmic_rays: true  # flag for inclusion of cosmic ray heating
 # covering_factor: 1.0  #
