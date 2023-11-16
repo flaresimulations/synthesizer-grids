@@ -245,8 +245,8 @@ if __name__ == "__main__":
             params_['metallicity'],
             dust_to_metal_ratio=params_['dust_to_metal_ratio'],
             alpha=params_['alpha'],
-            nitrogen_to_oxygen_ratio=params_['nitrogen_to_oxygen_ratio'],
-            carbon_to_oxygen_ratio=params_['carbon_to_oxygen_ratio']
+            nitrogen_abundance=params_['nitrogen_abundance'],
+            carbon_abundance=params_['carbon_abundance']
         )
 
         # if reference U model is used
