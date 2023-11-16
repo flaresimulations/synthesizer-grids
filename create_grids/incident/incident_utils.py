@@ -15,7 +15,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import grid_utils
 from grid_utils import * 
 
-__tag__ = grid_utils.__tag__
+# __tag__ = grid_utils.__tag__
 
 
 

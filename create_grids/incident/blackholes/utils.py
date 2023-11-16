@@ -10,7 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import incident_utils
 from incident_utils import * 
 
-__tag__ = incident_utils.__tag__
+# __tag__ = incident_utils.__tag__
 
 def broken_power_law(x, edges, indices, norms=False, normalise=True):
 

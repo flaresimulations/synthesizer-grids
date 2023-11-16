@@ -1,9 +1,9 @@
 
 import numpy as np
-import git
+# import git
 
-repo = git.Repo(search_parent_directories=True)
-__tag__ = repo.git.describe()
+# repo = git.Repo(search_parent_directories=True)
+# __tag__ = repo.git.describe()
 
 
 def get_grid_properties_from_hdf5(hf, verbose=True):
