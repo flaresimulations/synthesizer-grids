@@ -241,7 +241,13 @@ if __name__ == "__main__":
             params_['metallicity'] = 10**grid_params_['log10metallicity']
         
         # create abundances object
-        abundances = Abundances(params_['Z'], d2m=params_['dust_to_metal_ratio'], alpha=params_['alpha'], N=params_['N'], C=params_['C'])
+        abundances = Abundances(
+            params_['metallicity'],
+            dust_to_metal_ratio=params_['dust_to_metal_ratio'],
+            alpha=params_['alpha'],
+            nitrogen_to_oxygen_ratio=params_['nitrogen_to_oxygen_ratio'],
+            carbon_to_oxygen_ratio=params_['carbon_to_oxygen_ratio']
+        )
 
         # if reference U model is used
         if params_['ionisation_parameter_model'] == 'ref':
