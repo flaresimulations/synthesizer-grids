@@ -240,11 +240,9 @@ if __name__ == "__main__":
         elif 'log10metallicity' in grid_params_.keys():
             params_['metallicity'] = 10**grid_params_['log10metallicity']
         
-        print(params_['metallicity'])
-
         # create abundances object
         abundances = Abundances(
-            metallicity=params_['metallicity'],
+            metallicity=float(params_['metallicity']),
             dust_to_metal_ratio=params_['dust_to_metal_ratio'],
             alpha=params_['alpha'],
             nitrogen_abundance=params_['nitrogen_abundance'],
