@@ -48,7 +48,7 @@ def load_grid_params(param_file='c17.03-sps', dir = 'params'):
 
     for k, v in params.items():
         if isinstance(v, list):
-            grid_params[k] = v
+            grid_params[k] = np.array(list(map(float, v)))
         else:
             fixed_params[k] = v
 
