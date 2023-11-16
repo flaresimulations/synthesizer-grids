@@ -3,11 +3,11 @@ import sys
 import os
 
 # import function from incident_utils module
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../..')) #allow it to see anything two folders up so that grid_utils and incident_utils can be accessed
 import incident_utils
 from incident_utils import * 
 
-__tag__ = incident_utils.__tag__
+#__tag__ = incident_utils.__tag__
 
 def get_model_filename(model):
 
