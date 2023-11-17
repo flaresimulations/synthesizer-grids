@@ -4,8 +4,7 @@ import os
 
 # import function from incident_utils module
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..')) #allow it to see anything two folders up so that grid_utils and incident_utils can be accessed
-import incident_utils
-from incident_utils import * 
+#import incident_utils
 
 #__tag__ = incident_utils.__tag__
 
