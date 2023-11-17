@@ -12,11 +12,9 @@ from unyt import unyt_quantity
 
 # import functions from grid_utils module
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import grid_utils
-from grid_utils import * 
+from grid_utils import get_grid_properties_from_hdf5 #need this to work
 
-__tag__ = grid_utils.__tag__
-
+#__tag__ = grid_utils.__tag__
 
 
 def add_log10Q(grid_filename, ions=['HI', 'HeII'], limit=100):
