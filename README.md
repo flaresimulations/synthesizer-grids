@@ -36,3 +36,8 @@ where {param} is the key in the param file of the parameter to be varied, and {v
 Currently, only a *single* array can be specified. If multiple arrays are provided, only the *first* one will be read and processed.
 
 TODO: update to accept multiple arrays, and iterate over these recursively
+
+
+## Contributing
+
+Contributions welcome. Please read the contributing guidelines [here](https://github.com/flaresimulations/synthesizer/blob/main/docs/CONTRIBUTING.md).

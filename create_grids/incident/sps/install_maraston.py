@@ -4,6 +4,7 @@ Download BC03 and convert to HDF5 synthesizer grid.
 
 import numpy as np
 import os
+import wget
 import argparse
 from pathlib import Path
 import tarfile
@@ -14,15 +15,12 @@ from utils import (__tag__, write_data_h5py, write_attribute, add_log10Q,
                    get_model_filename)
 
 
-
-# --- these could be replaced by our own mirror
-
-
 def download_data(input_dir):
+    """
+    TODO: These could be replaced by our own mirror
+    """
 
     filename = wget.download(original_data_url[imf]) # download the original data to the working directory
-
-
 
     Path(input_dir).mkdir(parents=True, exist_ok=True)
 

@@ -187,7 +187,7 @@ if __name__ == "__main__":
 
 
             # create input file
-            create_cloudy_input(str(i), shape_commands, abundances,
+            cloudy.create_cloudy_input(str(i), shape_commands, abundances,
                                 output_dir=output_dir, **params)
 
             # write out input file
