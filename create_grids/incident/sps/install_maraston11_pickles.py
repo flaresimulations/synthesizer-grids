@@ -173,7 +173,7 @@ if __name__ == "__main__":
         for imf in imfs:
             print(extension)
             if args.download_data:
-                download_data(output_dir)
+                download_data(input_dir)
             
             fname = make_grid(
                 model, imf, extension, input_dir
