@@ -1,9 +1,6 @@
 """
 Download Maraston2011 and convert to HDF5 synthesizer grid.
 """
-
-# Allow the file to use incident_utils
-
 import numpy as np
 import os
 import argparse
@@ -23,23 +20,50 @@ from incident_utils import write_data_h5py, write_attribute, add_log10Q  # , __t
 c = 3 * 10**10
 
 
-def download_data(input_dir):
+def download_data(output_dir, data_url="http://www.icg.port.ac.uk/~maraston/M11/SSP_M11_Pickles.tar.gz"):
+    """
+    Download Maraston+11 data
+
+    Args:
+        output_dir (string):
+            directory to download and unpack data into
+        data_url (string):
+            URL from which to fetch the data
+
+    Returns:
+        None
+    """
     filename = wget.download(
-        original_data_url
+        data_url
     )  # download the original data to the working directory
 
-    Path(input_dir).mkdir(parents=True, exist_ok=True)
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     # --- untar main directory
     tar = tarfile.open(filename)
-    tar.extractall(path=input_dir)
+    tar.extractall(path=output_dir)
     tar.close()
     os.remove(filename)
 
 
 def make_grid(model, imf, extension):
     """Main function to convert Maraston 2011 and
-    produce grids used by synthesizer"""
+    produce grids used by synthesizer
+
+    Args:
+        model (dict):
+            dictionary containing model parameters
+        imf (string):
+            Initial mass function, can be one of Salpeter,
+            Kroupa or Chabrier
+        extension (string):
+            String extension to use at the end of the output
+            filename
+
+    Returns:
+        fname (string):
+            output filename
+    """
 
     # define output
     # ideally find a way to create the grids/model_name folder if it doesn't already exist
@@ -109,7 +133,7 @@ def make_grid(model, imf, extension):
 
 # Lets include a way to call this script not via an entry point
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="BC03 download and grid creation")
+    parser = argparse.ArgumentParser(description="Maraston+11 download and grid creation")
     parser.add_argument("-synthesizer_data_dir", type=str, required=True)
     parser.add_argument("-download_data", "--download_data", type=bool, default=False)
 
@@ -119,9 +143,8 @@ if __name__ == "__main__":
 
     model_name = "maraston11_pickles"
 
-    input_dir = f"{synthesizer_data_dir}/original_data/{model_name}"  # the location to untar the original data
+    output_dir = f"{synthesizer_data_dir}/original_data/{model_name}"  # the location to untar the original data
 
-    original_data_url = "http://www.icg.port.ac.uk/~maraston/M11/SSP_M11_Pickles.tar.gz"
     imf_code = {"salpeter": "ss", "kroupa": "kr", "chabrier": "cha"}
 
     model = {
@@ -147,7 +170,9 @@ if __name__ == "__main__":
 
         for imf in imfs:
             print(extension)
-            download_data(input_dir)
+            if args.download_data:
+                download_data(output_dir)
+            
             fname = make_grid(
                 model, imf, extension
             )  # makes the grid and returns the name
