@@ -46,7 +46,7 @@ def download_data(output_dir, data_url="http://www.icg.port.ac.uk/~maraston/M11/
     os.remove(filename)
 
 
-def make_grid(model, imf, extension):
+def make_grid(model, imf, extension, input_dir):
     """Main function to convert Maraston 2011 and
     produce grids used by synthesizer
 
@@ -59,6 +59,8 @@ def make_grid(model, imf, extension):
         extension (string):
             String extension to use at the end of the output
             filename
+        input_dir (string):
+            directory where the raw Maraston+11 files are read from
 
     Returns:
         fname (string):
@@ -143,7 +145,7 @@ if __name__ == "__main__":
 
     model_name = "maraston11_pickles"
 
-    output_dir = f"{synthesizer_data_dir}/original_data/{model_name}"  # the location to untar the original data
+    input_dir = f"{synthesizer_data_dir}/original_data/{model_name}"  # the location to untar the original data
 
     imf_code = {"salpeter": "ss", "kroupa": "kr", "chabrier": "cha"}
 
@@ -174,7 +176,7 @@ if __name__ == "__main__":
                 download_data(output_dir)
             
             fname = make_grid(
-                model, imf, extension
+                model, imf, extension, input_dir
             )  # makes the grid and returns the name
 
             add_log10Q(fname)
