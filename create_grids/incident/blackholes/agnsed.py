@@ -5,7 +5,8 @@ Create a synthesizer incident grid for the agnsed model
 import h5py 
 import numpy as np
 from unyt import c, Angstrom
-from utils import __tag__, broken_power_law, add_log10Q
+# from utils import __tag__, broken_power_law, add_log10Q
+from utils import broken_power_law, add_log10Q
 from datetime import date
 
 #adding relagn to pythonpath
@@ -19,22 +20,23 @@ synthesizer_data_dir = '/Users/sw376/Dropbox/Research/data/synthesizer/'
 model_name = 'agnsed'
 
 
-axes = ['log10Mbh', 'log10MdotEdd', 'cosinc']
+axes = ['mass', 'accretion_rate_eddington', 'cosine_inclination']
 
 axes_descriptions = {}
-axes_descriptions['log10Mbh'] = 'log10(BH mass)'
-axes_descriptions['log10MdotEdd'] = 'log10(BH accretion rate / Edding accretion rate) [LEdd=\eta MdotEdd c^2]'
-axes_descriptions['cosinc'] = 'cosine of the inclination'
+axes_descriptions['mass'] = 'blackhole mass'
+axes_descriptions['accretion_rate_eddington'] = 'BH accretion rate / Edding accretion rate [LEdd=\eta MdotEdd c^2]'
+axes_descriptions['cosine_inclination'] = 'cosine of the inclination'
 
 axes_units = {}
-axes_units['log10Mbh'] = 'dex(Msun)'
-axes_units['log10MdotEdd'] = 'dimensionless'
-axes_units['cosinc'] = 'dimensionless'
+axes_units['mass'] = 'Msun'
+axes_units['accretion_rate_eddington'] = 'dimensionless'
+axes_units['cosine_inclination'] = 'dimensionless'
 
 axes_values = {}
-axes_values['log10Mbh'] = np.arange(6.0, 10.0, 1.0)
-axes_values['log10MdotEdd'] = np.arange(-3., 1.0, 1.0)
-axes_values['cosinc'] = [0.09, 0.5, 0.98]
+axes_values['mass'] =10**np.arange(6.0, 10.0, 1.0)
+axes_values['accretion_rate_eddington'] = 10**np.arange(-3., 1.0, 1.0)
+axes_values['cosine_inclination'] = [0.09, 0.5, 0.98]
+
 
 # the shape of the grid (useful for creating outputs)
 axes_shape = list([len(axes_values[axis]) for axis in axes])
@@ -48,7 +50,6 @@ with h5py.File(filename, 'w') as hf:
 
     # save model attributes
     hf.attrs['model'] = model_name
-    hf.attrs['synthesizer-grids_tag'] = __tag__
     hf.attrs['date'] = str(date.today())
     hf.attrs['axes'] = axes
 
@@ -70,13 +71,14 @@ with h5py.File(filename, 'w') as hf:
     # create empty spectra grid
     spec = np.zeros((*axes_shape, len(lam)))
     
-    for i, logM in enumerate(axes_values['log10Mbh']):
-        for j, log_mdot in enumerate(axes_values['log10MdotEdd']):
-            for k, cos_inc in enumerate(axes_values['cosinc']):
+    for i, M in enumerate(axes_values['mass']):
+        for j, accretion_rate_eddington in enumerate(axes_values['accretion_rate_eddington']):
+            for k, cos_inc in enumerate(axes_values['cosine_inclination']):
 
-                M = 10**logM
-
-                dagn = relagn(a=0.0, cos_inc=cos_inc, log_mdot=log_mdot, M=M) 
+                dagn = relagn(a=0.0, 
+                              cos_inc=cos_inc,
+                              log_mdot=np.log10(accretion_rate_eddington),
+                              M=M) 
 
                 # lnu = dagn.get_totSED(rel=True) # relativistic
                 lnu = dagn.get_totSED(rel=False) # non-relativistic

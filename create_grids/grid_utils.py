@@ -1,6 +1,6 @@
 
 import numpy as np
-import git
+# import git
 
 #repo = git.Repo(search_parent_directories=True)
 #__tag__ = repo.git.describe()
