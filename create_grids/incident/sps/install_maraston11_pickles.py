@@ -23,13 +23,11 @@ c = 3 * 10**10
 def download_data(output_dir, data_url="http://www.icg.port.ac.uk/~maraston/M11/SSP_M11_Pickles.tar.gz"):
     """
     Download Maraston+11 data
-
     Args:
         output_dir (string):
             directory to download and unpack data into
         data_url (string):
             URL from which to fetch the data
-
     Returns:
         None
     """
@@ -49,7 +47,6 @@ def download_data(output_dir, data_url="http://www.icg.port.ac.uk/~maraston/M11/
 def make_grid(model, imf, extension, input_dir):
     """Main function to convert Maraston 2011 and
     produce grids used by synthesizer
-
     Args:
         model (dict):
             dictionary containing model parameters
@@ -61,7 +58,6 @@ def make_grid(model, imf, extension, input_dir):
             filename
         input_dir (string):
             directory where the raw Maraston+11 files are read from
-
     Returns:
         fname (string):
             output filename
@@ -174,7 +170,7 @@ if __name__ == "__main__":
             print(extension)
             if args.download_data:
                 download_data(input_dir)
-            
+
             fname = make_grid(
                 model, imf, extension, input_dir
             )  # makes the grid and returns the name
