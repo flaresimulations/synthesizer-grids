@@ -315,7 +315,7 @@ if __name__ == "__main__":
     grid_name = args.grid_name
     include_spectra = args.include_spectra
 
-    # check cloudy runs
+    # check cloudy runs and potentially replace them by the nearest grid point if they fail.
     failed_list = check_cloudy_runs(grid_name, synthesizer_data_dir, replace=args.replace)
 
     print(failed_list)
@@ -336,7 +336,6 @@ if __name__ == "__main__":
         print('- passed checks')
 
         # add spectra
-
         if include_spectra:
             add_spectra(grid_name, synthesizer_data_dir)
             print('- spectra added')
