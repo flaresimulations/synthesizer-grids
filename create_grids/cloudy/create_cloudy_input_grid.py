@@ -18,7 +18,7 @@ from synthesizer.photoionisation import cloudy17 as cloudy
 
 
 # local modules
-from utils import apollo_submission_script, get_grid_properties
+from utils import get_grid_properties, apollo_submission_script
 
 
 def load_grid_params(param_file='c17.03-sps', dir = 'params'):
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run a grid of incident cloudy models')
     
     # machine (for submission script generation)
-    parser.add_argument("-machine", type=str, required=True) 
+    #parser.add_argument("-machine", type=str, required=True) 
 
     # path to synthesizer_data_dir
     parser.add_argument("-synthesizer_data_dir", type=str, required=True)
@@ -88,10 +88,8 @@ if __name__ == "__main__":
     # load the cloudy parameters you are going to run
     fixed_params, grid_params = load_grid_params(args.cloudy_params)
 
-
     # open the parent incident grid
-    incident_grid = Grid(args.incident_grid, grid_dir=f'{args.synthesizer_data_dir}/grids/dev/', read_lines=False)
-
+    incident_grid = Grid(args.incident_grid, grid_dir=f'{args.synthesizer_data_dir}', read_lines=False) 
 
     # get name of new grid (concatenation of incident_grid and cloudy parameter file)
     new_grid_name = f'{args.incident_grid}_cloudy-{args.cloudy_params}'
@@ -148,10 +146,10 @@ if __name__ == "__main__":
     # create new synthesizer grid to contain the new grid    
 
     # open the new grid
-    with h5py.File(f'{args.synthesizer_data_dir}/grids/dev/{new_grid_name}.hdf5', 'w') as hf:
+    with h5py.File(f'{args.synthesizer_data_dir}/{new_grid_name}.hdf5', 'w') as hf: 
 
         # open the original incident model grid
-        with h5py.File(f'{args.synthesizer_data_dir}/grids/dev/{args.incident_grid}.hdf5', 'r') as hf_incident:
+        with h5py.File(f'{args.synthesizer_data_dir}/{args.incident_grid}.hdf5', 'r') as hf_incident: 
 
             if verbose: 
                 hf_incident.visit(print)
