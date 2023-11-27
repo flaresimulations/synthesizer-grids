@@ -1,30 +1,31 @@
 # synthesizer-grids
 
-This package includes scripts for generating grids for use by the synthesizer synthetic observations package. There are two branches, scripts for creating incident grid and scripts for creating cloudy input files and then combining them to form a synthesizer grid.
+This package includes scripts for generating grids for use by the `synthesizer` synthetic observations package. There are two branches, scripts for creating incident grid and scripts for creating cloudy input files and then combining them to form a `synthesizer` grid.
 
 ## Incident
+
+The first thing we need to do is create an incident grid. In some contexts this is good enough for our purposes.
+
+Unfortunately, since SPS codes adopt heterogenous approaches to everything the code for generating `synthesizer` incident grids is equally heterogenous. **However**, it should result in the creation of a standardised output file that can be further processed (e.g. by `cloudy`) or used within `synthesizer`.
 
 
 ## Processing grids with CLOUDY
 
-In this directory we can create cloudy input arrays, and process the output of these cloudy runs into a grid.
+In the `cloudy/` directory are scripts to create `cloudy` input scripts and then process them to create `synthesizer` grids. There are two steps:
+
+### Creating cloudy input grids
 
 To create an input grid, we run `make_cloudy_input_grid.py`. This takes the following arguments:
 
--dir (--directory): the output directory. We recommend using your default synthesizer data directory
--m (--machine): the type of HPC on which you are running. If not provided, no submission script will be written.
--sps (--sps_grid): name of the SPS grid on which you wish to run CLOUDY
--p (--params): YAML file containing CLOUDY parameters
--c (--cloudy): the bash executable for your CLOUDY installation (either full directory to the executable, or an alias set in your bashrc file)
+`-synthesizer_data_dir`: The directory containing both the cloudy runs (`cloudy/`) and grids (`grids/`). **Note** by default new grids are placed in `synthesizer_data_dir/grids/dev/`.
+`-m (--machine)`: the type of HPC on which you are running. If not provided, no submission script will be written.
+`-incident_grid`: The name of the synthesizer incident grid on which you wish to run `cloudy`.
+`-cloudy_params`: the YAML file containing `cloudy` parameters for modelling. See the examples for more details. These can be single values or arrays resulting in the creating of higher-dimensionality grids. Also included is the `cloudy` version.
+`-cloudy_path`: the path to the `cloudy` directory. **Note** this is not the path to executable. This was done to allow multiple versions of cloudy to exist simultanously.  
 
-An example:
+**Note:** there is currently a deprecated script to make cloudy input grids directly from cloudy commands, e.g. the "AGN" command. This will be reinstated soon.
 
-    python make_cloudy_input_grid.py -dir ../../../synthesizer_data/ -m cosma7 -sps bc03_chabrier03 -p default_param.yaml -cloudy CLOUDY_EXE
-
-    python make_cloudy_input_grid.py -dir /Users/stephenwilkins/Dropbox/Research/data/synthesizer/ -m apollo -sps bpass-2.2.1-sin_chabrier03-0.1,100.0  -p default_param.yaml -c $CLOUDY17
-    python make_cloudy_input_grid.py -dir /research/astrodata/highz/synthesizer/ -m apollo -sps bpass-2.2.1-bin_chabrier03-0.1,100.0  -p default_param.yaml -c $CLOUDY17
-
-### The param YAML file
+#### The param YAML file
 This contains the parameters that will be input into CLOUDY.
 
 Users can provide arrays/lists of parameters they wish to iterate over. In this case, the code will create individual runs for each of the parameters specified, with the following naming convention:
@@ -33,10 +34,23 @@ Users can provide arrays/lists of parameters they wish to iterate over. In this 
 
 where {param} is the key in the param file of the parameter to be varied, and {value} is the value to be provided. If this is numeric, it will be converted to a string, and if it is negative, the '-' will be substituted for 'm'.
 
-Currently, only a *single* array can be specified. If multiple arrays are provided, only the *first* one will be read and processed.
 
-TODO: update to accept multiple arrays, and iterate over these recursively
+### Creating cloudy synthesizer grids
 
+Next we need to combine the cloudy ouputs to create a new `synthesizer` grid. To do this we run `create_synthesizer_grid.py`. This takes the following arguments:
+
+`-synthesizer_data_dir`: The directory containing both the cloudy runs (`cloudy/`) and grids (`grids/`).
+`-grid_name`: The full grid name.
+`-include_spectra`: Whether to include spectra or just include line properties. Depending on the science context for large grids it might be sensible to not save the full spectra.
+`-replace`: Some models continuously fail. This is a last resort options to instead use the nearest model. **I RECOMMEND NEVER SETTING THIS TO TRUE**.
+`-line_calc_method`: Change the way line quantities are calculated.
+
+
+### Scripts
+
+The cloudy directory also includes a script folder `apollo_production_scripts/` for processing multiple grids automatically. Essentially there are two scripts, one for creating the cloudy inputs and a second for creating the ultimate synthesizer grids. These loop over the contents of `incident.txt` and `grids.txt` to get the input parameters. 
+
+These scripts will only work on Sussex's Apollo HPC system. Thus, if you want to use something similar please copy and adapt them as required. If you want them to form part of the package please make a new folder.
 
 ## Contributing
 
