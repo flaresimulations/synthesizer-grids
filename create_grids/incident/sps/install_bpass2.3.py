@@ -221,7 +221,6 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
         "Two-dimensional remaining remnant fraction grid, [age, Z]",
         units="Msun",
     )
-
     out_grid.write_dataset(
         f"specific_ionising_lum_original/HI",
         specific_ionising_lum_original["HI"],
@@ -229,7 +228,6 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
         " production rate grid, [age,Z] (dex(1/s))",
         units="dimensionless",
     )
-
     for ion in ["HI", "HeII"]:
         out_grid.write_dataset(
             f"specific_ionising_lum/{ion}",
