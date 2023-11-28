@@ -15,6 +15,10 @@ In the `cloudy/` directory are scripts to create `cloudy` input scripts and then
 
 ### Creating cloudy input grids
 
+There are two approaches to creating cloudy input grids, using an **incident grid** (for example from an SPS model as above) or generating the grid using a cloudy shape command (e.g. blackbody). These scearnios are handled by two separate modules.
+
+#### Using an incident grid
+
 To create an input grid, we run `make_cloudy_input_grid.py`. This takes the following arguments:
 
 `-synthesizer_data_dir`: The directory containing both the cloudy runs (`cloudy/`) and grids (`grids/`). **Note** by default new grids are placed in `synthesizer_data_dir/grids/dev/`.
@@ -23,7 +27,9 @@ To create an input grid, we run `make_cloudy_input_grid.py`. This takes the foll
 `-cloudy_params`: the YAML file containing `cloudy` parameters for modelling. See the examples for more details. These can be single values or arrays resulting in the creating of higher-dimensionality grids. Also included is the `cloudy` version.
 `-cloudy_path`: the path to the `cloudy` directory. **Note** this is not the path to executable. This was done to allow multiple versions of cloudy to exist simultanously.  
 
-**Note:** there is currently a deprecated script to make cloudy input grids directly from cloudy commands, e.g. the "AGN" command. This will be reinstated soon.
+#### Using a cloudy shape command
+
+As an alternative we can create a grid directly from using one of `cloudy`'s in-built shape commands (e.g. blackbody). To do this we need to provide a yaml file containing the name of the model (at the moment this is limited to `blackbody` and `agn`) with all the parameters, including any that are to be varied as a list.
 
 #### The param YAML file
 This contains the parameters that will be input into CLOUDY.
