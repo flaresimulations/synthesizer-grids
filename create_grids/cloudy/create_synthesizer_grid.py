@@ -145,7 +145,7 @@ def add_spectra(grid_name, synthesizer_data_dir):
             spectra[spec_name] = np.zeros((*shape, nlam))
 
         # array for holding the normalisation which is calculated below and used by lines
-        spectra['normalisation'] = np.zeros(shape)
+        spectra['normalisation'] = np.ones(shape)
 
         for i, indices in enumerate(index_list):
 
@@ -157,27 +157,32 @@ def add_spectra(grid_name, synthesizer_data_dir):
             # read the continuum file containing the spectra 
             spec_dict = cloudy.read_continuum(infile, return_dict=True)
 
-            # calculate Q for the output spectra and use this to calculate the normalisation
-            Q = calculate_Q(lam,
-                            spec_dict['incident'],
-                            ionisation_energy=13.6 * eV)
-            
-            # calculate normalisation
-            normalisation = hf['log10Q/HI'][indices] - np.log10(Q)
+            # if hf['log10Q/HI'] already exists (only true for non-cloudy 
+            # models) renormalise the spectrum. 
+            if 'log10Q/HI' in hf:            
+                Q = calculate_Q(lam,
+                                spec_dict['incident'],
+                                ionisation_energy=13.6 * eV)
+                
+                # calculate normalisation
+                normalisation = hf['log10Q/HI'][indices] - np.log10(Q)
 
-            # save normalisation for later use (rescaling lines)
-            spectra['normalisation'][indices] = 10**normalisation
-
-            # print(i, normalisation, np.log10(Q), np.sum(spec_dict['incident']), np.sum(spec_dict['transmitted']))
-
+                # save normalisation for later use (rescaling lines)
+                spectra['normalisation'][indices] = 10**normalisation
+                
             # save the normalised spectrum to the correct grid point 
             for spec_name in spec_names:
-                spectra[spec_name][indices] = spec_dict[spec_name] * 10**normalisation
+                spectra[spec_name][indices] = (
+                    spec_dict[spec_name] * spectra['normalisation'][indices])
 
 
 
 
-def add_lines(grid_name, synthesizer_data_dir, line_type = 'linelist', lines_to_include = False, include_spectra = True):
+def add_lines(grid_name,
+              synthesizer_data_dir,
+              line_type='linelist',
+              lines_to_include=False,
+              include_spectra=True):
     """
     Open cloudy lines and add them to the HDF5 grid
 
