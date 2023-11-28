@@ -13,6 +13,9 @@ from unyt import h, c
 from synthesizer.sed import calculate_Q
 from synthesizer.cloudy import Ions
 from datetime import date
+from unyt import angstrom, erg, s, Hz
+
+from ..io import GridFile
 from utils import (
     __tag__,
     write_data_h5py,
@@ -115,21 +118,21 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
         "z040": 0.040,
     }
     Z_to_Zk = {k: v for v, k in Zk_to_Z.items()}
-    Zs = np.sort(np.array(list(Z_to_Zk.keys())))
+    metallicities = np.sort(np.array(list(Z_to_Zk.keys())))
 
     # get ages
-    fn_ = f"{input_dir}/starmass-{bs}-imf_{bpass_imf}.a{ae}.{Z_to_Zk[Zs[0]]}.dat"
+    fn_ = f"{input_dir}/starmass-{bs}-imf_{bpass_imf}.a{ae}.{Z_to_Zk[metallicities[0]]}.dat"
     starmass = load.model_output(fn_)
     log10ages = starmass["log_age"].values
 
     # get wavelength grid
-    fn_ = f"spectra-{bs}-imf_{bpass_imf}.a{ae}.{Z_to_Zk[Zs[0]]}.dat"
+    fn_ = f"spectra-{bs}-imf_{bpass_imf}.a{ae}.{Z_to_Zk[metallicities[0]]}.dat"
     spec = load.model_output(f"{input_dir}/{fn_}")
     wavelengths = spec["WL"].values  # \AA
     nu = 3e8 / (wavelengths * 1e-10)
 
     # number of metallicities and ages
-    nZ = len(Zs)
+    nZ = len(metallicities)
     na = len(log10ages)
 
     # set up outputs
@@ -147,7 +150,7 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
 
     spectra = np.zeros((na, nZ, len(wavelengths)))
 
-    for iZ, Z in enumerate(Zs):
+    for iZ, Z in enumerate(metallicities):
         print(iZ, Z)
 
         # get remaining and remnant fraction
@@ -193,98 +196,50 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
                     )
                 )
 
-    # write out model parameters as top level attribute
-    for key, value in model.items():
-        # print(key, value)
-        write_attribute(out_filename, "/", key, (value))
+    # Create the GridFile ready to take outputs
+    out_grid = GridFile(out_filename, mode="a", overwrite=True)
 
-    write_data_h5py(out_filename, "star_fraction", data=stellar_mass, overwrite=True)
-    write_attribute(
-        out_filename,
+    # Write everything out thats common to all models
+    out_grid.write_grid_common(
+        model,
+        axes={"log10age": log10ages, "metallicity": metallicities},
+        wavelength=wavelengths * angstrom,
+        spectra={"incident": spectra * erg / s / Hz},
+        alt_axes=("log10ages", "metallicities"),
+    )
+
+    # Write datasets specific to BPASS 2.3
+    out_grid.write_dataset(
         "star_fraction",
-        "Description",
-        "Two-dimensional remaining stellar fraction grid, [age,Z]",
+        stellar_mass,
+        "Two-dimensional remaining stellar fraction grid, [age, Z]",
+        units="Msun",
     )
-
-    write_data_h5py(out_filename, "remnant_fraction", data=remnant_mass, overwrite=True)
-    write_attribute(
-        out_filename,
+    out_grid.write_dataset(
         "remnant_fraction",
-        "Description",
-        "Two-dimensional remaining remnant fraction grid, [age,Z]",
+        remnant_mass,
+        "Two-dimensional remaining remnant fraction grid, [age, Z]",
+        units="Msun",
     )
 
-    for ion in ["HI"]:
-        write_data_h5py(
-            out_filename,
-            f"specific_ionising_lum_original/{ion}",
-            data=specific_ionising_lum_original[ion],
-            overwrite=True,
-        )
-        write_attribute(
-            out_filename,
-            f"specific_ionising_lum_original/{ion}",
-            "Description",
-            f"Two-dimensional (original) {ion} ionising photon production rate grid, [age,Z]",
-        )
-        write_attribute(
-            out_filename, f"specific_ionising_lum_original/{ion}", "Units", "dex(1/s)"
-        )
+    out_grid.write_dataset(
+        f"specific_ionising_lum_original/HI",
+        specific_ionising_lum_original["HI"],
+        "Two-dimensional (original) HI ionising photon"
+        " production rate grid, [age,Z] (dex(1/s))",
+        units="dimensionless",
+    )
 
     for ion in ["HI", "HeII"]:
-        write_data_h5py(
-            out_filename,
+        out_grid.write_dataset(
             f"specific_ionising_lum/{ion}",
-            data=specific_ionising_lum[ion],
-            overwrite=True,
-        )
-        write_attribute(
-            out_filename,
-            f"specific_ionising_lum/{ion}",
-            "Description",
-            f"Two-dimensional {ion} ionising photon production rate grid, [age,Z]",
-        )
-        write_attribute(
-            out_filename, f"specific_ionising_lum/{ion}", "Units", "dex(1/s)"
+            specific_ionising_lum[ion],
+            f"Two-dimensional {ion} ionising photon"
+            " production rate grid, [age, Z] (desc(1/s))",
+            units="dimensionless",
         )
 
-    write_data_h5py(out_filename, "spectra/incident", data=spectra, overwrite=True)
-    write_attribute(
-        out_filename,
-        "spectra/incident",
-        "Description",
-        "Three-dimensional spectra grid, [Z,Age,wavelength]",
-    )
-    write_attribute(out_filename, "spectra/incident", "Units", "erg/s/Hz")
-
-    write_data_h5py(
-        out_filename, "spectra/wavelength", data=wavelengths, overwrite=True
-    )
-    write_attribute(
-        out_filename,
-        "spectra/wavelength",
-        "Description",
-        "Wavelength of the spectra grid",
-    )
-    write_attribute(out_filename, "spectra/wavelength", "Units", "Angstrom")
-
-    # write out axes
-    write_attribute(out_filename, "/", "axes", ("log10age", "metallicity"))
-
-    # write out log10ages
-    write_data_h5py(out_filename, "axes/log10age", data=log10ages, overwrite=True)
-    write_attribute(
-        out_filename,
-        "axes/log10age",
-        "Description",
-        "Stellar population ages in log10 years",
-    )
-    write_attribute(out_filename, "axes/log10age", "Units", "dex(yr)")
-
-    # write out metallicities
-    write_data_h5py(out_filename, "axes/metallicity", data=Zs, overwrite=True)
-    write_attribute(out_filename, "axes/metallicity", "Description", "raw abundances")
-    write_attribute(out_filename, "axes/metallicity", "Units", "dimensionless")
+    out_grid.close()
 
     return out_filename
 
@@ -325,8 +280,8 @@ def make_full_grid(original_model_name, bs="bin"):
         "z040": 0.040,
     }
     Z_to_Zk = {k: v for v, k in Zk_to_Z.items()}
-    Zs = np.sort(np.array(list(Z_to_Zk.keys())))
-    log10Zs = np.log10(Zs)
+    metallicities = np.sort(np.array(list(Z_to_Zk.keys())))
+    log10metallicities = np.log10(metallicities)
 
     # --- create alpha-enhancement grid
     alpha_enhancements = np.array(
@@ -341,18 +296,20 @@ def make_full_grid(original_model_name, bs="bin"):
     }  # look up dictionary for filename
 
     # --- get ages
-    fn_ = f"{input_dir}/starmass-bin-imf_{bpass_imf}.a+00.{Z_to_Zk[Zs[0]]}.dat"
+    fn_ = (
+        f"{input_dir}/starmass-bin-imf_{bpass_imf}.a+00.{Z_to_Zk[metallicities[0]]}.dat"
+    )
     starmass = load.model_output(fn_)
     log10ages = starmass["log_age"].values
 
     # --- get wavelength grid
-    fn_ = f"spectra-bin-imf_{bpass_imf}.a+00.{Z_to_Zk[Zs[0]]}.dat"
+    fn_ = f"spectra-bin-imf_{bpass_imf}.a+00.{Z_to_Zk[metallicities[0]]}.dat"
     spec = load.model_output(f"{input_dir}/{fn_}")
     wavelengths = spec["WL"].values  # \AA
     nu = 3e8 / (wavelengths * 1e-10)
 
     na = len(log10ages)
-    nZ = len(log10Zs)
+    nZ = len(log10metallicities)
     nae = len(alpha_enhancements)
 
     # set up outputs
@@ -370,7 +327,7 @@ def make_full_grid(original_model_name, bs="bin"):
 
     spectra = np.zeros((na, nZ, nae, len(wavelengths)))
 
-    for iZ, Z in enumerate(Zs):
+    for iZ, Z in enumerate(metallicities):
         for iae, alpha_enhancement in enumerate(alpha_enhancements):
             print(Z, alpha_enhancement)
 
@@ -487,7 +444,9 @@ def make_full_grid(original_model_name, bs="bin"):
     write_attribute(out_filename, "axes/log10age", "Units", "dex(yr)")
 
     # write out metallicities
-    write_data_h5py(out_filename, "axes/metallicity", data=Zs, overwrite=True)
+    write_data_h5py(
+        out_filename, "axes/metallicity", data=metallicities, overwrite=True
+    )
     write_attribute(out_filename, "axes/metallicity", "Description", "raw abundances")
     write_attribute(out_filename, "axes/metallicity", "Units", "dimensionless")
 
