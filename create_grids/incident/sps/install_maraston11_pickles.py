@@ -15,12 +15,19 @@ import sys
 
 # Allow the file to use incident_utils
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-from incident_utils import write_data_h5py, write_attribute, add_log10Q  # , __tag__
+from incident_utils import (
+    write_data_h5py,
+    write_attribute,
+    add_specific_ionising_lum,
+)  # , __tag__
 
 c = 3 * 10**10
 
 
-def download_data(output_dir, data_url="http://www.icg.port.ac.uk/~maraston/M11/SSP_M11_Pickles.tar.gz"):
+def download_data(
+    output_dir,
+    data_url="http://www.icg.port.ac.uk/~maraston/M11/SSP_M11_Pickles.tar.gz",
+):
     """
     Download Maraston+11 data
     Args:
@@ -131,7 +138,9 @@ def make_grid(model, imf, extension, input_dir):
 
 # Lets include a way to call this script not via an entry point
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Maraston+11 download and grid creation")
+    parser = argparse.ArgumentParser(
+        description="Maraston+11 download and grid creation"
+    )
     parser.add_argument("-synthesizer_data_dir", type=str, required=True)
     parser.add_argument("-download_data", "--download_data", type=bool, default=False)
 
@@ -175,4 +184,4 @@ if __name__ == "__main__":
                 model, imf, extension, input_dir
             )  # makes the grid and returns the name
 
-            add_log10Q(fname)
+            add_specific_ionising_lum(fname)
