@@ -1,48 +1,97 @@
 """
-This will create a cloudy grid but using a CLOUDY shape command, NOT an incident grid.
-
-Ultimately this will use e.g.:
-- Blackbody
-- Cloudy AGN model
-
-
-THIS IS NOT CURRENTLY WORKING
-
+Create a grid of cloudy scripts based on a cloudy in-built incident model such
+as a blackbody or AGN.
 """
 
-import yaml
 import numpy as np
-from pathlib import Path
 import argparse
+from pathlib import Path
+import yaml
 import h5py
-from unyt import Angstrom
 
-# synthesizer modules
-from synthesizer.photoionisation import cloudy17 as cloudy
+# synthesiser modules
 from synthesizer.abundances import Abundances
+from synthesizer.grid import Grid
+from synthesizer.photoionisation import cloudy17 as cloudy
+
+
 
 # local modules
-from emission_models import Feltre16
-from incident_utils import (get_grid_properties,
-                   apollo_submission_script,
-                   cosma7_submission_script)
+from utils import get_grid_properties, apollo_submission_script
 
 
-def load_grid_params(param_file='default.yaml'):
+class CloudyIncidentShapeCommands:
+
     """
-    Load parameters from a single param_file.
+    A class holding different cloudy incident models. These return the relevant
+    shape commands.
+    """
 
-    Args:
-        param_file (str)
-            Location of YAML file.
+    def blackbody(temperature=None, model=None):
 
-    Returns:
-        (dict)
-            Dictionary of cloudy parameters
+        """
+        A function for specifying the cloudy blackbody model.
+
+        Args:
+            temperature (float)
+                The characteristic temperature of the blackbody.
+            
+        Returns:
+            shape_commands (list, str)
+                A list of strings with the cloudy input commands
+        """
+        
+        shape_commands = []
+        shape_commands.append(f'black {temperature} \n')
+
+        return shape_commands
+
+    def agn(big_bump_temperature=None, aox=-1.4, auv=-0.5, ax=-1.35):
+    
+        """
+        A function for specifying the cloudy AGN model. See 6.2 Hazy1.pdf.
+
+        Args:
+            big_bump_temperature (float)
+                The Big Bump temperature
+            aox (float)
+                The x-ray slope (default value from Calabro CEERS AGN model)
+            auv (float)
+                The uv-slope (default value from Calabro CEERS AGN model)
+            ax (float)
+                Slope normalisation
+            
+        Returns:   
+            shape_commands (list, str)
+                A list of strings with the cloudy input commands
+        """
+
+        # collect cloudy shape commands
+        shape_commands = []
+        shape_commands.append(f'AGN T = {big_bump_temperature} k, a(ox) = {aox}, a(uv)= {auv} \
+                                a(x)={ax} \n')
+
+        return shape_commands
+
+
+def load_grid_params(param_file='c17.03-sps', dir = 'params'):
+    """
+    Load parameters from a single param_file. This separates parameters into 
+    those that vary and those that are fixed.
+
+    Parameters
+    ----------
+    param_file : str
+        Location of YAML file.
+
+    Returns
+    -------
+    dict
+        Dictionary of cloudy parameters
     """
 
     # open paramter file
-    with open(param_file, "r") as stream:
+    with open(f'{dir}/{param_file}.yaml', "r") as stream:
         try:
             params = yaml.safe_load(stream)
         except yaml.YAMLError as exc:
@@ -53,7 +102,7 @@ def load_grid_params(param_file='default.yaml'):
 
     for k, v in params.items():
         if isinstance(v, list):
-            grid_params[k] = v
+            grid_params[k] = np.array(list(map(float, v)))
         else:
             fixed_params[k] = v
 
@@ -62,145 +111,174 @@ def load_grid_params(param_file='default.yaml'):
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(
-        description='Run a grid of Cloudy AGN models')
-
+    parser = argparse.ArgumentParser(description='Run a grid of incident cloudy models')
+    
     # machine (for submission script generation)
-    parser.add_argument("-machine", type=str, required=True)
+    parser.add_argument("-machine", type=str, required=True) 
+
     # path to synthesizer_data_dir
     parser.add_argument("-synthesizer_data_dir", type=str, required=True)
-    # grid_name, used to define parameter file
-    parser.add_argument("-grid_name", type=str, required=True)
-    # path to cloudy directory (not executable; 
-    # this is assumed to {cloudy}/{cloudy_version}/source/cloudy.ext)
-    parser.add_argument("-cloudy_path", type=str, required=True)
-    # boolean for dry run
-    parser.add_argument("-dry_run", type=bool, required=False, default=False)
 
-    # get arguments
+    # the name of the file denoting the cloudy model and the variable parameters
+    parser.add_argument("-incident_cloudy_model", type=str, required=True) 
+
+    # the cloudy parameters, including any grid axes
+    parser.add_argument("-cloudy_params", type=str, required=False, default='c17.03-sps') 
+
+    # path to cloudy directory (not executable; this is assumed to {cloudy}/{cloudy_version}/source/cloudy.ext)
+    parser.add_argument("-cloudy_path", type=str, required=True) 
+
+    # verbosity flag
+    parser.add_argument("-verbose", type=bool, required=False, default=True) 
+
     args = parser.parse_args()
 
-    # set grid_name
-    grid_name = args.grid_name
+    verbose = args.verbose
 
-    # get model family
-    family = grid_name.split('_')[0] # e.g. AGN, blackbody, SPS
+    # load the cloudy parameters you are going to run
+    cloudy_fixed_params, cloudy_grid_params = load_grid_params(args.cloudy_params)
 
-    # get model
-    model = grid_name.split('_')[1]
+    # load the incident parameters
+    incident_fixed_params, incident_grid_params = (
+        load_grid_params(args.incident_cloudy_model,
+                         dir='cloudy_incident_models')
+                         )
 
-    machine = args.machine
-    output_dir = f"{args.synthesizer_data_dir}/cloudy/{grid_name}"
-    cloudy_path = args.cloudy_path
+    print(incident_fixed_params, incident_grid_params)
 
-    # load cloudy parameters
-    fixed_params, grid_params = load_grid_params(
-        param_file=f'params/{grid_name}.yaml')
+    # get name of new grid (concatenation of incident_grid and cloudy parameter file)
+    new_grid_name = f'{args.incident_cloudy_model}_cloudy-{args.cloudy_params}'
 
-    cloudy_version = fixed_params['cloudy_version']
+    print(new_grid_name)
 
-    print(machine)
-    print(output_dir)
-    print(cloudy_path)
-    print(model)
-    print(cloudy_version)
+    # define output directories 
+    output_dir = f'{args.synthesizer_data_dir}/cloudy/{new_grid_name}'
 
-    for k, v in fixed_params.items():
-        print(k, v)
+    # make output directories 
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-    for k, v in grid_params.items():
-        print(k, v)
+    # for submission system output files
+    Path(f'{output_dir}/output').mkdir(parents=True, exist_ok=True)
+
+    # set a list of the axes
+    axes = list(incident_grid_params.keys()) + list(cloudy_grid_params.keys())
+    if verbose:
+        print('axes:', axes)
+
+    # the parameters used to define the incident emission
+    incident_parameters = incident_grid_params | incident_fixed_params
+
+    # parameters varied on the grid
+    grid_parameters = incident_grid_params | cloudy_grid_params
+
+    # fixed parameters
+    fixed_parameters = incident_fixed_params | cloudy_fixed_params
+
+    if verbose:
+        # print fixed parameters
+        for k, v in fixed_parameters.items():
+            print(k, v)
+
+        # print grid parameters, including incident parameters
+        for k, v in grid_parameters.items():
+            print(k, v)
+
+    # combine all parameters
+    params = fixed_parameters | grid_parameters
+
+    # save all parameters
+    yaml.dump(params, open(f'{output_dir}/params.yaml', 'w'))
+
+    # get properties of the grid
+    n_axes, shape, n_models, mesh, model_list, index_list = (
+        get_grid_properties(axes,
+                            grid_parameters,
+                            verbose=True))
+
     
-    # make list of models
-    grid_axes = list(grid_params.keys())
+    # Create new synthesizer grid to contain the new grid    
 
-    # get the properties of the grid
-    axes, n_axes, shape, n_models, mesh, model_list, index_list = \
-        get_grid_properties(grid_axes, grid_params, verbose=True)
+    # open the new grid
+    with h5py.File(f'{args.synthesizer_data_dir}/grids/dev/{new_grid_name}.hdf5', 'w') as hf: 
 
-    if not args.dry_run:
+        # add attribute with full grid axes
+        hf.attrs['axes'] = axes
 
-        # create path for cloudy runs
-        Path(output_dir).mkdir(parents=True, exist_ok=True)
+        # add the bin centres for the grid bins
+        for axis in axes:
+            hf[f'axes/{axis}'] = grid_parameters[axis]
 
-        # for submission system output files
-        Path(f'{output_dir}/output').mkdir(parents=True, exist_ok=True)
-  
-        # open the new grid
-        with h5py.File(f'{args.synthesizer_data_dir}/grids/{grid_name}.hdf5',
-                       'w') as hf:
+        # add other parameters as attributes
+        for k,v in params.items():
+            hf.attrs[k] = v
 
-            # add attribute with the grid axes
-            hf.attrs['axes'] = grid_axes
+        if verbose: 
+            print('-'*50)
+            print('---- attributes')
+            for k,v in hf.attrs.items():
+                print(k,v)
+            print('---- groups and datasets')
+            hf.visit(print)
+        
+        
+    # loop over all models
+    for i, (grid_params_tuple, grid_index_tuple) in enumerate(zip(model_list, index_list)):
+    
+        # get a dictionary of all parameters that are varied over the grid
+        grid_params_ = dict(zip(axes, grid_params_tuple))
 
-            # add the bin centres for the grid bins
-            for axis in axes:
-                hf[f'axes/{axis}'] = grid_params[axis]
+        print(grid_params_)
 
-            # add other parameters as attributes
-            for k, v in fixed_params.items():
-                hf.attrs[k] = v
+        # Get all paramters
+        params_ = fixed_parameters | grid_params_
 
-    for i, grid_params_ in enumerate(model_list):
+        print(params_)
 
-        grid_params = dict(zip(grid_axes, grid_params_))
+        # get a dictionary of the parameter grid point
+        grid_index_ = dict(zip(axes, grid_index_tuple))
 
-        params = fixed_params | grid_params
+        # Get a dictionary of just the incident parameters. These are the 
+        # parameters that cloudy uses to generate the incident emission. 
+        # These can be fixed or not.
+        incident_params_ = {
+            k: params_[k] for k in incident_parameters.keys()}
 
-        # print(i, params)
+        print(incident_params_)
 
-        if not args.dry_run:
+    #     # get a dictionary of the incident parameter grid point
+    #     incident_index_ = {k:grid_index_[k] for k in incident_grid.axes}
 
-            # build abundances
-            abundances = Abundances(10**params['log10Z'],
-                                    d2m=params['d2m'],
-                                    alpha=params['alpha'],
-                                    C=params['C'],
-                                    N=params['N'],)
+    #     # get a tuple of the incident grid point
+    #     incident_grid_point = tuple(grid_index_[k] for k in incident_grid.axes)
 
-            if model == 'cloudy':
-
-                # create shape commands
-                TBB = 10**params['log10T']
-                shape_commands = cloudy.ShapeCommands.cloudy_agn(TBB,
-                                                          aox=params['aox'],
-                                                          auv=params['auv'],
-                                                          ax=params['ax'])
-            
-            # call a different model
-            # TODO: allow this to call the method from a string
-            elif model == 'feltre16':
-
-                # define wavelength grid
-                lam = np.arange(1, 20000, 1) * Angstrom
-
-                # determine luminosity
-                lnu = Feltre16.intrinsic(lam, alpha=params['aalpha'])
-
-                # create shape commands
-                shape_commands = cloudy.ShapeCommands.table_sed(str(i), lam, lnu,
-                                                         output_dir=output_dir)
-
-            else:
-
-                print('ERROR: unrecognised model')
+        # Create abundances object
+        abundances = Abundances(
+            metallicity=float(params_['metallicity']),
+            dust_to_metal_ratio=params_['dust_to_metal_ratio'],
+            alpha=params_['alpha'],
+            nitrogen_abundance=params_['nitrogen_abundance'],
+            carbon_abundance=params_['carbon_abundance']
+        )
 
 
-            # create input file
-            cloudy.create_cloudy_input(str(i), shape_commands, abundances,
-                                output_dir=output_dir, **params)
+        # For cloudy based grids it makes most sense to assume a fixed ionisation 
+        # parameter. This will also simplify the code.
 
-            # write out input file
-            with open(f"{output_dir}/input_names.txt", "a") as myfile:
-                myfile.write(f'{i}\n')
+        # float() is needed if the ionisation parameter is provided as e.g. 1E1 instead of 1e+1
+        params_['ionisation_parameter'] = float(params_['ionisation_parameter'])
 
-    if machine == 'apollo':
-        apollo_submission_script(n_models, output_dir, cloudy_path,
-                                 cloudy_version)
-    elif machine == 'cosma7':
-        cosma7_submission_script(n_models,
-                                 output_dir,
-                                 cloudy_path,
-                                 cloudy_version,
-                                 cosma_project='cosma7',
-                                 cosma_account='dp004')
+        # this returns the relevant shape commands, in this case for a tabulated SED
+
+        shape_command_function = getattr(CloudyIncidentShapeCommands, 
+                                        incident_params_['model'])
+
+        shape_commands = shape_command_function(**incident_params_)
+
+        # create cloudy input file
+        cloudy.create_cloudy_input(str(i+1), shape_commands, abundances, output_dir=output_dir, **params_)
+
+
+
+    # create submission script
+    if args.machine == 'apollo':
+        apollo_submission_script(n_models, output_dir, args.cloudy_path, params_['cloudy_version'])
