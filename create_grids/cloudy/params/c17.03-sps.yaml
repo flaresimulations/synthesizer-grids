@@ -11,7 +11,7 @@ cloudy_version: c17.03
 cosmic_rays: true  # flag for inclusion of cosmic ray heating
 # covering_factor: 1.0  #
 dust_to_metal_ratio: 0.0  # dust to metals ratio in the cloud
-hydrogen_density: 1.0e2
+hydrogen_density: 1.0e+2
 radius: 0.01  # log of the radius of the cloud, in parsecs
 stop_T: 500  # stopping temperature
 stop_efrac: -2  # limiting ratio of electron to H densities

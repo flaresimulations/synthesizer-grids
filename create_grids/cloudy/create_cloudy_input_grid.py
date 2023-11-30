@@ -287,7 +287,7 @@ if __name__ == "__main__":
 
         # this returns the relevant shape commands, in this case for a tabulated SED
         shape_commands = cloudy.ShapeCommands.table_sed(str(i+1), lam, lnu,  output_dir=output_dir)
-
+        
         # create cloudy input file
         cloudy.create_cloudy_input(str(i+1), shape_commands, abundances, output_dir=output_dir, **params_)
 
