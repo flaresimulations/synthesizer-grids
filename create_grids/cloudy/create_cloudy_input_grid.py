@@ -64,7 +64,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run a grid of incident cloudy models')
     
     # machine (for submission script generation)
-    #parser.add_argument("-machine", type=str, required=True) 
+    parser.add_argument("-machine", type=str, required=True) 
 
     # path to synthesizer_data_dir
     parser.add_argument("-synthesizer_data_dir", type=str, required=True)
