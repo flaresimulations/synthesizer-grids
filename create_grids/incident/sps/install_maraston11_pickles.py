@@ -6,7 +6,8 @@ import os
 import argparse
 from pathlib import Path
 import tarfile
-from synthesizer.utils import flam_to_fnu
+from unyt import erg, s, Angstrom, cm
+from synthesizer.conversions import flam_to_fnu
 from synthesizer.sed import calculate_Q
 from datetime import date
 import wget
@@ -17,8 +18,8 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from incident_utils import write_data_h5py, write_attribute, add_log10Q  # , __tag__
 
-c = 3 * 10**10
-
+# TODO: add way to automatically create /original_data/model_name and /input_data/model_name directories
+# currently I'm making these manually to make the code work
 
 def download_data(output_dir, data_url="http://www.icg.port.ac.uk/~maraston/M11/SSP_M11_Pickles.tar.gz"):
     """
@@ -36,7 +37,7 @@ def download_data(output_dir, data_url="http://www.icg.port.ac.uk/~maraston/M11/
     )  # download the original data to the working directory
 
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-
+    print('filename:',filename)
     # --- untar main directory
     tar = tarfile.open(filename)
     tar.extractall(path=output_dir)
@@ -44,7 +45,7 @@ def download_data(output_dir, data_url="http://www.icg.port.ac.uk/~maraston/M11/
     os.remove(filename)
 
 
-def make_grid(model, imf, extension, input_dir):
+def make_grid(model, imf, extension, output_dir):
     """Main function to convert Maraston 2011 and
     produce grids used by synthesizer
     Args:
@@ -56,7 +57,7 @@ def make_grid(model, imf, extension, input_dir):
         extension (string):
             String extension to use at the end of the output
             filename
-        input_dir (string):
+        output_dir (string):
             directory where the raw Maraston+11 files are read from
     Returns:
         fname (string):
@@ -64,7 +65,7 @@ def make_grid(model, imf, extension, input_dir):
     """
 
     # define output
-    # ideally find a way to create the grids/model_name folder if it doesn't already exist
+    # TODO: find a way to create the grids/model_name folder if it doesn't already exist
     fname = f"{synthesizer_data_dir}/input_files/{model_name}/{model_name}{extension}_{imf}.hdf5"
 
     metallicities = np.array([0.02])  # array of available metallicities
@@ -73,7 +74,7 @@ def make_grid(model, imf, extension, input_dir):
 
     metallicity_code = {0.02: "002"}  # codes for converting metallicty
 
-    fn = f"{input_dir}/ssp_M11_Pickles{extension}.{imf_code[imf]}z{metallicity_code[metallicities[0]]}"
+    fn = f"{output_dir}/ssp_M11_Pickles{extension}.{imf_code[imf]}z{metallicity_code[metallicities[0]]}"
 
     ages_, _, lam_, flam_ = np.loadtxt(fn).T  # flam is in (ergs /s /AA /Msun)
 
@@ -81,10 +82,7 @@ def make_grid(model, imf, extension, input_dir):
     ages = ages_Gyr * 1e9  # yr
     log10ages = np.log10(ages)
 
-    lam = lam_[ages_ == ages_[0]]
-
-    # to convert from (ergs /s /AA /Msun) to (ergs /s /Hz /Msun)
-    flam_ = flam_ * (10 ** (-8)) ** 2 / c
+    lam = lam_[ages_ == ages_[0]] * Angstrom 
 
     spec = np.zeros((len(ages), len(metallicities), len(lam)))
 
@@ -93,7 +91,7 @@ def make_grid(model, imf, extension, input_dir):
             print(iZ, ia, fn)
             ages_, _, lam_, flam_ = np.loadtxt(fn).T
 
-            flam = flam_[ages_ == age_Gyr]
+            flam = flam_[ages_ == age_Gyr] * erg / s / Angstrom / cm**2
             fnu = flam_to_fnu(lam, flam)
             spec[ia, iZ] = fnu
 
@@ -141,8 +139,7 @@ if __name__ == "__main__":
 
     model_name = "maraston11_pickles"
 
-    input_dir = f"{synthesizer_data_dir}/original_data/{model_name}"  # the location to untar the original data
-
+    output_dir = f"{synthesizer_data_dir}/original_data/{model_name}"  # the location to untar the original data
     imf_code = {"salpeter": "ss", "kroupa": "kr", "chabrier": "cha"}
 
     model = {
@@ -168,11 +165,11 @@ if __name__ == "__main__":
 
         for imf in imfs:
             print(extension)
-            if args.download_data:
-                download_data(input_dir)
+            #if args.download_data:
+            download_data(output_dir)
 
             fname = make_grid(
-                model, imf, extension, input_dir
+                model, imf, extension, output_dir
             )  # makes the grid and returns the name
 
             add_log10Q(fname)
