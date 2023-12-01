@@ -256,12 +256,12 @@ if __name__ == "__main__":
             # for spherical geometry the effective log10U is this
             if params_['geometry'] == 'spherical':
 
-                log10U = params_['reference_ionisation_parameter'] + (1/3) * delta_log10Q
+                log10U = np.log10(params_['reference_ionisation_parameter']) + (1/3) * delta_log10Q 
 
             # for plane-parallel geometry the effective just scales with log10Q
             elif params_['geometry'] == 'planeparallel':
 
-                log10U = params_['reference_ionisation_parameter'] + delta_log10Q
+                log10U = np.log10(params_['reference_ionisation_parameter']) + delta_log10Q 
 
             else:
 
@@ -270,14 +270,14 @@ if __name__ == "__main__":
         # if fixed U model is used
         elif params_['ionisation_parameter_model'] == 'fixed':
 
-            log10U = params_['ionisation_parameter']
+            log10U = np.log10(params_['ionisation_parameter']) 
 
         else:
 
             print(f"ERROR: do not understand U model choice: {params_['ionisation_parameter_model']}")
 
         # set log10U to provide cloudy
-        params_['ionisation_parameter'] = float(log10U)
+        params_['ionisation_parameter'] = 10**float(log10U)
 
         # get wavelength
         lam = incident_grid.lam # AA
