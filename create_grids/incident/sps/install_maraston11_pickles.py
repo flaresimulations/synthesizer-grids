@@ -6,7 +6,7 @@ import os
 import argparse
 from pathlib import Path
 import tarfile
-from unyt import Angstrom, nJy
+from unyt import erg, s, Angstrom, cm
 from synthesizer.conversions import flam_to_fnu
 from synthesizer.sed import calculate_Q
 from datetime import date
@@ -91,7 +91,7 @@ def make_grid(model, imf, extension, output_dir):
             print(iZ, ia, fn)
             ages_, _, lam_, flam_ = np.loadtxt(fn).T
 
-            flam = flam_[ages_ == age_Gyr] * nJy
+            flam = flam_[ages_ == age_Gyr] * erg / s / Angstrom / cm**2
             fnu = flam_to_fnu(lam, flam)
             spec[ia, iZ] = fnu
 
