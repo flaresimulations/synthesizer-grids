@@ -18,7 +18,7 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from incident_utils import write_data_h5py, write_attribute, add_log10Q  # , __tag__
 
-# add way to automatically create /original_data/model_name and /input_data/model_name directories
+# TODO: add way to automatically create /original_data/model_name and /input_data/model_name directories
 # currently I'm making these manually to make the code work
 
 def download_data(output_dir, data_url="http://www.icg.port.ac.uk/~maraston/M11/SSP_M11_Pickles.tar.gz"):
@@ -65,7 +65,7 @@ def make_grid(model, imf, extension, output_dir):
     """
 
     # define output
-    # ideally find a way to create the grids/model_name folder if it doesn't already exist
+    # TODO: find a way to create the grids/model_name folder if it doesn't already exist
     fname = f"{synthesizer_data_dir}/input_files/{model_name}/{model_name}{extension}_{imf}.hdf5"
 
     metallicities = np.array([0.02])  # array of available metallicities
