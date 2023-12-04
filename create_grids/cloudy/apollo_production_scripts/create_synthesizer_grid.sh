@@ -10,7 +10,7 @@ do
   grid=${arrIN[0]}
   echo $grid
   python3 create_synthesizer_grid.py -grid_name $grid -synthesizer_data_dir $synthesizer_dir -line_calc_method linelist
-done < scripts/grids.txt
+done < apollo_production_inputs/grids.txt
 
 
 
