@@ -89,7 +89,7 @@ if __name__ == "__main__":
     fixed_params, grid_params = load_grid_params(args.cloudy_params)
 
     # open the parent incident grid
-    incident_grid = Grid(args.incident_grid, grid_dir=f'{args.synthesizer_data_dir}', read_lines=False) 
+    incident_grid = Grid(args.incident_grid, grid_dir=f'{args.synthesizer_data_dir}/grids/dev/', read_lines=False) 
 
     # get name of new grid (concatenation of incident_grid and cloudy parameter file)
     new_grid_name = f'{args.incident_grid}_cloudy-{args.cloudy_params}'
