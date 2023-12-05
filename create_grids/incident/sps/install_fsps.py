@@ -63,11 +63,9 @@ def generate_grid(model):
         spec_ = sp.get_spectrum(zmet=iZ+1)[1]   # 2D array Lsol / AA
         for ia in range(na):
 
-            fnu = spec_[ia]  # Lsol / Hz
-            fnu *= 3.826e33  # erg s^-1 Hz^-1 Msol^-1
-
-            # fnu = convert_flam_to_fnu(lam, flam)
-            spec[ia, iZ] = fnu
+            lnu = spec_[ia]  # Lsol / Hz
+            lnu *= 3.826e33  # erg s^-1 Hz^-1 Msol^-1
+            spec[ia, iZ] = lnu
 
     # write out model parameters as top level attribute
     for key, value in model.items():
