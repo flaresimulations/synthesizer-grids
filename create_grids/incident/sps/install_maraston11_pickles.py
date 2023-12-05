@@ -6,7 +6,7 @@ import os
 import argparse
 from pathlib import Path
 import tarfile
-from unyt import erg, s, Angstrom, cm
+from unyt import erg, s, Angstrom, cm, yr
 from synthesizer.conversions import flam_to_fnu
 from datetime import date
 import wget
@@ -77,19 +77,20 @@ def make_grid(model, imf, extension, output_dir):
     ages_, _, lam_, flam_ = np.loadtxt(fn).T  # flam is in (ergs /s /AA /Msun)
 
     ages_Gyr = np.sort(np.array(list(set(ages_))))  # Gyr
-    ages = ages_Gyr * 1e9  # yr
+    ages = ages_Gyr * 1e9 
     log10ages = np.log10(ages)
 
     lam = lam_[ages_ == ages_[0]] * Angstrom 
+    print(lam)
 
     spec = np.zeros((len(ages), len(metallicities), len(lam)))
 
     for iZ, metallicity in enumerate(metallicities):
-        for ia, age_yr in enumerate(ages):
+        for ia, age_Gyr in enumerate(ages_Gyr):
             print(iZ, ia, fn)
             ages_, _, lam_, flam_ = np.loadtxt(fn).T
 
-            flam = flam_[ages_ == age_yr] * erg / s / Angstrom / cm**2
+            flam = flam_[ages_ == age_Gyr] * erg / s / Angstrom / cm**2
             fnu = flam_to_fnu(lam, flam)
             spec[ia, iZ] = fnu
 
