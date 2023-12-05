@@ -8,7 +8,6 @@ from pathlib import Path
 import tarfile
 from unyt import erg, s, Angstrom, cm
 from synthesizer.conversions import flam_to_fnu
-from synthesizer.sed import calculate_Q
 from datetime import date
 import wget
 import utils
@@ -65,7 +64,6 @@ def make_grid(model, imf, extension, output_dir):
     """
 
     # define output
-    # TODO: find a way to create the grids/model_name folder if it doesn't already exist
     fname = f"{synthesizer_data_dir}/input_files/{model_name}/{model_name}{extension}_{imf}.hdf5"
 
     metallicities = np.array([0.02])  # array of available metallicities
@@ -87,11 +85,11 @@ def make_grid(model, imf, extension, output_dir):
     spec = np.zeros((len(ages), len(metallicities), len(lam)))
 
     for iZ, metallicity in enumerate(metallicities):
-        for ia, age_Gyr in enumerate(ages_Gyr):
+        for ia, age_yr in enumerate(ages):
             print(iZ, ia, fn)
             ages_, _, lam_, flam_ = np.loadtxt(fn).T
 
-            flam = flam_[ages_ == age_Gyr] * erg / s / Angstrom / cm**2
+            flam = flam_[ages_ == age_yr] * erg / s / Angstrom / cm**2
             fnu = flam_to_fnu(lam, flam)
             spec[ia, iZ] = fnu
 
