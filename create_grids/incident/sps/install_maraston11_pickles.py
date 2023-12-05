@@ -6,8 +6,8 @@ import os
 import argparse
 from pathlib import Path
 import tarfile
-from unyt import erg, s, Angstrom, cm, yr
-from synthesizer.conversions import flam_to_fnu
+from unyt import erg, s, Angstrom, yr
+from synthesizer.conversions import llam_to_lnu
 from datetime import date
 import wget
 import sys
@@ -73,14 +73,13 @@ def make_grid(model, imf, extension, output_dir):
 
     fn = f"{output_dir}/ssp_M11_Pickles{extension}.{imf_code[imf]}z{metallicity_code[metallicities[0]]}"
 
-    ages_, _, lam_, flam_ = np.loadtxt(fn).T  # flam is in (ergs /s /AA /Msun)
+    ages_, _, lam_, llam_ = np.loadtxt(fn).T  # llam is in (ergs /s /AA /Msun)
 
     ages_Gyr = np.sort(np.array(list(set(ages_))))  # Gyr
     ages = ages_Gyr * 1e9 * yr 
     log10ages = np.log10(ages)
 
     lam = lam_[ages_ == ages_[0]] * Angstrom 
-    print(lam)
 
     spec = np.zeros((len(ages), len(metallicities), len(lam)))
 
@@ -88,11 +87,11 @@ def make_grid(model, imf, extension, output_dir):
     for iZ, metallicity in enumerate(metallicities):
         for ia, age_Gyr in enumerate(ages_Gyr):
             print(iZ, ia, fn)
-            ages_, _, lam_, flam_ = np.loadtxt(fn).T
+            ages_, _, lam_, llam_ = np.loadtxt(fn).T
 
-            flam = flam_[ages_ == age_Gyr] * erg / s / Angstrom / cm**2
-            fnu = flam_to_fnu(lam, flam)
-            spec[ia, iZ] = fnu
+            llam = llam_[ages_ == age_Gyr] * erg / s / Angstrom
+            lnu = llam_to_lnu(lam, llam)
+            spec[ia, iZ] = lnu
 
     # write out spectra
     write_data_h5py(fname, "spectra/wavelength", data=lam, overwrite=True)
