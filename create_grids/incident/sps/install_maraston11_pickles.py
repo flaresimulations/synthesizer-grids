@@ -10,7 +10,6 @@ from unyt import erg, s, Angstrom, cm, yr
 from synthesizer.conversions import flam_to_fnu
 from datetime import date
 import wget
-import utils
 import sys
 
 # Allow the file to use incident_utils
@@ -77,7 +76,7 @@ def make_grid(model, imf, extension, output_dir):
     ages_, _, lam_, flam_ = np.loadtxt(fn).T  # flam is in (ergs /s /AA /Msun)
 
     ages_Gyr = np.sort(np.array(list(set(ages_))))  # Gyr
-    ages = ages_Gyr * 1e9 
+    ages = ages_Gyr * 1e9 * yr 
     log10ages = np.log10(ages)
 
     lam = lam_[ages_ == ages_[0]] * Angstrom 
@@ -85,6 +84,7 @@ def make_grid(model, imf, extension, output_dir):
 
     spec = np.zeros((len(ages), len(metallicities), len(lam)))
 
+    # at each point in spec convert the units
     for iZ, metallicity in enumerate(metallicities):
         for ia, age_Gyr in enumerate(ages_Gyr):
             print(iZ, ia, fn)
