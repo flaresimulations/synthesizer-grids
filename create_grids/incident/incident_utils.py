@@ -6,9 +6,10 @@ import os
 import sys
 import h5py
 import numpy as np
-from synthesizer.sed import calculate_Q
+from synthesizer.sed import Sed
 from synthesizer.photoionisation import Ions
 from unyt import unyt_quantity
+from unyt import Angstrom
 
 # import functions from grid_utils module
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -47,8 +48,8 @@ def add_log10Q(grid_filename, ions=['HI', 'HeII'], limit=100):
         spectra = hf[f'spectra']
 
         # get wavelength grid, including with units
-        # lam = spectra['wavelength'] * unyt_quantity.from_string(spectra['wavelength'].attrs['Units'])
-        lam = spectra['wavelength'] 
+        #lam = spectra['wavelength'] * unyt_quantity.from_string(spectra['wavelength'].attrs['Units']).replace('AA','angstrom')
+        lam = np.array(spectra['wavelength']) * Angstrom
 
         # loop over grid points and calculate Q and store it
         for i, indices in enumerate(index_list):
@@ -63,10 +64,12 @@ def add_log10Q(grid_filename, ions=['HI', 'HeII'], limit=100):
 
                 # get incident spectrum
                 lnu = spectra['incident'][indices]
+
+                #create sed object
+                sed = Sed(lam=lam, lnu=lnu)
    
                 # calculate Q 
-                Q = calculate_Q(lam,
-                                lnu,
+                Q = sed.calculate_ionising_photon_production_rate(
                                 ionisation_energy=ionisation_energy,
                                 limit=limit)
 

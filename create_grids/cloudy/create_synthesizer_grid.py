@@ -228,7 +228,7 @@ def add_lines(grid_name,
         # set up output arrays
         for line_id in lines_to_include:
             lines[f'{line_id}/luminosity'] = np.zeros(shape)
-            lines[f'{line_id}/stellar_continuum'] = np.zeros(shape)
+            lines[f'{line_id}/transmitted_continuum'] = np.zeros(shape)
             lines[f'{line_id}/nebular_continuum'] = np.zeros(shape)
             lines[f'{line_id}/continuum'] = np.zeros(shape)
 
@@ -284,8 +284,8 @@ def add_lines(grid_name,
                 
                 if include_spectra:
 
-                    # calculate stellar continuum at the line wavelength and save it. 
-                    line['stellar_continuum'][indices] = np.interp(
+                    # calculate transmitted continuum at the line wavelength and save it. 
+                    line['transmitted_continuum'][indices] = np.interp(
                         wavelength_, lam, spectra['transmitted'][indices])  # erg s^-1 Hz^-1
                     
                     # calculate nebular continuum at the line wavelength and save it. 
