@@ -153,3 +153,7 @@ bc03-2016-Stelib_chabrier03-0.1,100 c17.03-sps_resolution:0.1
 bc03_chabrier03-0.1,100 c17.03-sps_resolution:0.1
 maraston-rhb_bpl-0.1,100-2.35 c17.03-sps_resolution:0.1
 fsps-3.2_chabrier03-0.08,120 c17.03-sps_resolution:0.1
+
+bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6.,7.,8. c17.03-sps-alpha
+bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6.,7.,8. c17.03-sps-no_scaling
+bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6.,7.,8. c17.03-sps-no_grains
