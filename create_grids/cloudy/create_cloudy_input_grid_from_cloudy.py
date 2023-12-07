@@ -46,7 +46,7 @@ class CloudyIncidentShapeCommands:
 
         return shape_commands
 
-    def agn(big_bump_temperature=None, aox=-1.4, auv=-0.5, ax=-1.35):
+    def agn(big_bump_temperature=None, aox=-1.4, auv=-0.5, ax=-1.35, model=None):
     
         """
         A function for specifying the cloudy AGN model. See 6.2 Hazy1.pdf.
