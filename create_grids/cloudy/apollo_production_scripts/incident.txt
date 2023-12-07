@@ -1,2 +1,2 @@
-feltre16 c17.03-nlr.yaml 
-feltre16 c17.03-blr.yaml 
+feltre16 c17.03-nlr
+feltre16 c17.03-blr
