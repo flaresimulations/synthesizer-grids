@@ -5,7 +5,7 @@
 # synthesizer_dir="/Users/sw376/Dropbox/Research/data/synthesizer/"
 synthesizer_dir="/research/astrodata/highz/synthesizer/" # apollo
 machine="apollo"
-incident_cloudy_model="blackbody"
+incident_cloudy_model="agn"
 c="/research/astro/flare/software/cloudy/"
 cloudy_params="c17.03-nlr" 
 
