@@ -31,7 +31,7 @@ def make_grid(model, imf, output_dir):
     """
 
     # define output
-    fname = f"{synthesizer_data_dir}/input_files/{model_name}/{model_name}_{imf}.hdf5"
+    fname = f"{synthesizer_data_dir}/{model_name}/{model_name}_{imf}.hdf5"
 
     metallicities = np.array([0.01,0.001,0.02,0.04])  # array of available metallicities
 
