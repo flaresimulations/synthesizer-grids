@@ -52,7 +52,7 @@ def check_cloudy_runs(grid_name,
     """
 
     # open the new grid
-    with h5py.File(f'{synthesizer_data_dir}/grids/{grid_name}.hdf5', 'r') as hf:
+    with h5py.File(f'{synthesizer_data_dir}/{grid_name}.hdf5', 'r') as hf:
 
         # Get the properties of the grid including the dimensions etc.
         axes, n_axes, shape, n_models, mesh, model_list, index_list = get_grid_properties_hf(hf)
@@ -120,7 +120,7 @@ def add_spectra(grid_name, synthesizer_data_dir):
     spec_names = ['incident', 'transmitted', 'nebular', 'linecont']
 
     # open the new grid
-    with h5py.File(f'{synthesizer_data_dir}/grids/{grid_name}.hdf5', 'a') as hf:
+    with h5py.File(f'{synthesizer_data_dir}/{grid_name}.hdf5', 'a') as hf:
 
         # Get the properties of the grid including the dimensions etc.
         axes, n_axes, shape, n_models, mesh, model_list, index_list = get_grid_properties_hf(hf, verbose=False)
@@ -169,7 +169,7 @@ def add_spectra(grid_name, synthesizer_data_dir):
                 # calculate Q 
                 Q = sed.calculate_ionising_photon_production_rate(
                                 ionisation_energy=13.6 * eV,
-                                limit=limit)     
+                                limit=100)     
             
                 #Q = calculate_Q(lam,
                 #                spec_dict['incident'],
@@ -210,7 +210,7 @@ def add_lines(grid_name,
     """
 
     # open the new grid
-    with h5py.File(f'{synthesizer_data_dir}/grids/{grid_name}.hdf5', 'a') as hf:
+    with h5py.File(f'{synthesizer_data_dir}/{grid_name}.hdf5', 'a') as hf:
 
         
         # Get the properties of the grid including the dimensions etc.
@@ -351,7 +351,7 @@ if __name__ == "__main__":
         
         print('- passed checks')
 
-        # add spectra
+            # add spectra
         if include_spectra:
             add_spectra(grid_name, synthesizer_data_dir)
             print('- spectra added')
