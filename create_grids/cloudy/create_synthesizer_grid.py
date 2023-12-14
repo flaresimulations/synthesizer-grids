@@ -11,11 +11,10 @@ import numpy as np
 import h5py
 
 # synthesizer modules
-from synthesizer.utils import read_params
 from synthesizer.photoionisation import cloudy17 as cloudy
-from synthesizer.sed import calculate_Q
+from synthesizer.sed import Sed
 
-# local modukes
+# local modules
 from utils import get_grid_properties
 
 
@@ -53,7 +52,7 @@ def check_cloudy_runs(grid_name,
     """
 
     # open the new grid
-    with h5py.File(f'{synthesizer_data_dir}/grids/dev/{grid_name}.hdf5', 'r') as hf:
+    with h5py.File(f'{synthesizer_data_dir}/{grid_name}.hdf5', 'r') as hf:
 
         # Get the properties of the grid including the dimensions etc.
         axes, n_axes, shape, n_models, mesh, model_list, index_list = get_grid_properties_hf(hf)
@@ -121,7 +120,7 @@ def add_spectra(grid_name, synthesizer_data_dir):
     spec_names = ['incident', 'transmitted', 'nebular', 'linecont']
 
     # open the new grid
-    with h5py.File(f'{synthesizer_data_dir}/grids/dev/{grid_name}.hdf5', 'a') as hf:
+    with h5py.File(f'{synthesizer_data_dir}/{grid_name}.hdf5', 'a') as hf:
 
         # Get the properties of the grid including the dimensions etc.
         axes, n_axes, shape, n_models, mesh, model_list, index_list = get_grid_properties_hf(hf, verbose=False)
@@ -159,10 +158,22 @@ def add_spectra(grid_name, synthesizer_data_dir):
 
             # if hf['log10Q/HI'] already exists (only true for non-cloudy 
             # models) renormalise the spectrum. 
-            if 'log10Q/HI' in hf:            
-                Q = calculate_Q(lam,
-                                spec_dict['incident'],
-                                ionisation_energy=13.6 * eV)
+
+            # need to add sed object and update calculate_Q
+
+            if 'log10Q/HI' in hf:       
+
+                #create sed object
+                sed = Sed(lam=lam, lnu=spec_dict['incident'])
+    
+                # calculate Q 
+                Q = sed.calculate_ionising_photon_production_rate(
+                                ionisation_energy=13.6 * eV,
+                                limit=100)     
+            
+                #Q = calculate_Q(lam,
+                #                spec_dict['incident'],
+                #                ionisation_energy=13.6 * eV)
                 
                 # calculate normalisation
                 normalisation = hf['log10Q/HI'][indices] - np.log10(Q)
@@ -199,7 +210,7 @@ def add_lines(grid_name,
     """
 
     # open the new grid
-    with h5py.File(f'{synthesizer_data_dir}/grids/dev/{grid_name}.hdf5', 'a') as hf:
+    with h5py.File(f'{synthesizer_data_dir}/{grid_name}.hdf5', 'a') as hf:
 
         
         # Get the properties of the grid including the dimensions etc.
@@ -340,7 +351,7 @@ if __name__ == "__main__":
         
         print('- passed checks')
 
-        # add spectra
+            # add spectra
         if include_spectra:
             add_spectra(grid_name, synthesizer_data_dir)
             print('- spectra added')
