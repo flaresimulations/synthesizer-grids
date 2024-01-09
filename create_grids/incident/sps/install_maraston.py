@@ -9,7 +9,7 @@ import argparse
 from pathlib import Path
 import tarfile
 from synthesizer.utils import flam_to_fnu
-from synthesizer.sed import calculate_Q
+from synthesizer.sed import calc_specific_ionising_luminosity
 from datetime import date
 from utils import (
     __tag__,

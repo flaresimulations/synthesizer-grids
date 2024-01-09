@@ -10,7 +10,7 @@ import tarfile
 import h5py
 from scipy import integrate
 from unyt import h, c
-from synthesizer.sed import calculate_Q
+from synthesizer.sed import calc_specific_ionising_luminosity
 from synthesizer.cloudy import Ions
 from datetime import date
 from utils import (
@@ -193,7 +193,7 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
                 limit = 100
                 ionisation_energy = Ions.energy[ion]
                 specific_ionising_luminosity[ion][ia, iZ] = np.log10(
-                    calculate_Q(
+                    calc_specific_ionising_luminosity(
                         wavelengths,
                         spec_,
                         ionisation_energy=ionisation_energy,
@@ -433,7 +433,7 @@ def make_full_grid(original_model_name, bs="bin"):
                     limit = 100
                     ionisation_energy = Ions.energy[ion]
                     specific_ionising_luminosity[ion][ia, iZ, iae] = np.log10(
-                        calculate_Q(
+                        calc_specific_ionising_luminosity(
                             wavelengths,
                             spec_,
                             ionisation_energy=ionisation_energy,

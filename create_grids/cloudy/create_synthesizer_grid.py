@@ -172,7 +172,7 @@ def add_spectra(grid_name, synthesizer_data_dir):
             # if hf['specific_ionising_luminosity/HI'] already exists (only true for non-cloudy
             # models) renormalise the spectrum.
 
-            # need to add sed object and update calculate_Q
+            # need to add sed object and update calc_specific_ionising_luminosity
 
             if "specific_ionising_luminosity/HI" in hf:
                 # create sed object
@@ -183,7 +183,7 @@ def add_spectra(grid_name, synthesizer_data_dir):
                     ionisation_energy=13.6 * eV, limit=100
                 )
 
-                # Q = calculate_Q(lam,
+                # Q = calc_specific_ionising_luminosity(lam,
                 #                spec_dict['incident'],
                 #                ionisation_energy=13.6 * eV)
 
@@ -221,7 +221,8 @@ def add_lines(
     line_type : str
         The type of line file to use (linelist, lines)
     dspecific_ionising_luminosity
-        The difference between the original and cloudy specific_ionising_luminosity used for rescaling the cloudy spectra
+        The difference between the original and cloudy
+        specific_ionising_luminosity used for rescaling the cloudy spectra
     """
 
     # open the new grid

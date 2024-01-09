@@ -38,7 +38,7 @@ from incident_utils import (
 )
 from unyt import c, Angstrom, s
 
-from synthesizer.sed import calculate_Q
+from synthesizer.sed import calc_specific_ionising_luminosity
 
 
 def download_data(synthesizer_data_dir, ver, fcov):
@@ -196,7 +196,7 @@ def make_grid(synthesizer_data_dir, ver, fcov):
     #     for ia, log10age in enumerate(log10ages):
 
     #         # --- calcualte ionising photon luminosity
-    #         specific_ionising_luminosity[ia, iZ] = np.log10(calculate_Q(lam, spec[ia, iZ, :]))
+    #         specific_ionising_luminosity[ia, iZ] = np.log10(calc_specific_ionising_luminosity(lam, spec[ia, iZ, :]))
 
     if fcov == "0":
         write_data_h5py(fname, "ages", data=ages, overwrite=True)

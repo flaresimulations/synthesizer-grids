@@ -129,7 +129,7 @@ def add_specific_ionising_luminosity(
 
 #                     lnu = hf['spectra/stellar'][ia, iZ, :]
 
-#                     Q = calculate_Q(lam, lnu, ionisation_energy=ionisation_energy, limit=limit)
+#                     Q = calc_specific_ionising_luminosity(lam, lnu, ionisation_energy=ionisation_energy, limit=limit)
 
 #                     hf[f'specific_ionising_luminosity/{ion}'][ia, iZ] = np.log10(Q)
 
