@@ -157,11 +157,11 @@ if __name__ == "__main__":
 
     # open the new grid
     with h5py.File(
-        f"{args.synthesizer_data_dir}/{new_grid_name}.hdf5", "w"
+        f"{args.grid_dir}/{new_grid_name}.hdf5", "w"
     ) as hf:
         # open the original incident model grid
         with h5py.File(
-            f"{args.synthesizer_data_dir}/{args.incident_grid}.hdf5", "r"
+            f"{args.grid_dir}/{args.incident_grid}.hdf5", "r"
         ) as hf_incident:
             if verbose:
                 hf_incident.visit(print)
