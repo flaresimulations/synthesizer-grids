@@ -6,7 +6,7 @@ from utils import (
     __tag__,
     write_data_h5py,
     write_attribute,
-    add_specific_ionising_lum,
+    add_log10Q,
     get_model_filename,
 )
 

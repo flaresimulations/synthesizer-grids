@@ -201,7 +201,6 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
                         limit=limit,
                     )
                 )
-
     # Create the GridFile ready to take outputs
     out_grid = GridFile(out_filename, mode="a", overwrite=True)
 

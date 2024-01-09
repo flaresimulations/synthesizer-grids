@@ -6,8 +6,8 @@ import h5py
 import numpy as np
 from unyt import c, Angstrom
 
-# from utils import __tag__, broken_power_law, add_specific_ionising_lum
-from utils import broken_power_law, add_specific_ionising_lum
+# from utils import __tag__, broken_power_law, add_log10Q
+from utils import broken_power_law, add_log10Q
 from datetime import date
 
 # adding relagn to pythonpath

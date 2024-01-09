@@ -196,7 +196,7 @@ def make_grid(synthesizer_data_dir, ver, fcov):
     #     for ia, log10age in enumerate(log10ages):
 
     #         # --- calcualte ionising photon luminosity
-    #         specific_ionising_lum[ia, iZ] = np.log10(calculate_Q(lam, spec[ia, iZ, :]))
+    #         log10Q[ia, iZ] = np.log10(calculate_Q(lam, spec[ia, iZ, :]))
 
     if fcov == "0":
         write_data_h5py(fname, "ages", data=ages, overwrite=True)
@@ -238,15 +238,10 @@ def make_grid(synthesizer_data_dir, ver, fcov):
             fname, "log10metallicities", "Units", "dimensionless [log10(Z)]"
         )
 
-        write_data_h5py(
-            fname,
-            "specific_ionising_lum",
-            data=specific_ionising_lum,
-            overwrite=True,
-        )
+        write_data_h5py(fname, "log10Q", data=log10Q, overwrite=True)
         write_attribute(
             fname,
-            "specific_ionising_lum",
+            "log10Q",
             "Description",
             (
                 "Two-dimensional ionising photon "
@@ -309,7 +304,7 @@ if __name__ == "__main__":
     for ver in vers:
         for fcov in fcovs:
             make_grid(synthesizer_data_dir, ver, fcov)
-        add_specific_ionising_lum(
+        add_log10Q(
             f"{synthesizer_data_dir}/grids/yggdrasil_POPIII{ver}.hdf5",
             limit=500,
         )

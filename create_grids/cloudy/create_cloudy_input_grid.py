@@ -170,30 +170,28 @@ if __name__ == "__main__":
             # add attribute with the original incident grid axes
             hf.attrs["incident_axes"] = hf_incident.attrs["axes"]
 
-            # we want to copy over specific_ionising_lum from the incident grid to allow us to
+            # we want to copy over log10Q from the incident grid to allow us to
             # normalise the cloudy outputs. However, the axes of the incident
             # grid may be different from the cloudy grid due to additional
-            # parameters, in which we need to extend the axes of specific_ionising_lum
+            # parameters, in which we need to extend the axes of log10Q
 
             # if there are no additional axes simply copy over the incident
-            # specific_ionising_lum
+            # log10Q
             if len(axes) == len(hf.attrs["incident_axes"]):
-                hf_incident.copy("specific_ionising_lum", hf)
+                hf_incident.copy("log10Q", hf)
 
             # else we need to expand the axis
             else:
                 # this is amount by which we need to expand
                 expansion = int(
                     np.product(shape)
-                    / np.product(hf_incident["specific_ionising_lum/HI"].shape)
+                    / np.product(hf_incident["log10Q/HI"].shape)
                 )
 
                 # loop over ions
-                for ion in hf_incident["specific_ionising_lum"].keys():
-                    # get the incident specific_ionising_lum array
-                    specific_ionising_lum_incident = hf_incident[
-                        f"specific_ionising_lum/{ion}"
-                    ][()]
+                for ion in hf_incident["log10Q"].keys():
+                    # get the incident log10Q array
+                    log10Q_incident = hf_incident[f"log10Q/{ion}"][()]
 
                     # create new array with repeated elements
                     specific_ionising_lum = np.repeat(
@@ -201,9 +199,7 @@ if __name__ == "__main__":
                     )
 
                     # reshape array to match new shape and save
-                    hf[f"specific_ionising_lum/{ion}"] = np.reshape(
-                        specific_ionising_lum, shape
-                    )
+                    hf[f"log10Q/{ion}"] = np.reshape(log10Q, shape)
 
         # add attribute with full grid axes
         hf.attrs["axes"] = axes
@@ -263,12 +259,10 @@ if __name__ == "__main__":
 
         # if reference U model is used
         if params_["ionisation_parameter_model"] == "ref":
-            # calculate the difference between the reference specific_ionising_lum (LyC continuum luminosity) and the current grid point
-            delta_specific_ionising_lum = (
-                incident_grid.specific_ionising_lum["HI"][incident_grid_point]
-                - incident_grid.specific_ionising_lum["HI"][
-                    incident_ref_grid_point
-                ]
+            # calculate the difference between the reference log10Q (LyC continuum luminosity) and the current grid point
+            delta_log10Q = (
+                incident_grid.log10Q["HI"][incident_grid_point]
+                - incident_grid.log10Q["HI"][incident_ref_grid_point]
             )
 
             # for spherical geometry the effective log10U is this
