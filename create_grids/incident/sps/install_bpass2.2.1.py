@@ -92,7 +92,7 @@ def make_grid(original_model_name, bin):
     input_dir = f'{synthesizer_data_dir}/input_files/bpass/{model["original_model_name"]}/'
 
     # --- ccreate metallicity grid and dictionary
-    Zk_to_Z = {
+    map_key_to_met = {
         "zem5": 0.00001,
         "zem4": 0.0001,
         "z001": 0.001,
@@ -108,39 +108,39 @@ def make_grid(original_model_name, bin):
         "z040": 0.040,
     }
 
-    Z_to_Zk = {k: v for v, k in Zk_to_Z.items()}
-    Zs = np.sort(np.array(list(Z_to_Zk.keys())))
-    print(f"metallicities: {Zs}")
+    map_met_to_key = {k: v for v, k in map_key_to_met.items()}
+    metallicities = np.sort(np.array(list(map_met_to_key.keys())))
+    print(f"metallicities: {metallicities}")
 
     # get ages
-    fn_ = f"starmass-{bin}-imf{bpass_imf}.{Z_to_Zk[Zs[0]]}.dat.gz"
+    fn_ = f"starmass-{bin}-imf{bpass_imf}.{map_met_to_key[metallicities[0]]}.dat.gz"
     starmass = load.model_output(f"{input_dir}/{fn_}")
     log10ages = starmass["log_age"].values
     print(f"log10ages: {log10ages}")
 
     # get wavelength grid
-    fn_ = f"spectra-{bin}-imf{bpass_imf}.{Z_to_Zk[Zs[0]]}.dat.gz"
+    fn_ = f"spectra-{bin}-imf{bpass_imf}.{map_met_to_key[metallicities[0]]}.dat.gz"
     spec = load.model_output(f"{input_dir}/{fn_}")
     wavelengths = spec["WL"].values  # \AA
     nu = 3e8 / (wavelengths * 1e-10)
 
     # set up output arrays
-    nZ = len(Zs)
+    nZ = len(metallicities)
     na = len(log10ages)
     stellar_mass = np.zeros((na, nZ))
     remnant_mass = np.zeros((na, nZ))
     spectra = np.zeros((na, nZ, len(wavelengths)))
 
     # loop over metallicity
-    for iZ, Z in enumerate(Zs):
+    for iZ, Z in enumerate(metallicities):
         # --- get remaining and remnant fraction
-        fn_ = f"starmass-{bin}-imf{bpass_imf}.{Z_to_Zk[Z]}.dat.gz"
+        fn_ = f"starmass-{bin}-imf{bpass_imf}.{map_met_to_key[Z]}.dat.gz"
         starmass = load.model_output(f"{input_dir}/{fn_}")
         stellar_mass[:, iZ] = starmass["stellar_mass"].values / 1e6
         remnant_mass[:, iZ] = starmass["remnant_mass"].values / 1e6
 
         # --- get spectra
-        fn_ = f"spectra-{bin}-imf{bpass_imf}.{Z_to_Zk[Z]}.dat.gz"
+        fn_ = f"spectra-{bin}-imf{bpass_imf}.{map_met_to_key[Z]}.dat.gz"
         spec = load.model_output(f"{input_dir}/{fn_}")
 
         for ia, log10age in enumerate(log10ages):
@@ -207,7 +207,9 @@ def make_grid(original_model_name, bin):
     write_attribute(out_filename, "axes/log10age", "Units", "dex(yr)")
 
     # write out metallicities
-    write_data_h5py(out_filename, "axes/metallicity", data=Zs, overwrite=True)
+    write_data_h5py(
+        out_filename, "axes/metallicity", data=metallicities, overwrite=True
+    )
     write_attribute(
         out_filename, "axes/metallicity", "Description", "raw abundances"
     )
