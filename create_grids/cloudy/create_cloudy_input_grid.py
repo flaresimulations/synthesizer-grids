@@ -65,7 +65,7 @@ if __name__ == "__main__":
     # path to grid directory (i.e. where incident and new grids are stored)
     parser.add_argument("-grid_dir", type=str, required=True)
 
-    # path to directory where cloudy runs are
+    # path to directory where cloudy runs are
     parser.add_argument("-cloudy_dir", type=str, required=True)
 
     # the name of the incident grid
@@ -156,9 +156,7 @@ if __name__ == "__main__":
     # create new synthesizer grid to contain the new grid
 
     # open the new grid
-    with h5py.File(
-        f"{args.grid_dir}/{new_grid_name}.hdf5", "w"
-    ) as hf:
+    with h5py.File(f"{args.grid_dir}/{new_grid_name}.hdf5", "w") as hf:
         # open the original incident model grid
         with h5py.File(
             f"{args.grid_dir}/{args.incident_grid}.hdf5", "r"
