@@ -92,14 +92,14 @@ def make_grid(model, imf, extension, output_dir):
     spec = np.zeros((len(ages), len(metallicities), len(lam)))
 
     # at each point in spec convert the units
-    for iZ, metallicity in enumerate(metallicities):
+    for imetal, metallicity in enumerate(metallicities):
         for ia, age_Gyr in enumerate(ages_Gyr):
-            print(iZ, ia, fn)
+            print(imetal, ia, fn)
             ages_, _, lam_, llam_ = np.loadtxt(fn).T
 
             llam = llam_[ages_ == age_Gyr] * erg / s / Angstrom
             lnu = llam_to_lnu(lam, llam)
-            spec[ia, iZ] = lnu
+            spec[ia, imetal] = lnu
 
     # write out spectra
     write_data_h5py(fname, "spectra/wavelength", data=lam, overwrite=True)
@@ -136,7 +136,9 @@ def make_grid(model, imf, extension, output_dir):
         fname, "axes/metallicity", data=metallicities, overwrite=True
     )
     write_attribute(fname, "axes/metallicity", "Description", "raw abundances")
-    write_attribute(fname, "axes/metallicity", "Units", "dimensionless [Z]")
+    write_attribute(
+        fname, "axes/metallicity", "Units", "dimensionless [metal]"
+    )
 
     return fname
 

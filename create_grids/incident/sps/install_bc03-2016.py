@@ -150,8 +150,8 @@ def convertBC03(files=None):
         line = file.readline()
         line = file.readline()
         # These last three lines are identical and contain the metallicity
-        (ZZ,) = re.search("Z=([0-9]+\.?[0-9]*)", line).groups()
-        metalBins[iFile] = eval(ZZ)
+        (jmetal,) = re.search("metal=([0-9]+\.?[0-9]*)", line).groups()
+        metalBins[iFile] = eval(jmetal)
         seds.resize(
             (len(metalBins), seds.shape[1], seds.shape[2]), refcheck=False
         )
@@ -244,7 +244,7 @@ def make_grid(variant, synthesizer_data_dir, out_filename):
     spec *= lam / nu  # erg s^-1 Hz^-1 Msol^-1
 
     na = len(ages)
-    nZ = len(metallicities)
+    nmetal = len(metallicities)
 
     # write out model parameters as top level attribute
     for key, value in model.items():

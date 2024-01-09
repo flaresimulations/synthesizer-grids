@@ -56,7 +56,7 @@ def download_data(model):
     model_url = {}
     model_url[
         "bpass_v2.2.1_chab100"
-    ] = "https://drive.google.com/file/d/1az7_hP3RDovr-BN9sXgDuaYqOZHHUeXD/view?usp=sharing"
+    ] = "https://drive.google.com/file/d/1az7_hP3RDovr-BN9sXgDuaYqOmetalHHUeXD/view?usp=sharing"
     model_url[
         "bpass_v2.2.1_chab300"
     ] = "https://drive.google.com/file/d/1JcUM-qyOQD16RdfWjhGKSTwdNfRUW4Xu/view?usp=sharing"
@@ -125,26 +125,26 @@ def make_grid(original_model_name, bin):
     nu = 3e8 / (wavelengths * 1e-10)
 
     # set up output arrays
-    nZ = len(metallicities)
+    nmetal = len(metallicities)
     na = len(log10ages)
-    stellar_mass = np.zeros((na, nZ))
-    remnant_mass = np.zeros((na, nZ))
-    spectra = np.zeros((na, nZ, len(wavelengths)))
+    stellar_mass = np.zeros((na, nmetal))
+    remnant_mass = np.zeros((na, nmetal))
+    spectra = np.zeros((na, nmetal, len(wavelengths)))
 
     # loop over metallicity
-    for iZ, Z in enumerate(metallicities):
+    for imetal, metal in enumerate(metallicities):
         # --- get remaining and remnant fraction
-        fn_ = f"starmass-{bin}-imf{bpass_imf}.{map_met_to_key[Z]}.dat.gz"
+        fn_ = f"starmass-{bin}-imf{bpass_imf}.{map_met_to_key[metal]}.dat.gz"
         starmass = load.model_output(f"{input_dir}/{fn_}")
-        stellar_mass[:, iZ] = starmass["stellar_mass"].values / 1e6
-        remnant_mass[:, iZ] = starmass["remnant_mass"].values / 1e6
+        stellar_mass[:, imetal] = starmass["stellar_mass"].values / 1e6
+        remnant_mass[:, imetal] = starmass["remnant_mass"].values / 1e6
 
         # --- get spectra
-        fn_ = f"spectra-{bin}-imf{bpass_imf}.{map_met_to_key[Z]}.dat.gz"
+        fn_ = f"spectra-{bin}-imf{bpass_imf}.{map_met_to_key[metal]}.dat.gz"
         spec = load.model_output(f"{input_dir}/{fn_}")
 
         for ia, log10age in enumerate(log10ages):
-            spectra[ia, iZ, :] = spec[
+            spectra[ia, imetal, :] = spec[
                 str(log10age)
             ].values  # Lsol AA^-1 10^6 Msol^-1
 
@@ -166,7 +166,7 @@ def make_grid(original_model_name, bin):
         out_filename,
         "star_fraction",
         "Description",
-        ("Two-dimensional remaining stellar " "fraction grid, [age,Z]"),
+        ("Two-dimensional remaining stellar " "fraction grid, [age,metal]"),
     )
 
     write_data_h5py(
@@ -176,7 +176,7 @@ def make_grid(original_model_name, bin):
         out_filename,
         "remnant_fraction",
         "Description",
-        ("Two-dimensional remaining remnant " "fraction grid, [age,Z]"),
+        ("Two-dimensional remaining remnant " "fraction grid, [age,metal]"),
     )
 
     # write out stellar spectra
@@ -187,7 +187,7 @@ def make_grid(original_model_name, bin):
         out_filename,
         "spectra/incident",
         "Description",
-        "Three-dimensional spectra grid, [Z,Age,wavelength]",
+        "Three-dimensional spectra grid, [metal,Age,wavelength]",
     )
     write_attribute(out_filename, "spectra/incident", "Units", "erg/s/Hz")
 

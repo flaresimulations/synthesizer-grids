@@ -129,46 +129,46 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
     nu = 3e8 / (wavelengths * 1e-10)
 
     # number of metallicities and ages
-    nZ = len(metallicities)
+    nmetal = len(metallicities)
     na = len(log10ages)
 
     # set up outputs
-    stellar_mass = np.zeros((na, nZ))
-    remnant_mass = np.zeros((na, nZ))
+    stellar_mass = np.zeros((na, nmetal))
+    remnant_mass = np.zeros((na, nmetal))
 
     # the ionising photon production rate
     log10Q = {}
-    log10Q["HI"] = np.zeros((na, nZ))
-    log10Q["HeII"] = np.zeros((na, nZ))
+    log10Q["HI"] = np.zeros((na, nmetal))
+    log10Q["HeII"] = np.zeros((na, nmetal))
 
     # provided by BPASS, sanity check for above
     log10Q_original = {}
-    log10Q_original["HI"] = np.zeros((na, nZ))
+    log10Q_original["HI"] = np.zeros((na, nmetal))
 
-    spectra = np.zeros((na, nZ, len(wavelengths)))
+    spectra = np.zeros((na, nmetal, len(wavelengths)))
 
-    for iZ, Z in enumerate(metallicities):
-        print(iZ, Z)
+    for imetal, metal in enumerate(metallicities):
+        print(imetal, metal)
 
         # get remaining and remnant fraction
-        fn_ = f"{input_dir}/starmass-{bs}-imf_{bpass_imf}.a{ae}.{map_met_to_key[Z]}.dat"
+        fn_ = f"{input_dir}/starmass-{bs}-imf_{bpass_imf}.a{ae}.{map_met_to_key[metal]}.dat"
         starmass = load.model_output(fn_)
-        stellar_mass[:, iZ] = (
+        stellar_mass[:, imetal] = (
             starmass["stellar_mass"].values / 1e6
         )  # convert to per M_sol
-        remnant_mass[:, iZ] = (
+        remnant_mass[:, imetal] = (
             starmass["remnant_mass"].values / 1e6
         )  # convert to per M_sol
 
         # get original log10Q
-        fn_ = f"{input_dir}/ionizing-{bs}-imf_{bpass_imf}.a{ae}.{map_met_to_key[Z]}.dat"
+        fn_ = f"{input_dir}/ionizing-{bs}-imf_{bpass_imf}.a{ae}.{map_met_to_key[metal]}.dat"
         ionising = load.model_output(fn_)
-        log10Q_original["HI"][:, iZ] = (
+        log10Q_original["HI"][:, imetal] = (
             ionising["prod_rate"].values - 6
         )  # convert to per M_sol
 
         # get spectra
-        fn_ = f"{input_dir}/spectra-{bs}-imf_{bpass_imf}.a{ae}.{map_met_to_key[Z]}.dat"
+        fn_ = f"{input_dir}/spectra-{bs}-imf_{bpass_imf}.a{ae}.{map_met_to_key[metal]}.dat"
         spec = load.model_output(fn_)
 
         for ia, log10age in enumerate(log10ages):
@@ -178,13 +178,13 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
             spec_ /= 1e6  # Lsol AA^-1 Msol^-1
             spec_ *= 3.826e33  # erg s^-1 AA^-1 Msol^-1
             spec_ *= wavelengths / nu  # erg s^-1 Hz^-1 Msol^-1
-            spectra[ia, iZ, :] = spec_
+            spectra[ia, imetal, :] = spec_
 
             # calcualte ionising photon luminosity
             for ion in ["HI", "HeII"]:
                 limit = 100
                 ionisation_energy = Ions.energy[ion]
-                log10Q[ion][ia, iZ] = np.log10(
+                log10Q[ion][ia, imetal] = np.log10(
                     calculate_Q(
                         wavelengths,
                         spec_,
@@ -205,7 +205,7 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
         out_filename,
         "star_fraction",
         "Description",
-        "Two-dimensional remaining stellar fraction grid, [age,Z]",
+        "Two-dimensional remaining stellar fraction grid, [age,metal]",
     )
 
     write_data_h5py(
@@ -215,7 +215,7 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
         out_filename,
         "remnant_fraction",
         "Description",
-        "Two-dimensional remaining remnant fraction grid, [age,Z]",
+        "Two-dimensional remaining remnant fraction grid, [age,metal]",
     )
 
     for ion in ["HI"]:
@@ -229,7 +229,7 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
             out_filename,
             f"log10Q_original/{ion}",
             "Description",
-            f"Two-dimensional (original) {ion} ionising photon production rate grid, [age,Z]",
+            f"Two-dimensional (original) {ion} ionising photon production rate grid, [age,metal]",
         )
         write_attribute(
             out_filename, f"log10Q_original/{ion}", "Units", "dex(1/s)"
@@ -243,7 +243,7 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
             out_filename,
             f"log10Q/{ion}",
             "Description",
-            f"Two-dimensional {ion} ionising photon production rate grid, [age,Z]",
+            f"Two-dimensional {ion} ionising photon production rate grid, [age,metal]",
         )
         write_attribute(out_filename, f"log10Q/{ion}", "Units", "dex(1/s)")
 
@@ -254,7 +254,7 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
         out_filename,
         "spectra/incident",
         "Description",
-        "Three-dimensional spectra grid, [Z,Age,wavelength]",
+        "Three-dimensional spectra grid, [metal,Age,wavelength]",
     )
     write_attribute(out_filename, "spectra/incident", "Units", "erg/s/Hz")
 
@@ -359,46 +359,52 @@ def make_full_grid(original_model_name, bs="bin"):
     nu = 3e8 / (wavelengths * 1e-10)
 
     na = len(log10ages)
-    nZ = len(log10metallicities)
+    nmetal = len(log10metallicities)
     nae = len(alpha_enhancements)
 
     # set up outputs
-    stellar_mass = np.zeros((na, nZ, nae))
-    remnant_mass = np.zeros((na, nZ, nae))
+    stellar_mass = np.zeros((na, nmetal, nae))
+    remnant_mass = np.zeros((na, nmetal, nae))
 
     # the ionising photon production rate
     log10Q = {}
-    log10Q["HI"] = np.zeros((na, nZ, nae))
-    log10Q["HeII"] = np.zeros((na, nZ, nae))
+    log10Q["HI"] = np.zeros((na, nmetal, nae))
+    log10Q["HeII"] = np.zeros((na, nmetal, nae))
 
     # provided by BPASS, sanity check for above
     log10Q_original = {}
-    log10Q_original["HI"] = np.zeros((na, nZ, nae))
+    log10Q_original["HI"] = np.zeros((na, nmetal, nae))
 
-    spectra = np.zeros((na, nZ, nae, len(wavelengths)))
+    spectra = np.zeros((na, nmetal, nae, len(wavelengths)))
 
-    for iZ, Z in enumerate(metallicities):
+    for imetal, metal in enumerate(metallicities):
         for iae, alpha_enhancement in enumerate(alpha_enhancements):
-            print(Z, alpha_enhancement)
+            print(metal, alpha_enhancement)
 
             aek = ae_to_aek[alpha_enhancement]
-            Zk = map_met_to_key[Z]
+            metalk = map_met_to_key[metal]
 
             # --- get remaining and remnant fraction
-            fn_ = f"{input_dir}/starmass-{bs}-imf_{bpass_imf}.a{aek}.{Zk}.dat"
+            fn_ = f"{input_dir}/starmass-{bs}-imf_{bpass_imf}.a{aek}.{metalk}.dat"
             starmass = load.model_output(fn_)
-            stellar_mass[:, iZ, iae] = starmass["stellar_mass"].values / 1e6
-            remnant_mass[:, iZ, iae] = starmass["remnant_mass"].values / 1e6
+            stellar_mass[:, imetal, iae] = (
+                starmass["stellar_mass"].values / 1e6
+            )
+            remnant_mass[:, imetal, iae] = (
+                starmass["remnant_mass"].values / 1e6
+            )
 
             # --- get original log10Q
-            fn_ = f"{input_dir}/ionizing-{bs}-imf_{bpass_imf}.a{aek}.{Zk}.dat"
+            fn_ = f"{input_dir}/ionizing-{bs}-imf_{bpass_imf}.a{aek}.{metalk}.dat"
             ionising = load.model_output(fn_)
-            log10Q_original["HI"][:, iZ, iae] = (
+            log10Q_original["HI"][:, imetal, iae] = (
                 ionising["prod_rate"].values - 6
             )  # convert to per M_sol
 
             # --- get spectra
-            fn_ = f"{input_dir}/spectra-{bs}-imf_{bpass_imf}.a{aek}.{Zk}.dat"
+            fn_ = (
+                f"{input_dir}/spectra-{bs}-imf_{bpass_imf}.a{aek}.{metalk}.dat"
+            )
             spec = load.model_output(fn_)
 
             for ia, log10age in enumerate(log10ages):
@@ -409,13 +415,13 @@ def make_full_grid(original_model_name, bs="bin"):
                 spec_ *= 3.826e33  # erg s^-1 AA^-1 Msol^-1
                 spec_ *= wavelengths / nu  # erg s^-1 Hz^-1 Msol^-1
 
-                spectra[ia, iZ, iae, :] = spec_  # Lsol AA^-1 10^6 Msol^-1
+                spectra[ia, imetal, iae, :] = spec_  # Lsol AA^-1 10^6 Msol^-1
 
                 # calcualte ionising photon luminosity
                 for ion in ["HI", "HeII"]:
                     limit = 100
                     ionisation_energy = Ions.energy[ion]
-                    log10Q[ion][ia, iZ, iae] = np.log10(
+                    log10Q[ion][ia, imetal, iae] = np.log10(
                         calculate_Q(
                             wavelengths,
                             spec_,
@@ -436,7 +442,7 @@ def make_full_grid(original_model_name, bs="bin"):
         out_filename,
         "star_fraction",
         "Description",
-        "Two-dimensional remaining stellar fraction grid, [age,Z]",
+        "Two-dimensional remaining stellar fraction grid, [age,metal]",
     )
 
     write_data_h5py(
@@ -446,7 +452,7 @@ def make_full_grid(original_model_name, bs="bin"):
         out_filename,
         "remnant_fraction",
         "Description",
-        "Two-dimensional remaining remnant fraction grid, [age,Z]",
+        "Two-dimensional remaining remnant fraction grid, [age,metal]",
     )
 
     # write out ionising photon production rate
@@ -461,7 +467,7 @@ def make_full_grid(original_model_name, bs="bin"):
             out_filename,
             f"log10Q_original/{ion}",
             "Description",
-            f"Two-dimensional (original) {ion} ionising photon production rate grid, [age,Z]",
+            f"Two-dimensional (original) {ion} ionising photon production rate grid, [age,metal]",
         )
         write_attribute(
             out_filename, f"log10Q_original/{ion}", "Units", "dex(1/s)"
@@ -475,7 +481,7 @@ def make_full_grid(original_model_name, bs="bin"):
             out_filename,
             f"log10Q/{ion}",
             "Description",
-            f"Two-dimensional {ion} ionising photon production rate grid, [age,Z]",
+            f"Two-dimensional {ion} ionising photon production rate grid, [age,metal]",
         )
         write_attribute(out_filename, f"log10Q/{ion}", "Units", "dex(1/s)")
 
@@ -534,7 +540,7 @@ def make_full_grid(original_model_name, bs="bin"):
         out_filename,
         "spectra/stellar",
         "Description",
-        "Three-dimensional spectra grid, [age, Z, ae, wavelength]",
+        "Three-dimensional spectra grid, [age, metal, ae, wavelength]",
     )
     write_attribute(out_filename, "spectra/stellar", "Units", "erg/s/Hz")
 

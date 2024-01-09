@@ -65,21 +65,21 @@ def generate_grid(model):
     lam = sp.wavelengths  # units: Angstroms
     log10ages = sp.log_age  # units: log10(years)
     ages = 10**log10ages
-    metallicities = sp.zlegend  # units: log10(Z)
+    metallicities = sp.zlegend  # units: log10(metal)
     log10metallicities = np.log10(metallicities)
 
     na = len(log10ages)
-    nZ = len(metallicities)
+    nmetal = len(metallicities)
 
-    log10Q = np.zeros((na, nZ))  # the ionising photon production rate
-    spec = np.zeros((na, nZ, len(lam)))
+    log10Q = np.zeros((na, nmetal))  # the ionising photon production rate
+    spec = np.zeros((na, nmetal, len(lam)))
 
-    for iZ in range(nZ):
-        spec_ = sp.get_spectrum(zmet=iZ + 1)[1]  # 2D array Lsol / AA
+    for imetal in range(nmetal):
+        spec_ = sp.get_spectrum(zmet=imetal + 1)[1]  # 2D array Lsol / AA
         for ia in range(na):
             lnu = spec_[ia]  # Lsol / Hz
             lnu *= 3.826e33  # erg s^-1 Hz^-1 Msol^-1
-            spec[ia, iZ] = lnu
+            spec[ia, imetal] = lnu
 
     # write out model parameters as top level attribute
     for key, value in model.items():

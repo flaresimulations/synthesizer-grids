@@ -115,19 +115,19 @@ def add_log10Q(grid_filename, ions=["HI", "HeII"], limit=100):
 
 #             ionisation_energy = Ions.energy[ion]
 
-#             hf[f'log10Q/{ion}'] = np.zeros((na, nZ))
+#             hf[f'log10Q/{ion}'] = np.zeros((na, nmetal))
 
 #             # ---- determine stellar log10Q
 
-#             for iZ, Z in enumerate(metallicities):
+#             for imetal, metal in enumerate(metallicities):
 #                 for ia, log10age in enumerate(log10ages):
-#                     # print(ia, iZ)
+#                     # print(ia, imetal)
 
-#                     lnu = hf['spectra/stellar'][ia, iZ, :]
+#                     lnu = hf['spectra/stellar'][ia, imetal, :]
 
 #                     Q = calculate_Q(lam, lnu, ionisation_energy=ionisation_energy, limit=limit)
 
-#                     hf[f'log10Q/{ion}'][ia, iZ] = np.log10(Q)
+#                     hf[f'log10Q/{ion}'][ia, imetal] = np.log10(Q)
 
 
 def write_data_h5py(filename, name, data, overwrite=False):
