@@ -14,12 +14,20 @@ import sys
 
 # Allow the file to use incident_utils
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-from incident_utils import write_data_h5py, write_attribute, add_log10Q  # , __tag__
+from incident_utils import (
+    write_data_h5py,
+    write_attribute,
+    add_log10Q,
+)  # , __tag__
 
 # TODO: add way to automatically create /original_data/model_name and /input_data/model_name directories
 # currently I'm making these manually to make the code work
 
-def download_data(output_dir, data_url="http://www.icg.port.ac.uk/~maraston/M11/SSP_M11_Pickles.tar.gz"):
+
+def download_data(
+    output_dir,
+    data_url="http://www.icg.port.ac.uk/~maraston/M11/SSP_M11_Pickles.tar.gz",
+):
     """
     Download Maraston+11 data
     Args:
@@ -35,7 +43,7 @@ def download_data(output_dir, data_url="http://www.icg.port.ac.uk/~maraston/M11/
     )  # download the original data to the working directory
 
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-    print('filename:',filename)
+    print("filename:", filename)
     # --- untar main directory
     tar = tarfile.open(filename)
     tar.extractall(path=output_dir)
@@ -76,10 +84,10 @@ def make_grid(model, imf, extension, output_dir):
     ages_, _, lam_, llam_ = np.loadtxt(fn).T  # llam is in (ergs /s /AA /Msun)
 
     ages_Gyr = np.sort(np.array(list(set(ages_))))  # Gyr
-    ages = ages_Gyr * 1e9 * yr 
+    ages = ages_Gyr * 1e9 * yr
     log10ages = np.log10(ages)
 
-    lam = lam_[ages_ == ages_[0]] * Angstrom 
+    lam = lam_[ages_ == ages_[0]] * Angstrom
 
     spec = np.zeros((len(ages), len(metallicities), len(lam)))
 
@@ -96,7 +104,10 @@ def make_grid(model, imf, extension, output_dir):
     # write out spectra
     write_data_h5py(fname, "spectra/wavelength", data=lam, overwrite=True)
     write_attribute(
-        fname, "spectra/wavelength", "Description", "Wavelength of the spectra grid"
+        fname,
+        "spectra/wavelength",
+        "Description",
+        "Wavelength of the spectra grid",
     )
     write_attribute(fname, "spectra/wavelength", "Units", "AA")
 
@@ -114,11 +125,16 @@ def make_grid(model, imf, extension, output_dir):
 
     write_data_h5py(fname, "axes/log10age", data=log10ages, overwrite=True)
     write_attribute(
-        fname, "axes/log10age", "Description", "Stellar population ages in log10 years"
+        fname,
+        "axes/log10age",
+        "Description",
+        "Stellar population ages in log10 years",
     )
     write_attribute(fname, "axes/log10age", "Units", "log10(yr)")
 
-    write_data_h5py(fname, "axes/metallicity", data=metallicities, overwrite=True)
+    write_data_h5py(
+        fname, "axes/metallicity", data=metallicities, overwrite=True
+    )
     write_attribute(fname, "axes/metallicity", "Description", "raw abundances")
     write_attribute(fname, "axes/metallicity", "Units", "dimensionless [Z]")
 
@@ -127,9 +143,13 @@ def make_grid(model, imf, extension, output_dir):
 
 # Lets include a way to call this script not via an entry point
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Maraston+11 download and grid creation")
+    parser = argparse.ArgumentParser(
+        description="Maraston+11 download and grid creation"
+    )
     parser.add_argument("-synthesizer_data_dir", type=str, required=True)
-    parser.add_argument("-download_data", "--download_data", type=bool, default=False)
+    parser.add_argument(
+        "-download_data", "--download_data", type=bool, default=False
+    )
 
     args = parser.parse_args()
 
@@ -163,7 +183,7 @@ if __name__ == "__main__":
 
         for imf in imfs:
             print(extension)
-            #if args.download_data:
+            # if args.download_data:
             download_data(output_dir)
 
             fname = make_grid(

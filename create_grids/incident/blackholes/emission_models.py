@@ -24,7 +24,7 @@ class Feltre16:
         Feltre et al. (2016). This is utilised to build the cloudy grid.
 
         Args:
-        
+
             lam (array)
                 Wavelength grid (array) in angstrom or unyt
 
