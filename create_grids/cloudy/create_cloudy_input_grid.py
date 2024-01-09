@@ -58,7 +58,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run a grid of incident cloudy models")
 
     # machine (for submission script generation)
-    # parser.add_argument("-machine", type=str, required=True)
+    parser.add_argument("-machine", type=str, required=True) 
 
     # path to synthesizer_data_dir
     parser.add_argument("-synthesizer_data_dir", type=str, required=True)
@@ -259,18 +259,14 @@ if __name__ == "__main__":
             )
 
             # for spherical geometry the effective log10U is this
-            if params_["geometry"] == "spherical":
-                log10U = (
-                    params_["reference_ionisation_parameter"]
-                    + (1 / 3) * delta_specific_ionising_lum
-                )
+            if params_['geometry'] == 'spherical':
 
-            # for plane-parallel geometry the effective just scales with specific_ionising_lum
-            elif params_["geometry"] == "planeparallel":
-                log10U = (
-                    params_["reference_ionisation_parameter"]
-                    + delta_specific_ionising_lum
-                )
+                log10U = np.log10(params_['reference_ionisation_parameter']) + (1/3) * delta_log10Q 
+
+            # for plane-parallel geometry the effective just scales with log10Q
+            elif params_['geometry'] == 'planeparallel':
+
+                log10U = np.log10(params_['reference_ionisation_parameter']) + delta_log10Q 
 
             else:
                 print(
@@ -278,8 +274,9 @@ if __name__ == "__main__":
                 )
 
         # if fixed U model is used
-        elif params_["ionisation_parameter_model"] == "fixed":
-            log10U = params_["ionisation_parameter"]
+        elif params_['ionisation_parameter_model'] == 'fixed':
+
+            log10U = np.log10(params_['ionisation_parameter']) 
 
         else:
             print(
@@ -287,7 +284,7 @@ if __name__ == "__main__":
             )
 
         # set log10U to provide cloudy
-        params_["ionisation_parameter"] = float(log10U)
+        params_['ionisation_parameter'] = 10**float(log10U)
 
         # get wavelength
         lam = incident_grid.lam  # AA
@@ -296,10 +293,8 @@ if __name__ == "__main__":
         lnu = incident_grid.spectra["incident"][incident_grid_point]
 
         # this returns the relevant shape commands, in this case for a tabulated SED
-        shape_commands = cloudy.ShapeCommands.table_sed(
-            str(i + 1), lam, lnu, output_dir=output_dir
-        )
-
+        shape_commands = cloudy.ShapeCommands.table_sed(str(i+1), lam, lnu,  output_dir=output_dir)
+        
         # create cloudy input file
         cloudy.create_cloudy_input(
             str(i + 1), shape_commands, abundances, output_dir=output_dir, **params_
