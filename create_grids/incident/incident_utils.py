@@ -12,13 +12,13 @@ from unyt import unyt_quantity
 from unyt import Angstrom
 
 # import functions from grid_utils module
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from grid_utils import get_grid_properties_from_hdf5 #need this to work
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+from grid_utils import get_grid_properties_from_hdf5  # need this to work
 
-#__tag__ = grid_utils.__tag__
+# __tag__ = grid_utils.__tag__
 
 
-def add_log10Q(grid_filename, ions=['HI', 'HeII'], limit=100):
+def add_log10Q(grid_filename, ions=["HI", "HeII"], limit=100):
     """
     A function to calculate the ionising photon luminosity for different ions.
 
@@ -29,56 +29,56 @@ def add_log10Q(grid_filename, ions=['HI', 'HeII'], limit=100):
     ions : list
         a list of ions to calculate Q for
     limit: float or int, optional
-        An upper bound on the number of subintervals 
+        An upper bound on the number of subintervals
         used in the integration adaptive algorithm.
 
     """
 
     # open  new grid
-    with h5py.File(grid_filename, 'a') as hf:
-
+    with h5py.File(grid_filename, "a") as hf:
         # Get the properties of the grid including the dimensions etc.
-        axes, shape, n_models, mesh, model_list, index_list = get_grid_properties_from_hdf5(hf)
+        (
+            axes,
+            shape,
+            n_models,
+            mesh,
+            model_list,
+            index_list,
+        ) = get_grid_properties_from_hdf5(hf)
 
         # set up output arrays
         for ion in ions:
-            hf[f'log10Q/{ion}'] = np.zeros(shape)
+            hf[f"log10Q/{ion}"] = np.zeros(shape)
 
         # get spectra group
-        spectra = hf[f'spectra']
+        spectra = hf[f"spectra"]
 
         # get wavelength grid, including with units
-        #lam = spectra['wavelength'] * unyt_quantity.from_string(spectra['wavelength'].attrs['Units']).replace('AA','angstrom')
-        lam = np.array(spectra['wavelength']) * Angstrom
+        # lam = spectra['wavelength'] * unyt_quantity.from_string(spectra['wavelength'].attrs['Units']).replace('AA','angstrom')
+        lam = np.array(spectra["wavelength"]) * Angstrom
 
-        # loop over grid points and calculate Q and store it
+        # loop over grid points and calculate Q and store it
         for i, indices in enumerate(index_list):
-
             indices = tuple(indices)
 
-            # loop over ions
+            # loop over ions
             for ion in ions:
-
                 # get the ionisation energy
                 ionisation_energy = Ions.energy[ion]
 
                 # get incident spectrum
-                lnu = spectra['incident'][indices]
+                lnu = spectra["incident"][indices]
 
-                #create sed object
+                # create sed object
                 sed = Sed(lam=lam, lnu=lnu)
-   
-                # calculate Q 
+
+                # calculate Q
                 Q = sed.calculate_ionising_photon_production_rate(
-                                ionisation_energy=ionisation_energy,
-                                limit=limit)
+                    ionisation_energy=ionisation_energy, limit=limit
+                )
 
                 # save
-                hf[f'log10Q/{ion}'][indices] = np.log10(Q)
-
-
-   
-
+                hf[f"log10Q/{ion}"][indices] = np.log10(Q)
 
 
 # def add_log10Q(grid_filename, ions=['HI', 'HeII'], limit=100):
@@ -92,7 +92,7 @@ def add_log10Q(grid_filename, ions=['HI', 'HeII'], limit=100):
 #     ions : list
 #         a list of ions to calculate Q for
 #     limit: float or int, optional
-#         An upper bound on the number of subintervals 
+#         An upper bound on the number of subintervals
 #         used in the integration adaptive algorithm.
 
 #     """
@@ -130,25 +130,25 @@ def add_log10Q(grid_filename, ions=['HI', 'HeII'], limit=100):
 #                     hf[f'log10Q/{ion}'][ia, iZ] = np.log10(Q)
 
 
-
 def write_data_h5py(filename, name, data, overwrite=False):
     check = check_h5py(filename, name)
 
-    with h5py.File(filename, 'a') as h5file:
+    with h5py.File(filename, "a") as h5file:
         if check:
             if overwrite:
-                print('Overwriting data in %s' % name)
+                print("Overwriting data in %s" % name)
                 del h5file[name]
                 h5file[name] = data
             else:
-                raise ValueError('Dataset already exists, ' +
-                                 'and `overwrite` not set')
+                raise ValueError(
+                    "Dataset already exists, " + "and `overwrite` not set"
+                )
         else:
             h5file.create_dataset(name, data=data)
 
 
 def check_h5py(filename, obj_str):
-    with h5py.File(filename, 'a') as h5file:
+    with h5py.File(filename, "a") as h5file:
         if obj_str not in h5file:
             return False
         else:
@@ -156,7 +156,7 @@ def check_h5py(filename, obj_str):
 
 
 def load_h5py(filename, obj_str):
-    with h5py.File(filename, 'a') as h5file:
+    with h5py.File(filename, "a") as h5file:
         dat = np.array(h5file.get(obj_str))
     return dat
 
@@ -170,7 +170,7 @@ def write_attribute(filename, obj, key, value):
     key (str) attribute key string
     value (str) content of the attribute
     """
-    with h5py.File(filename, 'a') as h5file:
+    with h5py.File(filename, "a") as h5file:
         dset = h5file[obj]
         dset.attrs[key] = value
 
@@ -179,7 +179,7 @@ def get_names_h5py(filename, group):
     """
     Return list of the names of objects inside a group
     """
-    with h5py.File(filename, 'r') as h5file:
+    with h5py.File(filename, "r") as h5file:
         keys = list(h5file[group].keys())
 
     return keys
@@ -189,7 +189,7 @@ def load_arr(name, filename):
     """
     Load Dataset array from file
     """
-    with h5py.File(filename, 'r') as f:
+    with h5py.File(filename, "r") as f:
         if name not in f:
             raise ValueError("'%s' Dataset doesn't exist..." % name)
 
