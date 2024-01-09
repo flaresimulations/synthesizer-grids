@@ -1,53 +1,54 @@
-
 import numpy as np
 
 
-def get_grid_properties(axes, axes_values, verbose = True):
-
-    """ 
+def get_grid_properties(axes, axes_values, verbose=True):
+    """
     Get the properties of the grid including the dimensions etc.
     """
 
-    # the grid axes   
-    if verbose: print(f'axes: {axes}')
+    # the grid axes
+    if verbose:
+        print(f"axes: {axes}")
 
     # number of axes
     n_axes = len(axes)
-    if verbose: print(f'number of axes: {n_axes}')
+    if verbose:
+        print(f"number of axes: {n_axes}")
 
     # the shape of the grid (useful for creating outputs)
     shape = list([len(axes_values[axis]) for axis in axes])
-    if verbose: print(f'shape: {shape}')
+    if verbose:
+        print(f"shape: {shape}")
 
     # determine number of models
     n_models = np.prod(shape)
-    if verbose: print(f'number of models to run: {n_models}')
+    if verbose:
+        print(f"number of models to run: {n_models}")
 
     # create the mesh of the grid
-    mesh = np.array(np.meshgrid(*[np.array(axes_values[axis]) for axis in axes]))
+    mesh = np.array(
+        np.meshgrid(*[np.array(axes_values[axis]) for axis in axes])
+    )
 
-    # create the list of the models 
+    # create the list of the models
     model_list = mesh.T.reshape(n_models, n_axes)
-    if verbose: 
-        print('model list:')
+    if verbose:
+        print("model list:")
         print(model_list)
 
     # create a list of the indices
 
     index_mesh = np.array(np.meshgrid(*[range(n) for n in shape]))
 
-    index_list =  index_mesh.T.reshape(n_models, n_axes)
-    if verbose: 
-        print('index list:')
+    index_list = index_mesh.T.reshape(n_models, n_axes)
+    if verbose:
+        print("index list:")
         print(index_list)
 
     return n_axes, shape, n_models, mesh, model_list, index_list
 
 
-
-
 def apollo_submission_script(n, grid_data_dir, cloudy_path, cloudy_version):
-
     """
     Create an Apollo SGE submission script.
 
@@ -66,12 +67,12 @@ def apollo_submission_script(n, grid_data_dir, cloudy_path, cloudy_version):
     """
 
     # cloudy executable
-    cloudy = f'{cloudy_path}/{cloudy_version}/source/cloudy.exe'
+    cloudy = f"{cloudy_path}/{cloudy_version}/source/cloudy.exe"
 
     print(cloudy)
 
     # cloudy data dir
-    cloudy_data_path = f'{cloudy_path}/{cloudy_version}/data/'
+    cloudy_data_path = f"{cloudy_path}/{cloudy_version}/data/"
 
     apollo_job_script = f"""
 ######################################################################
@@ -110,15 +111,14 @@ export CLOUDY_DATA_PATH={cloudy_data_path}
 {cloudy} -r $SGE_TASK_ID
 """
 
-    open(f'{grid_data_dir}/run_grid.job', 'w').write(apollo_job_script)
+    open(f"{grid_data_dir}/run_grid.job", "w").write(apollo_job_script)
     print(grid_data_dir)
 
     # define the qsub command
-    qsub = f'qsub -t 1:{n} -q smp.q -pe openmp 2 run_grid.job '
+    qsub = f"qsub -t 1:{n} -q smp.q -pe openmp 2 run_grid.job "
     print(qsub)
 
     # create a script to execute the qsub command
-    open(f'{grid_data_dir}/run.sh', 'w').write(qsub)
+    open(f"{grid_data_dir}/run.sh", "w").write(qsub)
 
     return
-

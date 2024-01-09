@@ -1,4 +1,3 @@
-
 import sys
 import os
 import numpy as np
@@ -6,24 +5,23 @@ from unyt import c
 import scipy.integrate as integrate
 
 # import function from incident_utils module
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 import incident_utils
-from incident_utils import * 
+from incident_utils import *
 
 # __tag__ = incident_utils.__tag__
 
-def broken_power_law(x, edges, indices, norms=False, normalise=True):
 
+def broken_power_law(x, edges, indices, norms=False, normalise=True):
     """
     Function to produce a broken power-law spectrum
-    
+
     """
 
     y = np.zeros(len(x))
 
     # if normalisations not calculated, go ahead an
     if not norms:
-
         norms = [
             1.0,
         ]
@@ -41,7 +39,7 @@ def broken_power_law(x, edges, indices, norms=False, normalise=True):
 
         s = (x >= e1) & (x < e2)
 
-        print(e1,e2,ind,norm,np.sum(s))
+        print(e1, e2, ind, norm, np.sum(s))
         y[s] = norm * x[s] ** ind
 
     # normalise
