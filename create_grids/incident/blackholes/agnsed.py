@@ -101,6 +101,6 @@ with h5py.File(filename, "w") as hf:
     hf["spectra/incident"].attrs["Units"] = "erg/s/Hz"
 
 
-# calcualte specific_ionising_lum
+# calcualte log10Q
 
-add_specific_ionising_lum(filename)
+add_log10Q(filename)

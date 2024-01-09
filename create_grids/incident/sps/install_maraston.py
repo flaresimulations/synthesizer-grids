@@ -200,4 +200,4 @@ if __name__ == "__main__":
             model["sps_variant"] = hr_morphology
             out_filename = make_grid(model, imf, hr_morphology)
 
-            add_specific_ionising_lum(out_filename)
+            add_log10Q(out_filename)

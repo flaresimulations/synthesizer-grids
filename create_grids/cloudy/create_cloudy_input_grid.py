@@ -194,9 +194,7 @@ if __name__ == "__main__":
                     log10Q_incident = hf_incident[f"log10Q/{ion}"][()]
 
                     # create new array with repeated elements
-                    specific_ionising_lum = np.repeat(
-                        specific_ionising_lum_incident, expansion, axis=-1
-                    )
+                    log10Q = np.repeat(log10Q_incident, expansion, axis=-1)
 
                     # reshape array to match new shape and save
                     hf[f"log10Q/{ion}"] = np.reshape(log10Q, shape)

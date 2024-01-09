@@ -338,5 +338,5 @@ if __name__ == "__main__":
     # make grid
     out_filename = make_grid()
 
-    # add specific_ionising_lum for different ions
-    add_specific_ionising_lum(out_filename)
+    # add log10Q for different ions
+    add_log10Q(out_filename)

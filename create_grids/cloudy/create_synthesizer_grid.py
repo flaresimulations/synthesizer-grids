@@ -218,8 +218,8 @@ def add_lines(
         Directory where synthesizer data is kept.
     line_type : str
         The type of line file to use (linelist, lines)
-    dspecific_ionising_lum
-        The difference between the original and cloudy specific_ionising_lum used for rescaling the cloudy spectra
+    dlog10Q
+        The difference between the original and cloudy log10Q used for rescaling the cloudy spectra
     """
 
     # open the new grid

@@ -5,7 +5,7 @@ Create a synthesizer incident grid for a broken power-law SED model.
 import h5py
 import numpy as np
 from unyt import c, Angstrom
-from utils import __tag__, broken_power_law, add_specific_ionising_lum
+from utils import __tag__, broken_power_law, add_log10Q
 from datetime import date
 
 synthesizer_data_dir = "/Users/sw376/Dropbox/Research/data/synthesizer/"
@@ -89,6 +89,6 @@ with h5py.File(filename, "w") as hf:
     hf["spectra/incident"].attrs["Units"] = "erg/s/Hz"
 
 
-# calcualte specific_ionising_lum
+# calcualte log10Q
 
-add_specific_ionising_lum(filename)
+add_log10Q(filename)

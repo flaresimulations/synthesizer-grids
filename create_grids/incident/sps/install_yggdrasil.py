@@ -31,11 +31,7 @@ import pathlib
 import re
 import subprocess
 import argparse
-from incident_utils import (
-    write_data_h5py,
-    write_attribute,
-    add_specific_ionising_lum,
-)
+from incident_utils import write_data_h5py, write_attribute, add_log10Q
 from unyt import c, Angstrom, s
 
 from synthesizer.sed import calculate_Q
@@ -188,9 +184,7 @@ def make_grid(synthesizer_data_dir, ver, fcov):
     na = len(ages)
     nZ = len(metallicities)
 
-    specific_ionising_lum = np.zeros(
-        (na, nZ)
-    )  # the ionising photon production rate
+    log10Q = np.zeros((na, nZ))  # the ionising photon production rate
 
     # for iZ, metallicity in enumerate(metallicities):
     #     for ia, log10age in enumerate(log10ages):

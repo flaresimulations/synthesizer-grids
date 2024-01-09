@@ -312,5 +312,3 @@ if __name__ == "__main__":
         )
 
         make_grid(variant, synthesizer_data_dir, out_filename)
-
-        add_specific_ionising_lum(out_filename)

@@ -275,6 +275,6 @@ if __name__ == "__main__":
             # synthesizer_model_name = get_model_filename(model)
             # out_filename = f'{synthesizer_data_dir}/grids/{synthesizer_model_name}.hdf5'
 
-            # add specific_ionising_lum, can specify the desired ions with ions keyword.
+            # add log10Q, can specify the desired ions with ions keyword.
             # by default calculates [HI, HeII]
-            add_specific_ionising_lum(out_filename)
+            add_log10Q(out_filename)

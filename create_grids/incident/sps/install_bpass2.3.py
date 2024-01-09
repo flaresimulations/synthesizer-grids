@@ -20,7 +20,6 @@ from utils import (
     __tag__,
     write_data_h5py,
     write_attribute,
-    add_specific_ionising_lum,
     get_model_filename,
 )
 

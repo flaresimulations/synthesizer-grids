@@ -71,9 +71,7 @@ def generate_grid(model):
     na = len(log10ages)
     nZ = len(metallicities)
 
-    specific_ionising_lum = np.zeros(
-        (na, nZ)
-    )  # the ionising photon production rate
+    log10Q = np.zeros((na, nZ))  # the ionising photon production rate
     spec = np.zeros((na, nZ, len(lam)))
 
     for iZ in range(nZ):
@@ -194,5 +192,5 @@ if __name__ == "__main__":
         # make grid
         out_filename = generate_grid(model)
 
-        # add specific_ionising_lum for different ions
-        add_specific_ionising_lum(out_filename)
+        # add log10Q for different ions
+        add_log10Q(out_filename)
