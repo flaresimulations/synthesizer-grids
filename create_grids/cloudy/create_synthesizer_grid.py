@@ -34,7 +34,10 @@ def get_grid_properties_hf(hf, verbose=True):
 
 
 def check_cloudy_runs(
-    grid_name, synthesizer_data_dir, replace=False, files_to_check=["cont", "elin"]
+    grid_name,
+    synthesizer_data_dir,
+    replace=False,
+    files_to_check=["cont", "elin"],
 ):
     """
     Check that all the cloudy runs have run properly
@@ -50,7 +53,9 @@ def check_cloudy_runs(
     """
 
     # open the new grid
-    with h5py.File(f"{synthesizer_data_dir}/grids/dev/{grid_name}.hdf5", "r") as hf:
+    with h5py.File(
+        f"{synthesizer_data_dir}/grids/dev/{grid_name}.hdf5", "r"
+    ) as hf:
         # Get the properties of the grid including the dimensions etc.
         (
             axes,
@@ -119,7 +124,9 @@ def add_spectra(grid_name, synthesizer_data_dir):
     spec_names = ["incident", "transmitted", "nebular", "linecont"]
 
     # open the new grid
-    with h5py.File(f"{synthesizer_data_dir}/grids/dev/{grid_name}.hdf5", "a") as hf:
+    with h5py.File(
+        f"{synthesizer_data_dir}/grids/dev/{grid_name}.hdf5", "a"
+    ) as hf:
         # Get the properties of the grid including the dimensions etc.
         (
             axes,
@@ -132,7 +139,9 @@ def add_spectra(grid_name, synthesizer_data_dir):
         ) = get_grid_properties_hf(hf, verbose=False)
 
         # read first spectra from the first grid point to get length and wavelength grid
-        lam = cloudy.read_wavelength(f"{synthesizer_data_dir}/cloudy/{grid_name}/1")
+        lam = cloudy.read_wavelength(
+            f"{synthesizer_data_dir}/cloudy/{grid_name}/1"
+        )
 
         if "spectra" in hf:
             del hf["spectra"]
@@ -140,7 +149,9 @@ def add_spectra(grid_name, synthesizer_data_dir):
         spectra = hf.create_group(
             "spectra"
         )  # create a group holding the spectra in the grid file
-        spectra.attrs["spec_names"] = spec_names  # save list of spectra as attribute
+        spectra.attrs[
+            "spec_names"
+        ] = spec_names  # save list of spectra as attribute
 
         spectra["wavelength"] = lam  # save the wavelength
         nu = 3e8 / (lam * 1e-10)
@@ -152,7 +163,7 @@ def add_spectra(grid_name, synthesizer_data_dir):
             spectra[spec_name] = np.zeros((*shape, nlam))
 
         # array for holding the normalisation which is calculated below and used by lines
-        spectra['normalisation'] = np.ones(shape)
+        spectra["normalisation"] = np.ones(shape)
 
         for i, indices in enumerate(index_list):
             indices = tuple(indices)
@@ -163,30 +174,33 @@ def add_spectra(grid_name, synthesizer_data_dir):
             # read the continuum file containing the spectra
             spec_dict = cloudy.read_continuum(infile, return_dict=True)
 
-            # if hf['log10Q/HI'] already exists (only true for non-cloudy 
-            # models) renormalise the spectrum. 
-            if 'log10Q/HI' in hf:            
-                Q = calculate_Q(lam,
-                                spec_dict['incident'],
-                                ionisation_energy=13.6 * eV)
-                
+            # if hf['log10Q/HI'] already exists (only true for non-cloudy
+            # models) renormalise the spectrum.
+            if "log10Q/HI" in hf:
+                Q = calculate_Q(
+                    lam, spec_dict["incident"], ionisation_energy=13.6 * eV
+                )
+
                 # calculate normalisation
-                normalisation = hf['log10Q/HI'][indices] - np.log10(Q)
+                normalisation = hf["log10Q/HI"][indices] - np.log10(Q)
 
                 # save normalisation for later use (rescaling lines)
-                spectra['normalisation'][indices] = 10**normalisation
-                
-            # save the normalised spectrum to the correct grid point 
+                spectra["normalisation"][indices] = 10**normalisation
+
+            # save the normalised spectrum to the correct grid point
             for spec_name in spec_names:
                 spectra[spec_name][indices] = (
-                    spec_dict[spec_name] * spectra['normalisation'][indices])
+                    spec_dict[spec_name] * spectra["normalisation"][indices]
+                )
 
 
-def add_lines(grid_name,
-              synthesizer_data_dir,
-              line_type='linelist',
-              lines_to_include=False,
-              include_spectra=True):
+def add_lines(
+    grid_name,
+    synthesizer_data_dir,
+    line_type="linelist",
+    lines_to_include=False,
+    include_spectra=True,
+):
     """
     Open cloudy lines and add them to the HDF5 grid
 
@@ -203,7 +217,9 @@ def add_lines(grid_name,
     """
 
     # open the new grid
-    with h5py.File(f"{synthesizer_data_dir}/grids/dev/{grid_name}.hdf5", "a") as hf:
+    with h5py.File(
+        f"{synthesizer_data_dir}/grids/dev/{grid_name}.hdf5", "a"
+    ) as hf:
         # Get the properties of the grid including the dimensions etc.
         (
             axes,
@@ -236,10 +252,10 @@ def add_lines(grid_name,
 
         # set up output arrays
         for line_id in lines_to_include:
-            lines[f'{line_id}/luminosity'] = np.zeros(shape)
-            lines[f'{line_id}/transmitted_continuum'] = np.zeros(shape)
-            lines[f'{line_id}/nebular_continuum'] = np.zeros(shape)
-            lines[f'{line_id}/continuum'] = np.zeros(shape)
+            lines[f"{line_id}/luminosity"] = np.zeros(shape)
+            lines[f"{line_id}/transmitted_continuum"] = np.zeros(shape)
+            lines[f"{line_id}/nebular_continuum"] = np.zeros(shape)
+            lines[f"{line_id}/continuum"] = np.zeros(shape)
 
         for i, indices in enumerate(index_list):
             # convert indices array to tuple
@@ -258,7 +274,13 @@ def add_lines(grid_name,
             # get line quantities  <--- THIS NEEDS TO CHANGE
 
             if line_type == "lines":
-                id, blend, wavelength, intrinsic, luminosity = cloudy.read_lines(infile)
+                (
+                    id,
+                    blend,
+                    wavelength,
+                    intrinsic,
+                    luminosity,
+                ) = cloudy.read_lines(infile)
 
                 # identify lines we want to keep
                 s = np.nonzero(np.in1d(id, np.array(lines_to_include)))[0]
@@ -270,7 +292,9 @@ def add_lines(grid_name,
             elif line_type == "linelist":
                 id, wavelength, luminosity = cloudy.read_linelist(infile)
 
-            for id_, wavelength_, luminosity_ in zip(id, wavelength, luminosity):
+            for id_, wavelength_, luminosity_ in zip(
+                id, wavelength, luminosity
+            ):
                 line = lines[id_]
 
                 # save line wavelength
@@ -283,22 +307,23 @@ def add_lines(grid_name,
                     norm = 1.0
 
                 # calculate line luminosity and save it. Uses normalisation from spectra.
-                line['luminosity'][indices] = luminosity_*norm  # erg s^-1
-                
-                
-                if include_spectra:
+                line["luminosity"][indices] = luminosity_ * norm  # erg s^-1
 
-                    # calculate transmitted continuum at the line wavelength and save it. 
-                    line['transmitted_continuum'][indices] = np.interp(
-                        wavelength_, lam, spectra['transmitted'][indices])  # erg s^-1 Hz^-1
-                    
-                    # calculate nebular continuum at the line wavelength and save it. 
-                    line['nebular_continuum'][indices] = np.interp(
-                        wavelength_, lam, nebular_continuum)  # erg s^-1 Hz^-1
-                    
-                    # calculate total continuum at the line wavelength and save it. 
-                    line['continuum'][indices] = np.interp(
-                        wavelength_, lam, continuum)  # erg s^-1 Hz^-1
+                if include_spectra:
+                    # calculate transmitted continuum at the line wavelength and save it.
+                    line["transmitted_continuum"][indices] = np.interp(
+                        wavelength_, lam, spectra["transmitted"][indices]
+                    )  # erg s^-1 Hz^-1
+
+                    # calculate nebular continuum at the line wavelength and save it.
+                    line["nebular_continuum"][indices] = np.interp(
+                        wavelength_, lam, nebular_continuum
+                    )  # erg s^-1 Hz^-1
+
+                    # calculate total continuum at the line wavelength and save it.
+                    line["continuum"][indices] = np.interp(
+                        wavelength_, lam, continuum
+                    )  # erg s^-1 Hz^-1
 
                 if include_spectra:
                     # calculate stellar continuum at the line wavelength and save it.
@@ -327,7 +352,11 @@ if __name__ == "__main__":
     )  # path to synthesizer_data_dir
     parser.add_argument("-grid_name", "--grid_name", type=str, required=True)
     parser.add_argument(
-        "-include_spectra", "--include_spectra", type=bool, default=True, required=False
+        "-include_spectra",
+        "--include_spectra",
+        type=bool,
+        default=True,
+        required=False,
     )
     parser.add_argument(
         "-replace", "--replace", type=bool, default=False, required=False

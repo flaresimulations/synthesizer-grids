@@ -84,12 +84,12 @@ def make_grid(original_model_name, bin):
     synthesizer_model_name = get_model_filename(model)
 
     # this is the full path to the ultimate HDF5 grid file
-    out_filename = f"{synthesizer_data_dir}/grids/{synthesizer_model_name}.hdf5"
+    out_filename = (
+        f"{synthesizer_data_dir}/grids/{synthesizer_model_name}.hdf5"
+    )
 
     # input directory
-    input_dir = (
-        f'{synthesizer_data_dir}/input_files/bpass/{model["original_model_name"]}/'
-    )
+    input_dir = f'{synthesizer_data_dir}/input_files/bpass/{model["original_model_name"]}/'
 
     # --- ccreate metallicity grid and dictionary
     Zk_to_Z = {
@@ -144,7 +144,9 @@ def make_grid(original_model_name, bin):
         spec = load.model_output(f"{input_dir}/{fn_}")
 
         for ia, log10age in enumerate(log10ages):
-            spectra[ia, iZ, :] = spec[str(log10age)].values  # Lsol AA^-1 10^6 Msol^-1
+            spectra[ia, iZ, :] = spec[
+                str(log10age)
+            ].values  # Lsol AA^-1 10^6 Msol^-1
 
     # convert spectra to synthesizer base units
     spectra /= 1e6  # Lsol AA^-1 Msol^-1
@@ -157,7 +159,9 @@ def make_grid(original_model_name, bin):
         write_attribute(out_filename, "/", key, (value))
 
     # write out remaining stellar mass and remnant fractions
-    write_data_h5py(out_filename, "star_fraction", data=stellar_mass, overwrite=True)
+    write_data_h5py(
+        out_filename, "star_fraction", data=stellar_mass, overwrite=True
+    )
     write_attribute(
         out_filename,
         "star_fraction",
@@ -165,7 +169,9 @@ def make_grid(original_model_name, bin):
         ("Two-dimensional remaining stellar " "fraction grid, [age,Z]"),
     )
 
-    write_data_h5py(out_filename, "remnant_fraction", data=remnant_mass, overwrite=True)
+    write_data_h5py(
+        out_filename, "remnant_fraction", data=remnant_mass, overwrite=True
+    )
     write_attribute(
         out_filename,
         "remnant_fraction",
@@ -174,7 +180,9 @@ def make_grid(original_model_name, bin):
     )
 
     # write out stellar spectra
-    write_data_h5py(out_filename, "spectra/incident", data=spectra, overwrite=True)
+    write_data_h5py(
+        out_filename, "spectra/incident", data=spectra, overwrite=True
+    )
     write_attribute(
         out_filename,
         "spectra/incident",
@@ -187,7 +195,9 @@ def make_grid(original_model_name, bin):
     write_attribute(out_filename, "/", "axes", ("log10age", "metallicity"))
 
     # write out log10ages
-    write_data_h5py(out_filename, "axes/log10age", data=log10ages, overwrite=True)
+    write_data_h5py(
+        out_filename, "axes/log10age", data=log10ages, overwrite=True
+    )
     write_attribute(
         out_filename,
         "axes/log10age",
@@ -198,7 +208,9 @@ def make_grid(original_model_name, bin):
 
     # write out metallicities
     write_data_h5py(out_filename, "axes/metallicity", data=Zs, overwrite=True)
-    write_attribute(out_filename, "axes/metallicity", "Description", "raw abundances")
+    write_attribute(
+        out_filename, "axes/metallicity", "Description", "raw abundances"
+    )
     write_attribute(out_filename, "axes/metallicity", "Units", "dimensionless")
 
     # write out wavelength grid

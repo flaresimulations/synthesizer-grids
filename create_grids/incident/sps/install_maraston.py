@@ -58,7 +58,9 @@ def make_grid(model, imf, hr_morphology):
     print(synthesizer_model_name)
 
     # Define output
-    out_filename = f"{synthesizer_data_dir}/grids/dev/{synthesizer_model_name}.hdf5"
+    out_filename = (
+        f"{synthesizer_data_dir}/grids/dev/{synthesizer_model_name}.hdf5"
+    )
 
     # NOTE THE LOWEST METALLICITY MODEL DOES NOT HAVE YOUNG AGES so don't use
     metallicities = np.array(
@@ -89,9 +91,7 @@ def make_grid(model, imf, hr_morphology):
 
     for iZ, metallicity in enumerate(metallicities):
         for ia, age_Gyr in enumerate(ages_Gyr):
-            fn = (
-                f"{input_dir}/sed.{imf}z{metallicity_code[metallicity]}.{hr_morphology}"
-            )
+            fn = f"{input_dir}/sed.{imf}z{metallicity_code[metallicity]}.{hr_morphology}"
             print(iZ, ia, fn)
             ages_, _, lam_, flam_ = np.loadtxt(fn).T
 
@@ -99,7 +99,9 @@ def make_grid(model, imf, hr_morphology):
             fnu = flam_to_fnu(lam, flam)
             spec[ia, iZ] = fnu
 
-    write_data_h5py(out_filename, "spectra/wavelength", data=lam, overwrite=True)
+    write_data_h5py(
+        out_filename, "spectra/wavelength", data=lam, overwrite=True
+    )
     write_attribute(
         out_filename,
         "spectra/wavelength",
@@ -108,7 +110,9 @@ def make_grid(model, imf, hr_morphology):
     )
     write_attribute(out_filename, "spectra/wavelength", "Units", "AA")
 
-    write_data_h5py(out_filename, "spectra/incident", data=spec, overwrite=True)
+    write_data_h5py(
+        out_filename, "spectra/incident", data=spec, overwrite=True
+    )
     write_attribute(
         out_filename,
         "spectra/incident",
@@ -120,7 +124,9 @@ def make_grid(model, imf, hr_morphology):
     # write out axes
     write_attribute(out_filename, "/", "axes", ("log10age", "metallicity"))
 
-    write_data_h5py(out_filename, "axes/log10age", data=log10ages, overwrite=True)
+    write_data_h5py(
+        out_filename, "axes/log10age", data=log10ages, overwrite=True
+    )
     write_attribute(
         out_filename,
         "axes/log10age",
@@ -132,7 +138,9 @@ def make_grid(model, imf, hr_morphology):
     write_data_h5py(
         out_filename, "axes/metallicity", data=metallicities, overwrite=True
     )
-    write_attribute(out_filename, "axes/metallicity", "Description", "raw abundances")
+    write_attribute(
+        out_filename, "axes/metallicity", "Description", "raw abundances"
+    )
     write_attribute(out_filename, "axes/metallicity", "Units", "dimensionless")
 
     return out_filename
@@ -140,7 +148,9 @@ def make_grid(model, imf, hr_morphology):
 
 # Lets include a way to call this script not via an entry point
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Maraston download and grid creation")
+    parser = argparse.ArgumentParser(
+        description="Maraston download and grid creation"
+    )
     parser.add_argument(
         "--download",
         default=False,

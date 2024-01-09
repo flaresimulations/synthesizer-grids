@@ -68,7 +68,9 @@ with h5py.File(filename, "w") as hf:
 
     # save wavelength dataset
     hf["spectra/wavelength"] = lam
-    hf["spectra/wavelength"].attrs["Description"] = "Wavelength of the spectra grid"
+    hf["spectra/wavelength"].attrs[
+        "Description"
+    ] = "Wavelength of the spectra grid"
     hf["spectra/wavelength"].attrs["Units"] = "Angstrom"
 
     # create empty spectra grid

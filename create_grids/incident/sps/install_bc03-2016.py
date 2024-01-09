@@ -44,7 +44,10 @@ def untar_data(synthesizer_data_dir):
     os.remove(fn)
 
     # --- unzip the individual files that need reading
-    model_dir = f"{synthesizer_data_dir}/input_files/" "bc03/models/Padova2000/chabrier"
+    model_dir = (
+        f"{synthesizer_data_dir}/input_files/"
+        "bc03/models/Padova2000/chabrier"
+    )
     files = glob.glob(f"{model_dir}/bc2003_hr_m*_chab_ssp.ised_ASCII.gz")
 
     for file in files:
@@ -133,7 +136,9 @@ def convertBC03(files=None):
         print("Number of ages: %s" % nAge)
         if ageBins is None:
             ageBins = ages
-            seds.resize((seds.shape[0], len(ageBins), seds.shape[2]), refcheck=False)
+            seds.resize(
+                (seds.shape[0], len(ageBins), seds.shape[2]), refcheck=False
+            )
         if not np.array_equal(ages, ageBins):  # check for consistency
             print("Age bins are not identical everywhere!!!")
             print("CANCELLING CONVERSION!!!")
@@ -147,12 +152,16 @@ def convertBC03(files=None):
         # These last three lines are identical and contain the metallicity
         (ZZ,) = re.search("Z=([0-9]+\.?[0-9]*)", line).groups()
         metalBins[iFile] = eval(ZZ)
-        seds.resize((len(metalBins), seds.shape[1], seds.shape[2]), refcheck=False)
+        seds.resize(
+            (len(metalBins), seds.shape[1], seds.shape[2]), refcheck=False
+        )
         # Read wavelength bins
         lambdas, lastLine = readBC03Array(file, lastLineFloat=lastLine)
         if lambdaBins is None:  # Write wavelengths to sed file
             lambdaBins = lambdas
-            seds.resize((seds.shape[0], seds.shape[1], len(lambdaBins)), refcheck=False)
+            seds.resize(
+                (seds.shape[0], seds.shape[1], len(lambdaBins)), refcheck=False
+            )
         if not np.array_equal(lambdas, lambdaBins):  # check for consistency
             print("Wavelength bins are not identical everywhere!!!")
             print("CANCELLING CONVERSION!!!")
@@ -200,7 +209,8 @@ def make_grid(variant, synthesizer_data_dir, out_filename):
         variant_code = "hr_stelib"
 
     basepath = (
-        f"{synthesizer_data_dir}/input_files/" f"bc03-2016/{variant_dir}/Chabrier_IMF/"
+        f"{synthesizer_data_dir}/input_files/"
+        f"bc03-2016/{variant_dir}/Chabrier_IMF/"
     )
 
     # Define files
@@ -255,13 +265,17 @@ def make_grid(variant, synthesizer_data_dir, out_filename):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="BC03-2016 download and grid creation")
+    parser = argparse.ArgumentParser(
+        description="BC03-2016 download and grid creation"
+    )
     parser.add_argument(
         "-synthesizer_data_dir",
         "--synthesizer_data_dir",
         default="/Users/sw376/Dropbox/Research/data/synthesizer",
     )
-    parser.add_argument("-download_data", "--download_data", type=bool, default=False)
+    parser.add_argument(
+        "-download_data", "--download_data", type=bool, default=False
+    )
 
     args = parser.parse_args()
 
@@ -293,7 +307,9 @@ if __name__ == "__main__":
         print(synthesizer_model_name)
 
         # this is the full path to the ultimate HDF5 grid file
-        out_filename = f"{synthesizer_data_dir}/grids/dev/{synthesizer_model_name}.hdf5"
+        out_filename = (
+            f"{synthesizer_data_dir}/grids/dev/{synthesizer_model_name}.hdf5"
+        )
 
         make_grid(variant, synthesizer_data_dir, out_filename)
 

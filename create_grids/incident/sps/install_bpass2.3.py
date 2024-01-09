@@ -94,12 +94,12 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
     print(synthesizer_model_name)
 
     # this is the full path to the ultimate HDF5 grid file
-    out_filename = f"{synthesizer_data_dir}/grids/{synthesizer_model_name}.hdf5"
+    out_filename = (
+        f"{synthesizer_data_dir}/grids/{synthesizer_model_name}.hdf5"
+    )
 
     # input directory
-    input_dir = (
-        f'{synthesizer_data_dir}/input_files/bpass/{model["original_model_name"]}/'
-    )
+    input_dir = f'{synthesizer_data_dir}/input_files/bpass/{model["original_model_name"]}/'
 
     # create metallicity grid and dictionary
     Zk_to_Z = {
@@ -154,7 +154,9 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
         print(iZ, Z)
 
         # get remaining and remnant fraction
-        fn_ = f"{input_dir}/starmass-{bs}-imf_{bpass_imf}.a{ae}.{Z_to_Zk[Z]}.dat"
+        fn_ = (
+            f"{input_dir}/starmass-{bs}-imf_{bpass_imf}.a{ae}.{Z_to_Zk[Z]}.dat"
+        )
         starmass = load.model_output(fn_)
         stellar_mass[:, iZ] = (
             starmass["stellar_mass"].values / 1e6
@@ -164,14 +166,18 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
         )  # convert to per M_sol
 
         # get original specific_ionising_lum
-        fn_ = f"{input_dir}/ionizing-{bs}-imf_{bpass_imf}.a{ae}.{Z_to_Zk[Z]}.dat"
+        fn_ = (
+            f"{input_dir}/ionizing-{bs}-imf_{bpass_imf}.a{ae}.{Z_to_Zk[Z]}.dat"
+        )
         ionising = load.model_output(fn_)
         specific_ionising_lum_original["HI"][:, iZ] = (
             ionising["prod_rate"].values - 6
         )  # convert to per M_sol
 
         # get spectra
-        fn_ = f"{input_dir}/spectra-{bs}-imf_{bpass_imf}.a{ae}.{Z_to_Zk[Z]}.dat"
+        fn_ = (
+            f"{input_dir}/spectra-{bs}-imf_{bpass_imf}.a{ae}.{Z_to_Zk[Z]}.dat"
+        )
         spec = load.model_output(fn_)
 
         for ia, log10age in enumerate(log10ages):
@@ -254,12 +260,12 @@ def make_full_grid(original_model_name, bs="bin"):
     print(synthesizer_model_name)
 
     # this is the full path to the ultimate HDF5 grid file
-    out_filename = f"{synthesizer_data_dir}/grids/dev/{synthesizer_model_name}.hdf5"
+    out_filename = (
+        f"{synthesizer_data_dir}/grids/dev/{synthesizer_model_name}.hdf5"
+    )
 
     # input directory
-    input_dir = (
-        f'{synthesizer_data_dir}/input_files/bpass/{model["original_model_name"]}/'
-    )
+    input_dir = f'{synthesizer_data_dir}/input_files/bpass/{model["original_model_name"]}/'
 
     # --- ccreate metallicity grid and dictionary
     Zk_to_Z = {
@@ -294,9 +300,7 @@ def make_full_grid(original_model_name, bs="bin"):
     }  # look up dictionary for filename
 
     # --- get ages
-    fn_ = (
-        f"{input_dir}/starmass-bin-imf_{bpass_imf}.a+00.{Z_to_Zk[metallicities[0]]}.dat"
-    )
+    fn_ = f"{input_dir}/starmass-bin-imf_{bpass_imf}.a+00.{Z_to_Zk[metallicities[0]]}.dat"
     starmass = load.model_output(fn_)
     log10ages = starmass["log_age"].values
 
@@ -377,7 +381,9 @@ def make_full_grid(original_model_name, bs="bin"):
         # print(key, value)
         write_attribute(out_filename, "/", key, (value))
 
-    write_data_h5py(out_filename, "star_fraction", data=stellar_mass, overwrite=True)
+    write_data_h5py(
+        out_filename, "star_fraction", data=stellar_mass, overwrite=True
+    )
     write_attribute(
         out_filename,
         "star_fraction",
@@ -385,7 +391,9 @@ def make_full_grid(original_model_name, bs="bin"):
         "Two-dimensional remaining stellar fraction grid, [age,Z]",
     )
 
-    write_data_h5py(out_filename, "remnant_fraction", data=remnant_mass, overwrite=True)
+    write_data_h5py(
+        out_filename, "remnant_fraction", data=remnant_mass, overwrite=True
+    )
     write_attribute(
         out_filename,
         "remnant_fraction",
@@ -408,7 +416,10 @@ def make_full_grid(original_model_name, bs="bin"):
             f"Two-dimensional (original) {ion} ionising photon production rate grid, [age,Z]",
         )
         write_attribute(
-            out_filename, f"specific_ionising_lum_original/{ion}", "Units", "dex(1/s)"
+            out_filename,
+            f"specific_ionising_lum_original/{ion}",
+            "Units",
+            "dex(1/s)",
         )
 
     for ion in ["HI", "HeII"]:
@@ -429,10 +440,14 @@ def make_full_grid(original_model_name, bs="bin"):
         )
 
     # write out axes
-    write_attribute(out_filename, "/", "axes", ("log10age", "metallicity", "alpha"))
+    write_attribute(
+        out_filename, "/", "axes", ("log10age", "metallicity", "alpha")
+    )
 
     # write out log10ages
-    write_data_h5py(out_filename, "axes/log10age", data=log10ages, overwrite=True)
+    write_data_h5py(
+        out_filename, "axes/log10age", data=log10ages, overwrite=True
+    )
     write_attribute(
         out_filename,
         "axes/log10age",
@@ -445,11 +460,15 @@ def make_full_grid(original_model_name, bs="bin"):
     write_data_h5py(
         out_filename, "axes/metallicity", data=metallicities, overwrite=True
     )
-    write_attribute(out_filename, "axes/metallicity", "Description", "raw abundances")
+    write_attribute(
+        out_filename, "axes/metallicity", "Description", "raw abundances"
+    )
     write_attribute(out_filename, "axes/metallicity", "Units", "dimensionless")
 
     # write of alpha values
-    write_data_h5py(out_filename, "axes/alpha", data=alpha_enhancements, overwrite=True)
+    write_data_h5py(
+        out_filename, "axes/alpha", data=alpha_enhancements, overwrite=True
+    )
     write_attribute(
         out_filename, "axes/alpha", "Description", "log10(alpha enhancement)"
     )
@@ -468,7 +487,9 @@ def make_full_grid(original_model_name, bs="bin"):
     write_attribute(out_filename, "spectra/wavelength", "Units", "Angstrom")
 
     # write stellar spectra
-    write_data_h5py(out_filename, "spectra/stellar", data=spectra, overwrite=True)
+    write_data_h5py(
+        out_filename, "spectra/stellar", data=spectra, overwrite=True
+    )
     write_attribute(
         out_filename,
         "spectra/stellar",
@@ -481,7 +502,9 @@ def make_full_grid(original_model_name, bs="bin"):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="BPASS_2.3 download and grid creation")
+    parser = argparse.ArgumentParser(
+        description="BPASS_2.3 download and grid creation"
+    )
 
     # flag whether to download data
     parser.add_argument(

@@ -55,10 +55,12 @@ def load_grid_params(param_file="c17.03-sps", dir="params"):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run a grid of incident cloudy models")
+    parser = argparse.ArgumentParser(
+        description="Run a grid of incident cloudy models"
+    )
 
     # machine (for submission script generation)
-    parser.add_argument("-machine", type=str, required=True) 
+    parser.add_argument("-machine", type=str, required=True)
 
     # path to synthesizer_data_dir
     parser.add_argument("-synthesizer_data_dir", type=str, required=True)
@@ -86,7 +88,9 @@ if __name__ == "__main__":
 
     # open the parent incident grid
     incident_grid = Grid(
-        args.incident_grid, grid_dir=f"{args.synthesizer_data_dir}", read_lines=False
+        args.incident_grid,
+        grid_dir=f"{args.synthesizer_data_dir}",
+        read_lines=False,
     )
 
     # get name of new grid (concatenation of incident_grid and cloudy parameter file)
@@ -137,14 +141,21 @@ if __name__ == "__main__":
     yaml.dump(params, open(f"{output_dir}/params.yaml", "w"))
 
     # get properties of the grid
-    n_axes, shape, n_models, mesh, model_list, index_list = get_grid_properties(
-        axes, grid_params, verbose=True
-    )
+    (
+        n_axes,
+        shape,
+        n_models,
+        mesh,
+        model_list,
+        index_list,
+    ) = get_grid_properties(axes, grid_params, verbose=True)
 
     # create new synthesizer grid to contain the new grid
 
     # open the new grid
-    with h5py.File(f"{args.synthesizer_data_dir}/{new_grid_name}.hdf5", "w") as hf:
+    with h5py.File(
+        f"{args.synthesizer_data_dir}/{new_grid_name}.hdf5", "w"
+    ) as hf:
         # open the original incident model grid
         with h5py.File(
             f"{args.synthesizer_data_dir}/{args.incident_grid}.hdf5", "r"
@@ -255,18 +266,24 @@ if __name__ == "__main__":
             # calculate the difference between the reference specific_ionising_lum (LyC continuum luminosity) and the current grid point
             delta_specific_ionising_lum = (
                 incident_grid.specific_ionising_lum["HI"][incident_grid_point]
-                - incident_grid.specific_ionising_lum["HI"][incident_ref_grid_point]
+                - incident_grid.specific_ionising_lum["HI"][
+                    incident_ref_grid_point
+                ]
             )
 
             # for spherical geometry the effective log10U is this
-            if params_['geometry'] == 'spherical':
-
-                log10U = np.log10(params_['reference_ionisation_parameter']) + (1/3) * delta_log10Q 
+            if params_["geometry"] == "spherical":
+                log10U = (
+                    np.log10(params_["reference_ionisation_parameter"])
+                    + (1 / 3) * delta_log10Q
+                )
 
             # for plane-parallel geometry the effective just scales with log10Q
-            elif params_['geometry'] == 'planeparallel':
-
-                log10U = np.log10(params_['reference_ionisation_parameter']) + delta_log10Q 
+            elif params_["geometry"] == "planeparallel":
+                log10U = (
+                    np.log10(params_["reference_ionisation_parameter"])
+                    + delta_log10Q
+                )
 
             else:
                 print(
@@ -274,9 +291,8 @@ if __name__ == "__main__":
                 )
 
         # if fixed U model is used
-        elif params_['ionisation_parameter_model'] == 'fixed':
-
-            log10U = np.log10(params_['ionisation_parameter']) 
+        elif params_["ionisation_parameter_model"] == "fixed":
+            log10U = np.log10(params_["ionisation_parameter"])
 
         else:
             print(
@@ -284,7 +300,7 @@ if __name__ == "__main__":
             )
 
         # set log10U to provide cloudy
-        params_['ionisation_parameter'] = 10**float(log10U)
+        params_["ionisation_parameter"] = 10 ** float(log10U)
 
         # get wavelength
         lam = incident_grid.lam  # AA
@@ -293,11 +309,17 @@ if __name__ == "__main__":
         lnu = incident_grid.spectra["incident"][incident_grid_point]
 
         # this returns the relevant shape commands, in this case for a tabulated SED
-        shape_commands = cloudy.ShapeCommands.table_sed(str(i+1), lam, lnu,  output_dir=output_dir)
-        
+        shape_commands = cloudy.ShapeCommands.table_sed(
+            str(i + 1), lam, lnu, output_dir=output_dir
+        )
+
         # create cloudy input file
         cloudy.create_cloudy_input(
-            str(i + 1), shape_commands, abundances, output_dir=output_dir, **params_
+            str(i + 1),
+            shape_commands,
+            abundances,
+            output_dir=output_dir,
+            **params_,
         )
 
     # create submission script

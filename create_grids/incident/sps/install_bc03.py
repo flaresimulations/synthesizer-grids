@@ -43,7 +43,10 @@ def untar_data(synthesizer_data_dir):
     os.remove(fn)
 
     # --- unzip the individual files that need reading
-    model_dir = f"{synthesizer_data_dir}/input_files/bc03/" "models/Padova2000/chabrier"
+    model_dir = (
+        f"{synthesizer_data_dir}/input_files/bc03/"
+        "models/Padova2000/chabrier"
+    )
 
     files = glob.glob(f"{model_dir}/bc2003_hr_m*_chab_ssp.ised_ASCII.gz")
 
@@ -134,7 +137,9 @@ def convertBC03(files=None):
         print("Number of ages: %s" % nAge)
         if ageBins is None:
             ageBins = ages
-            seds.resize((seds.shape[0], len(ageBins), seds.shape[2]), refcheck=False)
+            seds.resize(
+                (seds.shape[0], len(ageBins), seds.shape[2]), refcheck=False
+            )
         if not np.array_equal(ages, ageBins):  # check for consistency
             print("Age bins are not identical everywhere!!!")
             print("CANCELLING CONVERSION!!!")
@@ -148,12 +153,16 @@ def convertBC03(files=None):
         # These last three lines are identical and contain the metallicity
         (ZZ,) = re.search("Z=([0-9]+\.?[0-9]*)", line).groups()
         metalBins[iFile] = eval(ZZ)
-        seds.resize((len(metalBins), seds.shape[1], seds.shape[2]), refcheck=False)
+        seds.resize(
+            (len(metalBins), seds.shape[1], seds.shape[2]), refcheck=False
+        )
         # Read wavelength bins
         lambdas, lastLine = readBC03Array(file, lastLineFloat=lastLine)
         if lambdaBins is None:  # Write wavelengths to sed file
             lambdaBins = lambdas
-            seds.resize((seds.shape[0], seds.shape[1], len(lambdaBins)), refcheck=False)
+            seds.resize(
+                (seds.shape[0], seds.shape[1], len(lambdaBins)), refcheck=False
+            )
         if not np.array_equal(lambdas, lambdaBins):  # check for consistency
             print("Wavelength bins are not identical everywhere!!!")
             print("CANCELLING CONVERSION!!!")
@@ -190,10 +199,15 @@ def make_grid():
     produce grids used by synthesizer"""
 
     # output filename
-    out_filename = f"{synthesizer_data_dir}/grids/{synthesizer_model_name}.hdf5"
+    out_filename = (
+        f"{synthesizer_data_dir}/grids/{synthesizer_model_name}.hdf5"
+    )
 
     # Define base path
-    basepath = f"{synthesizer_data_dir}/input_files/bc03/" "models/Padova2000/chabrier/"
+    basepath = (
+        f"{synthesizer_data_dir}/input_files/bc03/"
+        "models/Padova2000/chabrier/"
+    )
 
     # Define files
     files = [
@@ -236,7 +250,9 @@ def make_grid():
     write_attribute(out_filename, "/", "axes", ("log10age", "metallicity"))
 
     # write out log10ages
-    write_data_h5py(out_filename, "axes/log10age", data=log10ages, overwrite=True)
+    write_data_h5py(
+        out_filename, "axes/log10age", data=log10ages, overwrite=True
+    )
     write_attribute(
         out_filename,
         "axes/log10age",
@@ -249,10 +265,14 @@ def make_grid():
     write_data_h5py(
         out_filename, "axes/metallicity", data=metallicities, overwrite=True
     )
-    write_attribute(out_filename, "axes/metallicity", "Description", "raw abundances")
+    write_attribute(
+        out_filename, "axes/metallicity", "Description", "raw abundances"
+    )
     write_attribute(out_filename, "axes/metallicity", "Units", "dimensionless")
 
-    write_data_h5py(out_filename, "spectra/wavelength", data=lam, overwrite=True)
+    write_data_h5py(
+        out_filename, "spectra/wavelength", data=lam, overwrite=True
+    )
     write_attribute(
         out_filename,
         "spectra/wavelength",
@@ -261,7 +281,9 @@ def make_grid():
     )
     write_attribute(out_filename, "spectra/wavelength", "Units", "AA")
 
-    write_data_h5py(out_filename, "spectra/incident", data=spec, overwrite=True)
+    write_data_h5py(
+        out_filename, "spectra/incident", data=spec, overwrite=True
+    )
     write_attribute(
         out_filename,
         "spectra/incident",
@@ -275,13 +297,17 @@ def make_grid():
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="BC03 download and grid creation")
+    parser = argparse.ArgumentParser(
+        description="BC03 download and grid creation"
+    )
     parser.add_argument(
         "-synthesizer_data_dir",
         "--synthesizer_data_dir",
         default="/Users/sw376/Dropbox/Research/data/synthesizer",
     )
-    parser.add_argument("-download_data", "--download_data", type=bool, default=False)
+    parser.add_argument(
+        "-download_data", "--download_data", type=bool, default=False
+    )
 
     args = parser.parse_args()
 

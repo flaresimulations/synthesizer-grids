@@ -46,7 +46,9 @@ def get_grid_properties(axes, axes_values, verbose=False):
         print(f"number of models to run: {n_models}")
 
     # create the mesh of the grid
-    mesh = np.array(np.meshgrid(*[np.array(axes_values[axis]) for axis in axes]))
+    mesh = np.array(
+        np.meshgrid(*[np.array(axes_values[axis]) for axis in axes])
+    )
 
     # create the list of the models
     model_list = mesh.T.reshape(n_models, n_axes)
@@ -77,7 +79,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "-input_grid", type=str, required=True
     )  # grid_name, used to define parameter file
-    parser.add_argument("-output_dir", type=str, required=True)  # the parameters of the
+    parser.add_argument(
+        "-output_dir", type=str, required=True
+    )  # the parameters of the
     parser.add_argument(
         "-output_grid", type=str, required=True
     )  # the parameters of the
@@ -87,7 +91,9 @@ if __name__ == "__main__":
     original_grid = h5py.File(f"{args.input_dir}/{args.input_grid}.hdf5", "r")
 
     # open the new grid file
-    rebinned_grid = h5py.File(f"{args.output_dir}/{args.output_grid}.hdf5", "w")
+    rebinned_grid = h5py.File(
+        f"{args.output_dir}/{args.output_grid}.hdf5", "w"
+    )
 
     # copy attributes
     for k, v in original_grid.attrs.items():

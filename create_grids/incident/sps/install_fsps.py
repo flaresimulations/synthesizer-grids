@@ -20,7 +20,9 @@ def generate_grid(model):
 
     if imf_type == "chabrier03":
         sp = fsps.StellarPopulation(
-            imf_type=1, imf_upper_limit=imf_masses[-1], imf_lower_limit=imf_masses[0]
+            imf_type=1,
+            imf_upper_limit=imf_masses[-1],
+            imf_lower_limit=imf_masses[0],
         )
     elif imf_type == "bpl":
         imf_slopes = model["imf_slopes"]
@@ -47,14 +49,18 @@ def generate_grid(model):
     # include the isochrones/spectra as the sps_variant name
     # model['sps_variant'] = '-'.join(map(lambda x: str(x), sp.libraries[:2]))
 
-    model["sps_variant"] = "-".join(map(lambda x: x.decode("utf-8"), sp.libraries[:2]))
+    model["sps_variant"] = "-".join(
+        map(lambda x: x.decode("utf-8"), sp.libraries[:2])
+    )
     print(model["sps_variant"])
 
     # generate the synthesizer_model_name
     synthesizer_model_name = get_model_filename(model)
 
     # this is the full path to the ultimate HDF5 grid file
-    out_filename = f"{synthesizer_data_dir}/grids/{synthesizer_model_name}.hdf5"
+    out_filename = (
+        f"{synthesizer_data_dir}/grids/{synthesizer_model_name}.hdf5"
+    )
 
     lam = sp.wavelengths  # units: Angstroms
     log10ages = sp.log_age  # units: log10(years)
@@ -65,13 +71,14 @@ def generate_grid(model):
     na = len(log10ages)
     nZ = len(metallicities)
 
-    specific_ionising_lum = np.zeros((na, nZ))  # the ionising photon production rate
+    specific_ionising_lum = np.zeros(
+        (na, nZ)
+    )  # the ionising photon production rate
     spec = np.zeros((na, nZ, len(lam)))
 
     for iZ in range(nZ):
         spec_ = sp.get_spectrum(zmet=iZ + 1)[1]  # 2D array Lsol / AA
         for ia in range(na):
-
             lnu = spec_[ia]  # Lsol / Hz
             lnu *= 3.826e33  # erg s^-1 Hz^-1 Msol^-1
             spec[ia, iZ] = lnu
@@ -81,7 +88,9 @@ def generate_grid(model):
         write_attribute(out_filename, "/", key, (value))
 
     # write wavelength grid
-    write_data_h5py(out_filename, "spectra/wavelength", data=lam, overwrite=True)
+    write_data_h5py(
+        out_filename, "spectra/wavelength", data=lam, overwrite=True
+    )
     write_attribute(
         out_filename,
         "spectra/wavelength",
@@ -91,7 +100,9 @@ def generate_grid(model):
     write_attribute(out_filename, "spectra/wavelength", "Units", "Angstrom")
 
     # write stellar spectra
-    write_data_h5py(out_filename, "spectra/incident", data=spec, overwrite=True)
+    write_data_h5py(
+        out_filename, "spectra/incident", data=spec, overwrite=True
+    )
     write_attribute(
         out_filename,
         "spectra/incident",
@@ -104,7 +115,9 @@ def generate_grid(model):
     write_attribute(out_filename, "/", "axes", ("log10age", "metallicity"))
 
     # write out log10ages
-    write_data_h5py(out_filename, "axes/log10age", data=log10ages, overwrite=True)
+    write_data_h5py(
+        out_filename, "axes/log10age", data=log10ages, overwrite=True
+    )
     write_attribute(
         out_filename,
         "axes/log10age",
@@ -117,14 +130,18 @@ def generate_grid(model):
     write_data_h5py(
         out_filename, "axes/metallicity", data=metallicities, overwrite=True
     )
-    write_attribute(out_filename, "axes/metallicity", "Description", "raw abundances")
+    write_attribute(
+        out_filename, "axes/metallicity", "Description", "raw abundances"
+    )
     write_attribute(out_filename, "axes/metallicity", "Units", "dimensionless")
 
     return out_filename
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="FSPS download and grid creation")
+    parser = argparse.ArgumentParser(
+        description="FSPS download and grid creation"
+    )
     parser.add_argument(
         "-synthesizer_data_dir",
         "--synthesizer_data_dir",
@@ -159,7 +176,9 @@ if __name__ == "__main__":
     #            ]
 
     # different high-mass slopes
-    models += [{"imf_slopes": [1.3, 2.3, a3]} for a3 in np.arange(1.5, 3.01, 0.1)]
+    models += [
+        {"imf_slopes": [1.3, 2.3, a3]} for a3 in np.arange(1.5, 3.01, 0.1)
+    ]
 
     # # different high-mass cut-offs
     # models += [{'imf_type': 'chabrier03', 'imf_masses': [0.08, hmc]}
