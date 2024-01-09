@@ -45,11 +45,6 @@ class GridFile:
 
         This will open the HDF5 file.
 
-        NOTE: Closing of the file is done automatically at garbage collection,
-              if the close method has not been called. This means the user
-              never has to explictly close the HDF5 file and accidental
-              corruption by not closing is not possible.
-
         Args:
             filepath (str)
                 The file path to where the file should be stored. This should
@@ -67,8 +62,8 @@ class GridFile:
         # What mode are we using?
         self.mode = mode
 
-        # Open the file (will be closed at collection or by method call)
-        self.hdf = h5py.File(self.filepath, self.mode)
+        # Setup the HDF5 file attribute
+        self.hdf = None
 
         # Set the overwrite flag
         self.overwrite = overwrite
@@ -80,29 +75,9 @@ class GridFile:
                 f"Mode was: {self.mode}, The overwrite flag will be ignored."
             )
 
-    def close(self):
-        """
-        Closes the HDF5 file.
-        """
-
-        # Close the file
-        if hasattr(self, "hdf") and self.hdf is not None:
-            self.hdf.close()
-
-            # Set it to None so we know
-            self.hdf = None
-
-    def __del__(self):
-        """
-        Overloading the del function to auto close the file if necessary.
-        """
-
-        # Close the file
-        self.close()
-
     def _dataset_exists(self, key):
         """
-        Checks to see if a dataset exists already.
+        Check to see if a dataset exists already.
 
         Only appicable when self.mode = "r+" (i.e. appending)
 
@@ -117,7 +92,7 @@ class GridFile:
 
     def _attr_exists(self, group, attr_key):
         """
-        Checks to see if a dataset exists already.
+        Check to see if a dataset exists already.
 
         Only appicable when self.mode = "r+" (i.e. appending)
 
@@ -148,6 +123,8 @@ class GridFile:
             verbose (bool)
                 Are we talking?
         """
+        # Open the file
+        self.hdf = h5py.File(self.filepath, self.mode)
 
         # If we are overwriting we have some extra work to do
         if self.mode == "r+" and self.overwrite:
@@ -169,6 +146,8 @@ class GridFile:
 
         # Finally, Write it!
         self.hdf[group].attrs[attr_key] = data
+
+        self.hdf.close()
 
     def write_dataset(
         self,
@@ -201,6 +180,9 @@ class GridFile:
                 Any attributes of the dataset can be passed in the form:
                 attr_key=attr_value (like the units kwarg).
         """
+
+        # Open the file
+        self.hdf = h5py.File(self.filepath, self.mode)
 
         # If we are overwriting we have some extra work to do
         if self.mode == "r+" and self.overwrite:
@@ -238,6 +220,8 @@ class GridFile:
         for dset_attr_key, val in kwargs.items():
             dset.attrs[dset_attr_key] = val
 
+        self.hdf.close()
+
     def read_attribute(self, attr_key, group="/"):
         """
         Read an attribute and return it.
@@ -253,7 +237,10 @@ class GridFile:
             array-like/float/int/str
                 The attribute stored at hdf[group].attrs[attr_key].
         """
-        return self.hdf[group].attrs[attr_key]
+        self.hdf = h5py.File(self.filepath, self.mode)
+        attr = self.hdf[group].attrs[attr_key]
+        self.hdf.close()
+        return attr
 
     def read_dataset(self, key, print_description=False):
         """
@@ -270,6 +257,8 @@ class GridFile:
             unyt_array/array-like
                 The dataset stored at hdf[key].
         """
+        # Open the file
+        self.hdf = h5py.File(self.filepath, self.mode)
 
         # Get the data
         data = self.hdf[key]
@@ -284,6 +273,8 @@ class GridFile:
         if unit_str != "dimensionless":
             return unyt_array(data, unit_str)
 
+        self.hdf.close()
+
         return data
 
     def write_grid_common(
@@ -296,6 +287,8 @@ class GridFile:
         descriptions={},
     ):
         """
+        Write out the common parts of a Synthesizer grid.
+
         This writer method writes all datasets and attributes that Synthesizer
         expects to exist, regardless of model.
 
@@ -327,7 +320,6 @@ class GridFile:
             ValueError
                 If arguments disagree with each other an error is thrown.
         """
-
         # Write out model parameters as top level attributes
         for key, value in model.items():
             self.write_attribute("/", key, value)
@@ -393,8 +385,9 @@ class GridFile:
 
     def add_specific_ionising_lum(self, ions=("HI", "HeII"), limit=100):
         """
-        Calculate the specific ionising photon luminosity for different ions
-        and write them to the file.
+        Calculate the specific ionising photon luminosity for different ions.
+
+        This will also write them to the file.
 
         This can only be used after the spectra arrays have been written out!
 
@@ -406,6 +399,8 @@ class GridFile:
                 used in the integration adaptive algorithm.
 
         """
+        # Open the file
+        self.hdf = h5py.File(self.filepath, self.mode)
 
         # Get the properties of the grid including the dimensions etc.
         (
@@ -461,9 +456,13 @@ class GridFile:
                     "Two-dimensional {ion} ionising photon production rate grid, [age, Z]",
                 )
 
+        self.hdf.close()
+
 
 def read_params(param_file):
     """
+    Read a parameter file and return the imported parameters.
+
     Args:
     param_file (str) location of parameter file
 
