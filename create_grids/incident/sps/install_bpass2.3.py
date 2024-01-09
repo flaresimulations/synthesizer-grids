@@ -139,13 +139,13 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
     remnant_mass = np.zeros((na, nZ))
 
     # the ionising photon production rate
-    specific_ionising_lum = {}
-    specific_ionising_lum["HI"] = np.zeros((na, nZ))
-    specific_ionising_lum["HeII"] = np.zeros((na, nZ))
+    log10Q = {}
+    log10Q["HI"] = np.zeros((na, nZ))
+    log10Q["HeII"] = np.zeros((na, nZ))
 
     # provided by BPASS, sanity check for above
-    specific_ionising_lum_original = {}
-    specific_ionising_lum_original["HI"] = np.zeros((na, nZ))
+    log10Q_original = {}
+    log10Q_original["HI"] = np.zeros((na, nZ))
 
     spectra = np.zeros((na, nZ, len(wavelengths)))
 
@@ -164,12 +164,12 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
             starmass["remnant_mass"].values / 1e6
         )  # convert to per M_sol
 
-        # get original specific_ionising_lum
+        # get original log10Q
         fn_ = (
             f"{input_dir}/ionizing-{bs}-imf_{bpass_imf}.a{ae}.{Z_to_Zk[Z]}.dat"
         )
         ionising = load.model_output(fn_)
-        specific_ionising_lum_original["HI"][:, iZ] = (
+        log10Q_original["HI"][:, iZ] = (
             ionising["prod_rate"].values - 6
         )  # convert to per M_sol
 
@@ -192,7 +192,7 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
             for ion in ["HI", "HeII"]:
                 limit = 100
                 ionisation_energy = Ions.energy[ion]
-                specific_ionising_lum[ion][ia, iZ] = np.log10(
+                log10Q[ion][ia, iZ] = np.log10(
                     calculate_Q(
                         wavelengths,
                         spec_,
@@ -226,16 +226,16 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
         units="Msun",
     )
     out_grid.write_dataset(
-        f"specific_ionising_lum_original/HI",
-        specific_ionising_lum_original["HI"],
+        f"log10Q_original/HI",
+        log10Q_original["HI"],
         "Two-dimensional (original) HI ionising photon"
         " production rate grid, [age,Z] (dex(1/s))",
         units="dimensionless",
     )
     for ion in ["HI", "HeII"]:
         out_grid.write_dataset(
-            f"specific_ionising_lum/{ion}",
-            specific_ionising_lum[ion],
+            f"log10Q/{ion}",
+            log10Q[ion],
             f"Two-dimensional {ion} ionising photon"
             " production rate grid, [age, Z] (desc(1/s))",
             units="dimensionless",
@@ -317,13 +317,13 @@ def make_full_grid(original_model_name, bs="bin"):
     remnant_mass = np.zeros((na, nZ, nae))
 
     # the ionising photon production rate
-    specific_ionising_lum = {}
-    specific_ionising_lum["HI"] = np.zeros((na, nZ, nae))
-    specific_ionising_lum["HeII"] = np.zeros((na, nZ, nae))
+    log10Q = {}
+    log10Q["HI"] = np.zeros((na, nZ, nae))
+    log10Q["HeII"] = np.zeros((na, nZ, nae))
 
     # provided by BPASS, sanity check for above
-    specific_ionising_lum_original = {}
-    specific_ionising_lum_original["HI"] = np.zeros((na, nZ, nae))
+    log10Q_original = {}
+    log10Q_original["HI"] = np.zeros((na, nZ, nae))
 
     spectra = np.zeros((na, nZ, nae, len(wavelengths)))
 
@@ -340,10 +340,10 @@ def make_full_grid(original_model_name, bs="bin"):
             stellar_mass[:, iZ, iae] = starmass["stellar_mass"].values / 1e6
             remnant_mass[:, iZ, iae] = starmass["remnant_mass"].values / 1e6
 
-            # --- get original specific_ionising_lum
+            # --- get original log10Q
             fn_ = f"{input_dir}/ionizing-{bs}-imf_{bpass_imf}.a{aek}.{Zk}.dat"
             ionising = load.model_output(fn_)
-            specific_ionising_lum_original["HI"][:, iZ, iae] = (
+            log10Q_original["HI"][:, iZ, iae] = (
                 ionising["prod_rate"].values - 6
             )  # convert to per M_sol
 
@@ -365,7 +365,7 @@ def make_full_grid(original_model_name, bs="bin"):
                 for ion in ["HI", "HeII"]:
                     limit = 100
                     ionisation_energy = Ions.energy[ion]
-                    specific_ionising_lum[ion][ia, iZ, iae] = np.log10(
+                    log10Q[ion][ia, iZ, iae] = np.log10(
                         calculate_Q(
                             wavelengths,
                             spec_,
@@ -403,19 +403,19 @@ def make_full_grid(original_model_name, bs="bin"):
     for ion in ["HI"]:
         write_data_h5py(
             out_filename,
-            f"specific_ionising_lum_original/{ion}",
-            data=specific_ionising_lum_original[ion],
+            f"log10Q_original/{ion}",
+            data=log10Q_original[ion],
             overwrite=True,
         )
         write_attribute(
             out_filename,
-            f"specific_ionising_lum_original/{ion}",
+            f"log10Q_original/{ion}",
             "Description",
             f"Two-dimensional (original) {ion} ionising photon production rate grid, [age,Z]",
         )
         write_attribute(
             out_filename,
-            f"specific_ionising_lum_original/{ion}",
+            f"log10Q_original/{ion}",
             "Units",
             "dex(1/s)",
         )
@@ -423,19 +423,17 @@ def make_full_grid(original_model_name, bs="bin"):
     for ion in ["HI", "HeII"]:
         write_data_h5py(
             out_filename,
-            f"specific_ionising_lum/{ion}",
-            data=specific_ionising_lum[ion],
+            f"log10Q/{ion}",
+            data=log10Q[ion],
             overwrite=True,
         )
         write_attribute(
             out_filename,
-            f"specific_ionising_lum/{ion}",
+            f"log10Q/{ion}",
             "Description",
             f"Two-dimensional {ion} ionising photon production rate grid, [age,Z]",
         )
-        write_attribute(
-            out_filename, f"specific_ionising_lum/{ion}", "Units", "dex(1/s)"
-        )
+        write_attribute(out_filename, f"log10Q/{ion}", "Units", "dex(1/s)")
 
     # write out axes
     write_attribute(
