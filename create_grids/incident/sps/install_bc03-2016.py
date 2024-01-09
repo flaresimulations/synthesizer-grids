@@ -18,7 +18,7 @@ from utils import (
     __tag__,
     write_data_h5py,
     write_attribute,
-    add_log10Q,
+    add_specific_ionising_luminosity,
     get_model_filename,
 )
 
@@ -347,4 +347,4 @@ if __name__ == "__main__":
 
         make_grid(variant, synthesizer_data_dir, out_filename)
 
-        add_log10Q(out_filename)
+        add_specific_ionising_luminosity(out_filename)

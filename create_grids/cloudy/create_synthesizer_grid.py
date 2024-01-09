@@ -169,12 +169,12 @@ def add_spectra(grid_name, synthesizer_data_dir):
             # read the continuum file containing the spectra
             spec_dict = cloudy.read_continuum(infile, return_dict=True)
 
-            # if hf['log10Q/HI'] already exists (only true for non-cloudy
+            # if hf['specific_ionising_luminosity/HI'] already exists (only true for non-cloudy
             # models) renormalise the spectrum.
 
             # need to add sed object and update calculate_Q
 
-            if "log10Q/HI" in hf:
+            if "specific_ionising_luminosity/HI" in hf:
                 # create sed object
                 sed = Sed(lam=lam, lnu=spec_dict["incident"])
 
@@ -188,7 +188,9 @@ def add_spectra(grid_name, synthesizer_data_dir):
                 #                ionisation_energy=13.6 * eV)
 
                 # calculate normalisation
-                normalisation = hf["log10Q/HI"][indices] - np.log10(Q)
+                normalisation = hf["specific_ionising_luminosity/HI"][
+                    indices
+                ] - np.log10(Q)
 
                 # save normalisation for later use (rescaling lines)
                 spectra["normalisation"][indices] = 10**normalisation
@@ -218,8 +220,8 @@ def add_lines(
         Directory where synthesizer data is kept.
     line_type : str
         The type of line file to use (linelist, lines)
-    dlog10Q
-        The difference between the original and cloudy log10Q used for rescaling the cloudy spectra
+    dspecific_ionising_luminosity
+        The difference between the original and cloudy specific_ionising_luminosity used for rescaling the cloudy spectra
     """
 
     # open the new grid

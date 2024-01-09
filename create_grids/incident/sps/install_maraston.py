@@ -15,7 +15,7 @@ from utils import (
     __tag__,
     write_data_h5py,
     write_attribute,
-    add_log10Q,
+    add_specific_ionising_luminosity,
     get_model_filename,
 )
 
@@ -200,4 +200,4 @@ if __name__ == "__main__":
             model["sps_variant"] = hr_morphology
             out_filename = make_grid(model, imf, hr_morphology)
 
-            add_log10Q(out_filename)
+            add_specific_ionising_luminosity(out_filename)

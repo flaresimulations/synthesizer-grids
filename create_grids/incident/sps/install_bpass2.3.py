@@ -17,7 +17,7 @@ from utils import (
     __tag__,
     write_data_h5py,
     write_attribute,
-    add_log10Q,
+    add_specific_ionising_luminosity,
     get_model_filename,
 )
 
@@ -139,13 +139,13 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
     remnant_mass = np.zeros((na, nZ))
 
     # the ionising photon production rate
-    log10Q = {}
-    log10Q["HI"] = np.zeros((na, nZ))
-    log10Q["HeII"] = np.zeros((na, nZ))
+    specific_ionising_luminosity = {}
+    specific_ionising_luminosity["HI"] = np.zeros((na, nZ))
+    specific_ionising_luminosity["HeII"] = np.zeros((na, nZ))
 
     # provided by BPASS, sanity check for above
-    log10Q_original = {}
-    log10Q_original["HI"] = np.zeros((na, nZ))
+    specific_ionising_luminosity_original = {}
+    specific_ionising_luminosity_original["HI"] = np.zeros((na, nZ))
 
     spectra = np.zeros((na, nZ, len(wavelengths)))
 
@@ -164,12 +164,12 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
             starmass["remnant_mass"].values / 1e6
         )  # convert to per M_sol
 
-        # get original log10Q
+        # get original specific_ionising_luminosity
         fn_ = (
             f"{input_dir}/ionizing-{bs}-imf_{bpass_imf}.a{ae}.{Z_to_Zk[Z]}.dat"
         )
         ionising = load.model_output(fn_)
-        log10Q_original["HI"][:, iZ] = (
+        specific_ionising_luminosity_original["HI"][:, iZ] = (
             ionising["prod_rate"].values - 6
         )  # convert to per M_sol
 
@@ -192,7 +192,7 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
             for ion in ["HI", "HeII"]:
                 limit = 100
                 ionisation_energy = Ions.energy[ion]
-                log10Q[ion][ia, iZ] = np.log10(
+                specific_ionising_luminosity[ion][ia, iZ] = np.log10(
                     calculate_Q(
                         wavelengths,
                         spec_,
@@ -229,31 +229,42 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
     for ion in ["HI"]:
         write_data_h5py(
             out_filename,
-            f"log10Q_original/{ion}",
-            data=log10Q_original[ion],
+            f"specific_ionising_luminosity_original/{ion}",
+            data=specific_ionising_luminosity_original[ion],
             overwrite=True,
         )
         write_attribute(
             out_filename,
-            f"log10Q_original/{ion}",
+            f"specific_ionising_luminosity_original/{ion}",
             "Description",
             f"Two-dimensional (original) {ion} ionising photon production rate grid, [age,Z]",
         )
         write_attribute(
-            out_filename, f"log10Q_original/{ion}", "Units", "dex(1/s)"
+            out_filename,
+            f"specific_ionising_luminosity_original/{ion}",
+            "Units",
+            "dex(1/s)",
         )
 
     for ion in ["HI", "HeII"]:
         write_data_h5py(
-            out_filename, f"log10Q/{ion}", data=log10Q[ion], overwrite=True
+            out_filename,
+            f"specific_ionising_luminosity/{ion}",
+            data=specific_ionising_luminosity[ion],
+            overwrite=True,
         )
         write_attribute(
             out_filename,
-            f"log10Q/{ion}",
+            f"specific_ionising_luminosity/{ion}",
             "Description",
             f"Two-dimensional {ion} ionising photon production rate grid, [age,Z]",
         )
-        write_attribute(out_filename, f"log10Q/{ion}", "Units", "dex(1/s)")
+        write_attribute(
+            out_filename,
+            f"specific_ionising_luminosity/{ion}",
+            "Units",
+            "dex(1/s)",
+        )
 
     write_data_h5py(
         out_filename, "spectra/incident", data=spectra, overwrite=True
@@ -373,13 +384,13 @@ def make_full_grid(original_model_name, bs="bin"):
     remnant_mass = np.zeros((na, nZ, nae))
 
     # the ionising photon production rate
-    log10Q = {}
-    log10Q["HI"] = np.zeros((na, nZ, nae))
-    log10Q["HeII"] = np.zeros((na, nZ, nae))
+    specific_ionising_luminosity = {}
+    specific_ionising_luminosity["HI"] = np.zeros((na, nZ, nae))
+    specific_ionising_luminosity["HeII"] = np.zeros((na, nZ, nae))
 
     # provided by BPASS, sanity check for above
-    log10Q_original = {}
-    log10Q_original["HI"] = np.zeros((na, nZ, nae))
+    specific_ionising_luminosity_original = {}
+    specific_ionising_luminosity_original["HI"] = np.zeros((na, nZ, nae))
 
     spectra = np.zeros((na, nZ, nae, len(wavelengths)))
 
@@ -396,10 +407,10 @@ def make_full_grid(original_model_name, bs="bin"):
             stellar_mass[:, iZ, iae] = starmass["stellar_mass"].values / 1e6
             remnant_mass[:, iZ, iae] = starmass["remnant_mass"].values / 1e6
 
-            # --- get original log10Q
+            # --- get original specific_ionising_luminosity
             fn_ = f"{input_dir}/ionizing-{bs}-imf_{bpass_imf}.a{aek}.{Zk}.dat"
             ionising = load.model_output(fn_)
-            log10Q_original["HI"][:, iZ, iae] = (
+            specific_ionising_luminosity_original["HI"][:, iZ, iae] = (
                 ionising["prod_rate"].values - 6
             )  # convert to per M_sol
 
@@ -421,7 +432,7 @@ def make_full_grid(original_model_name, bs="bin"):
                 for ion in ["HI", "HeII"]:
                     limit = 100
                     ionisation_energy = Ions.energy[ion]
-                    log10Q[ion][ia, iZ, iae] = np.log10(
+                    specific_ionising_luminosity[ion][ia, iZ, iae] = np.log10(
                         calculate_Q(
                             wavelengths,
                             spec_,
@@ -459,31 +470,42 @@ def make_full_grid(original_model_name, bs="bin"):
     for ion in ["HI"]:
         write_data_h5py(
             out_filename,
-            f"log10Q_original/{ion}",
-            data=log10Q_original[ion],
+            f"specific_ionising_luminosity_original/{ion}",
+            data=specific_ionising_luminosity_original[ion],
             overwrite=True,
         )
         write_attribute(
             out_filename,
-            f"log10Q_original/{ion}",
+            f"specific_ionising_luminosity_original/{ion}",
             "Description",
             f"Two-dimensional (original) {ion} ionising photon production rate grid, [age,Z]",
         )
         write_attribute(
-            out_filename, f"log10Q_original/{ion}", "Units", "dex(1/s)"
+            out_filename,
+            f"specific_ionising_luminosity_original/{ion}",
+            "Units",
+            "dex(1/s)",
         )
 
     for ion in ["HI", "HeII"]:
         write_data_h5py(
-            out_filename, f"log10Q/{ion}", data=log10Q[ion], overwrite=True
+            out_filename,
+            f"specific_ionising_luminosity/{ion}",
+            data=specific_ionising_luminosity[ion],
+            overwrite=True,
         )
         write_attribute(
             out_filename,
-            f"log10Q/{ion}",
+            f"specific_ionising_luminosity/{ion}",
             "Description",
             f"Two-dimensional {ion} ionising photon production rate grid, [age,Z]",
         )
-        write_attribute(out_filename, f"log10Q/{ion}", "Units", "dex(1/s)")
+        write_attribute(
+            out_filename,
+            f"specific_ionising_luminosity/{ion}",
+            "Units",
+            "dex(1/s)",
+        )
 
     # write out axes
     write_attribute(

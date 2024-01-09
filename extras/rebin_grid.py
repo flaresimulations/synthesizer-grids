@@ -100,7 +100,7 @@ if __name__ == "__main__":
         rebinned_grid.attrs[k] = v
 
     # copy various quantities (all excluding the spectra) from the original grid
-    for ds in ["axes", "log10Q", "lines"]:
+    for ds in ["axes", "specific_ionising_luminosity", "lines"]:
         original_grid.copy(original_grid[ds], rebinned_grid["/"], ds)
 
     # define the new wavelength grid

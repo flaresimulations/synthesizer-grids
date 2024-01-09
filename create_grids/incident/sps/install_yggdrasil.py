@@ -31,7 +31,11 @@ import pathlib
 import re
 import subprocess
 import argparse
-from incident_utils import write_data_h5py, write_attribute, add_log10Q
+from incident_utils import (
+    write_data_h5py,
+    write_attribute,
+    add_specific_ionising_luminosity,
+)
 from unyt import c, Angstrom, s
 
 from synthesizer.sed import calculate_Q
@@ -184,13 +188,15 @@ def make_grid(synthesizer_data_dir, ver, fcov):
     na = len(ages)
     nZ = len(metallicities)
 
-    log10Q = np.zeros((na, nZ))  # the ionising photon production rate
+    specific_ionising_luminosity = np.zeros(
+        (na, nZ)
+    )  # the ionising photon production rate
 
     # for iZ, metallicity in enumerate(metallicities):
     #     for ia, log10age in enumerate(log10ages):
 
     #         # --- calcualte ionising photon luminosity
-    #         log10Q[ia, iZ] = np.log10(calculate_Q(lam, spec[ia, iZ, :]))
+    #         specific_ionising_luminosity[ia, iZ] = np.log10(calculate_Q(lam, spec[ia, iZ, :]))
 
     if fcov == "0":
         write_data_h5py(fname, "ages", data=ages, overwrite=True)
@@ -232,10 +238,15 @@ def make_grid(synthesizer_data_dir, ver, fcov):
             fname, "log10metallicities", "Units", "dimensionless [log10(Z)]"
         )
 
-        write_data_h5py(fname, "log10Q", data=log10Q, overwrite=True)
+        write_data_h5py(
+            fname,
+            "specific_ionising_luminosity",
+            data=specific_ionising_luminosity,
+            overwrite=True,
+        )
         write_attribute(
             fname,
-            "log10Q",
+            "specific_ionising_luminosity",
             "Description",
             (
                 "Two-dimensional ionising photon "
@@ -298,7 +309,7 @@ if __name__ == "__main__":
     for ver in vers:
         for fcov in fcovs:
             make_grid(synthesizer_data_dir, ver, fcov)
-        add_log10Q(
+        add_specific_ionising_luminosity(
             f"{synthesizer_data_dir}/grids/yggdrasil_POPIII{ver}.hdf5",
             limit=500,
         )
