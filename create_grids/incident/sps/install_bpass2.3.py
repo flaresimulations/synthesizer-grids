@@ -117,21 +117,23 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
         "z040": 0.040,
     }
     Z_to_Zk = {k: v for v, k in Zk_to_Z.items()}
-    metallicities = np.sort(np.array(list(Z_to_Zk.keys())))
+    Zs = np.sort(np.array(list(Z_to_Zk.keys())))
 
     # get ages
-    fn_ = f"{input_dir}/starmass-{bs}-imf_{bpass_imf}.a{ae}.{Z_to_Zk[metallicities[0]]}.dat"
+    fn_ = (
+        f"{input_dir}/starmass-{bs}-imf_{bpass_imf}.a{ae}.{Z_to_Zk[Zs[0]]}.dat"
+    )
     starmass = load.model_output(fn_)
     log10ages = starmass["log_age"].values
 
     # get wavelength grid
-    fn_ = f"spectra-{bs}-imf_{bpass_imf}.a{ae}.{Z_to_Zk[metallicities[0]]}.dat"
+    fn_ = f"spectra-{bs}-imf_{bpass_imf}.a{ae}.{Z_to_Zk[Zs[0]]}.dat"
     spec = load.model_output(f"{input_dir}/{fn_}")
     wavelengths = spec["WL"].values  # \AA
     nu = 3e8 / (wavelengths * 1e-10)
 
-    # number of metallicities and ages
-    nZ = len(metallicities)
+    # number of Zs and ages
+    nZ = len(Zs)
     na = len(log10ages)
 
     # set up outputs
@@ -149,7 +151,7 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
 
     spectra = np.zeros((na, nZ, len(wavelengths)))
 
-    for iZ, Z in enumerate(metallicities):
+    for iZ, Z in enumerate(Zs):
         print(iZ, Z)
 
         # get remaining and remnant fraction
@@ -206,10 +208,10 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model,
-        axes={"log10age": log10ages, "metallicity": metallicities},
+        axes={"log10age": log10ages, "metallicity": Zs},
         wavelength=wavelengths * angstrom,
         spectra={"incident": spectra * erg / s / Hz},
-        alt_axes=("log10ages", "metallicities"),
+        alt_axes=("log10ages", "Zs"),
     )
 
     # Write datasets specific to BPASS 2.3
@@ -282,8 +284,8 @@ def make_full_grid(original_model_name, bs="bin"):
         "z040": 0.040,
     }
     Z_to_Zk = {k: v for v, k in Zk_to_Z.items()}
-    metallicities = np.sort(np.array(list(Z_to_Zk.keys())))
-    log10metallicities = np.log10(metallicities)
+    Zs = np.sort(np.array(list(Z_to_Zk.keys())))
+    log10Zs = np.log10(Zs)
 
     # --- create alpha-enhancement grid
     alpha_enhancements = np.array(
@@ -298,18 +300,18 @@ def make_full_grid(original_model_name, bs="bin"):
     }  # look up dictionary for filename
 
     # --- get ages
-    fn_ = f"{input_dir}/starmass-bin-imf_{bpass_imf}.a+00.{Z_to_Zk[metallicities[0]]}.dat"
+    fn_ = f"{input_dir}/starmass-bin-imf_{bpass_imf}.a+00.{Z_to_Zk[Zs[0]]}.dat"
     starmass = load.model_output(fn_)
     log10ages = starmass["log_age"].values
 
     # --- get wavelength grid
-    fn_ = f"spectra-bin-imf_{bpass_imf}.a+00.{Z_to_Zk[metallicities[0]]}.dat"
+    fn_ = f"spectra-bin-imf_{bpass_imf}.a+00.{Z_to_Zk[Zs[0]]}.dat"
     spec = load.model_output(f"{input_dir}/{fn_}")
     wavelengths = spec["WL"].values  # \AA
     nu = 3e8 / (wavelengths * 1e-10)
 
     na = len(log10ages)
-    nZ = len(log10metallicities)
+    nZ = len(log10Zs)
     nae = len(alpha_enhancements)
 
     # set up outputs
@@ -327,7 +329,7 @@ def make_full_grid(original_model_name, bs="bin"):
 
     spectra = np.zeros((na, nZ, nae, len(wavelengths)))
 
-    for iZ, Z in enumerate(metallicities):
+    for iZ, Z in enumerate(Zs):
         for iae, alpha_enhancement in enumerate(alpha_enhancements):
             print(Z, alpha_enhancement)
 
@@ -452,10 +454,8 @@ def make_full_grid(original_model_name, bs="bin"):
     )
     write_attribute(out_filename, "axes/log10age", "Units", "dex(yr)")
 
-    # write out metallicities
-    write_data_h5py(
-        out_filename, "axes/metallicity", data=metallicities, overwrite=True
-    )
+    # write out Zs
+    write_data_h5py(out_filename, "axes/metallicity", data=Zs, overwrite=True)
     write_attribute(
         out_filename, "axes/metallicity", "Description", "raw abundances"
     )
