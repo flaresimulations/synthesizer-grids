@@ -4,12 +4,9 @@ Download Maraston2011 and convert to HDF5 synthesizer grid.
 import numpy as np
 import os
 import argparse
-from pathlib import Path
-import tarfile
 from unyt import erg, s, Angstrom, yr
 from synthesizer.conversions import llam_to_lnu
 from datetime import date
-import wget
 import sys
 
 # Allow the file to use incident_utils
@@ -20,66 +17,39 @@ from incident_utils import (
     add_log10Q,
 )  # , __tag__
 
-# TODO: add way to automatically create /original_data/model_name and /input_data/model_name directories
-# currently I'm making these manually to make the code work
 
-
-def download_data(
-    output_dir,
-    data_url="http://www.icg.port.ac.uk/~maraston/M11/SSP_M11_Pickles.tar.gz",
-):
-    """
-    Download Maraston+11 data
-    Args:
-        output_dir (string):
-            directory to download and unpack data into
-        data_url (string):
-            URL from which to fetch the data
-    Returns:
-        None
-    """
-    filename = wget.download(
-        data_url
-    )  # download the original data to the working directory
-
-    Path(output_dir).mkdir(parents=True, exist_ok=True)
-    print("filename:", filename)
-    # --- untar main directory
-    tar = tarfile.open(filename)
-    tar.extractall(path=output_dir)
-    tar.close()
-    os.remove(filename)
-
-
-def make_grid(model, imf, extension, output_dir):
-    """Main function to convert Maraston 2011 and
+def make_grid(model, imf, output_dir):
+    """Main function to convert Maraston 2013 and
     produce grids used by synthesizer
     Args:
         model (dict):
             dictionary containing model parameters
         imf (string):
-            Initial mass function, can be one of Salpeter,
-            Kroupa or Chabrier
-        extension (string):
-            String extension to use at the end of the output
-            filename
+            Initial mass function, Salpeter or
+            Kroupa
         output_dir (string):
-            directory where the raw Maraston+11 files are read from
+            directory where the raw Maraston+13 files are read from
     Returns:
         fname (string):
             output filename
     """
 
     # define output
-    fname = f"{synthesizer_data_dir}/input_files/{model_name}/{model_name}{extension}_{imf}.hdf5"
+    fname = f"{synthesizer_data_dir}/{model_name}/{model_name}_{imf}.hdf5"
 
-    metallicities = np.array([0.02])  # array of available metallicities
+    metallicities = np.array(
+        [0.01, 0.001, 0.02, 0.04]
+    )  # array of available metallicities
 
-    log10metallicities = np.log10(metallicities)
+    metallicity_code = {
+        0.01: "001",
+        0.001: "0001",
+        0.02: "002",
+        0.04: "004",
+    }  # codes for converting metallicty
 
-    metallicity_code = {0.02: "002"}  # codes for converting metallicty
-
-    fn = f"{output_dir}/ssp_M11_Pickles{extension}.{imf_code[imf]}z{metallicity_code[metallicities[0]]}"
+    # open first raw data file to get age
+    fn = f"{output_dir}/sed_M13.{imf_code[imf]}z{metallicity_code[metallicities[0]]}"
 
     ages_, _, lam_, llam_ = np.loadtxt(fn).T  # llam is in (ergs /s /AA /Msun)
 
@@ -144,7 +114,7 @@ def make_grid(model, imf, extension, output_dir):
 # Lets include a way to call this script not via an entry point
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Maraston+11 download and grid creation"
+        description="Maraston+13 download and grid creation"
     )
     parser.add_argument("-synthesizer_data_dir", type=str, required=True)
     parser.add_argument(
@@ -155,10 +125,11 @@ if __name__ == "__main__":
 
     synthesizer_data_dir = args.synthesizer_data_dir
 
-    model_name = "maraston11_pickles"
+    model_name = "maraston13"
 
     output_dir = f"{synthesizer_data_dir}/original_data/{model_name}"  # the location to untar the original data
-    imf_code = {"salpeter": "ss", "kroupa": "kr", "chabrier": "cha"}
+    imfs = ["salpeter", "kroupa"]
+    imf_code = {"salpeter": "ss", "kroupa": "kr"}
 
     model = {
         "sps_name": "maraston",
@@ -167,27 +138,9 @@ if __name__ == "__main__":
         "date": str(date.today()),
     }  #'synthesizer-grids_tag': __tag__,
 
-    for extension in [
-        "",
-        "_nearIRextended",
-        "_UVtheoretical",
-        "_UVtheoretical_nearIRextended",
-    ]:
-        if (extension == "") or (extension == "_nearIRextended"):
-            imfs = ["salpeter", "kroupa", "chabrier"]
+    for imf in imfs:
+        fname = make_grid(
+            model, imf, output_dir
+        )  # makes the grid and returns the name
 
-        if (extension == "_UVtheoretical") or (
-            extension == "_UVtheoretical_nearIRextended"
-        ):
-            imfs = ["salpeter"]
-
-        for imf in imfs:
-            print(extension)
-            # if args.download_data:
-            download_data(output_dir)
-
-            fname = make_grid(
-                model, imf, extension, output_dir
-            )  # makes the grid and returns the name
-
-            add_log10Q(fname)
+        add_log10Q(fname)
