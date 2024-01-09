@@ -19,26 +19,25 @@ from synthesizer.photoionisation import cloudy17 as cloudy
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Reduce a grid')
-    
-   
-    # path to synthesizer_data_dir
-    parser.add_argument("-synthesizer_data_dir", type=str, required=True)
 
-    # the name of the original_grid 
-    parser.add_argument("-original_grid", type=str, required=True) 
+    parser.add_argument("-synthesizer_data_dir", type=str, required=True,
+                        help = 'path to synthesizer_data_dir')
 
-    # log10 of the max age
-    parser.add_argument("-max_age", type=float, required=False, default=None) 
+    parser.add_argument("-original_grid", type=str, required=True,
+                        help = 'the name of the original_grid') 
 
-    # log10 of the specific set of ages, e.g. -ages=6.,7.,8.
-    parser.add_argument("-ages", type=str, required=False, default=None) 
+    parser.add_argument("-max_age", type=float, required=False, default=None,
+                        help = 'log10 of the max age') 
+
+    parser.add_argument("-ages", type=str, required=False, default=None,
+                        help = 'log10 of the specific set of ages, e.g. -ages=6.,7.,8.') 
 
     args = parser.parse_args()
 
     # open the parent incident grid
     original_grid = Grid(
         args.original_grid,
-        grid_dir=f'{args.synthesizer_data_dir}/grids/dev/',
+        grid_dir=f'{args.synthesizer_data_dir}',
         read_lines=False)
 
     print(args.ages)
@@ -70,10 +69,10 @@ if __name__ == "__main__":
     print(indices)
 
     # open the new grid
-    with h5py.File(f'{args.synthesizer_data_dir}/grids/dev/{new_grid_name}.hdf5', 'w') as hf: 
+    with h5py.File(f'{args.synthesizer_data_dir}/{new_grid_name}.hdf5', 'w') as hf: 
 
         # open the original incident model grid
-        with h5py.File(f'{args.synthesizer_data_dir}/grids/dev/{args.original_grid}.hdf5', 'r') as hf_original: 
+        with h5py.File(f'{args.synthesizer_data_dir}/{args.original_grid}.hdf5', 'r') as hf_original: 
 
             print('-'*50)
             print(f'ORIGINAL GRID - {args.original_grid}')
@@ -112,17 +111,3 @@ if __name__ == "__main__":
         print('---- groups and datasets')
         hf.visititems(print)
         print(hf['axes/log10age'][:])
-
-        # # add the bin centres for the grid bins
-        # for axis in axes:
-        #     hf[f'axes/{axis}'] = grid_params[axis]
-
-        
-
-        
-        
-
-
-
-
-
