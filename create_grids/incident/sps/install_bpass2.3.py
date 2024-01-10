@@ -229,7 +229,7 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
     )
     out_grid.write_dataset(
         f"specific_ionising_luminosity_original/HI",
-        log10Q_original["HI"],
+        specific_ionising_luminosity_original["HI"],
         "Two-dimensional (original) HI ionising photon"
         " production rate grid, [age,Z] (dex(1/s))",
         units="dimensionless",
@@ -238,7 +238,7 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
     for ion in ["HI", "HeII"]:
         out_grid.write_dataset(
             f"specific_ionising_luminosity/{ion}",
-            log10Q[ion],
+            specific_ionising_luminosity[ion],
             f"Two-dimensional {ion} ionising photon"
             " production rate grid, [age, Z] (desc(1/s))",
             units="dimensionless",
