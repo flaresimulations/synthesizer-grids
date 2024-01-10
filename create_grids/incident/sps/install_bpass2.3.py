@@ -200,7 +200,7 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model,
-        axes={"log10age": log10ages, "metallicity": Zs},
+        axes={"log10age": log10ages, "metallicity": metallicity},
         wavelength=wavelengths * angstrom,
         spectra={"incident": spectra * erg / s / Hz},
         alt_axes=("log10ages", "metallicities"),
