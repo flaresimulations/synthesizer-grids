@@ -6,6 +6,7 @@ import os
 import sys
 import h5py
 import numpy as np
+
 from synthesizer.sed import Sed
 from synthesizer.photoionisation import Ions
 from unyt import unyt_quantity

@@ -17,4 +17,4 @@ do
   printf '%s\n' "$params"
   echo python3 create_cloudy_input_grid.py -synthesizer_data_dir $synthesizer_dir -machine $machine -incident_grid $incident  -cloudy_params $params  -cloudy_path $c
   python3 create_cloudy_input_grid.py -synthesizer_data_dir $synthesizer_dir -machine $machine -incident_grid $incident  -cloudy_params $params  -cloudy_path $c
-done < scripts/incident.txt
+done < apollo_production_scripts/incident.txt

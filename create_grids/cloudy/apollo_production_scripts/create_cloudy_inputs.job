@@ -30,6 +30,8 @@
 
 
 synthesizer_dir="/research/astrodata/highz/synthesizer/" # apollo
+cloudy_dir=$synthesizer_dir/cloudy
+grid_dir=$synthesizer_dir/grids/dev
 machine="apollo"
 c="/research/astro/flare/software/cloudy/"
 

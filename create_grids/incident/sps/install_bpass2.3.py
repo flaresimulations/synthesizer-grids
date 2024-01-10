@@ -13,11 +13,13 @@ from unyt import h, c
 from synthesizer.sed import calculate_Q
 from synthesizer.cloudy import Ions
 from datetime import date
+from unyt import angstrom, erg, s, Hz
+
+from ..io import GridFile
 from utils import (
     __tag__,
     write_data_h5py,
     write_attribute,
-    add_log10Q,
     get_model_filename,
 )
 
@@ -192,106 +194,49 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
                         limit=limit,
                     )
                 )
+    # Create the GridFile ready to take outputs
+    out_grid = GridFile(out_filename, mode="a", overwrite=True)
 
-    # write out model parameters as top level attribute
-    for key, value in model.items():
-        # print(key, value)
-        write_attribute(out_filename, "/", key, (value))
-
-    write_data_h5py(
-        out_filename, "star_fraction", data=stellar_mass, overwrite=True
+    # Write everything out thats common to all models
+    out_grid.write_grid_common(
+        model,
+        axes={"log10age": log10ages, "metallicity": Zs},
+        wavelength=wavelengths * angstrom,
+        spectra={"incident": spectra * erg / s / Hz},
+        alt_axes=("log10ages", "metallicities"),
     )
-    write_attribute(
-        out_filename,
+
+    # Write datasets specific to BPASS 2.3
+    out_grid.write_dataset(
         "star_fraction",
-        "Description",
-        "Two-dimensional remaining stellar fraction grid, [age,metal]",
+        stellar_mass,
+        "Two-dimensional remaining stellar fraction grid, [age, Z]",
+        units="Msun",
     )
-
-    write_data_h5py(
-        out_filename, "remnant_fraction", data=remnant_mass, overwrite=True
-    )
-    write_attribute(
-        out_filename,
+    out_grid.write_dataset(
         "remnant_fraction",
-        "Description",
-        "Two-dimensional remaining remnant fraction grid, [age,metal]",
+        remnant_mass,
+        "Two-dimensional remaining remnant fraction grid, [age, Z]",
+        units="Msun",
     )
-
-    for ion in ["HI"]:
-        write_data_h5py(
-            out_filename,
-            f"log10Q_original/{ion}",
-            data=log10Q_original[ion],
-            overwrite=True,
-        )
-        write_attribute(
-            out_filename,
-            f"log10Q_original/{ion}",
-            "Description",
-            f"Two-dimensional (original) {ion} ionising photon production rate grid, [age,metal]",
-        )
-        write_attribute(
-            out_filename, f"log10Q_original/{ion}", "Units", "dex(1/s)"
-        )
+    out_grid.write_dataset(
+        f"log10Q_original/HI",
+        log10Q_original["HI"],
+        "Two-dimensional (original) HI ionising photon"
+        " production rate grid, [age,Z] (dex(1/s))",
+        units="dimensionless",
+    )
 
     for ion in ["HI", "HeII"]:
-        write_data_h5py(
-            out_filename, f"log10Q/{ion}", data=log10Q[ion], overwrite=True
-        )
-        write_attribute(
-            out_filename,
+        out_grid.write_dataset(
             f"log10Q/{ion}",
-            "Description",
-            f"Two-dimensional {ion} ionising photon production rate grid, [age,metal]",
+            log10Q[ion],
+            f"Two-dimensional {ion} ionising photon"
+            " production rate grid, [age, Z] (desc(1/s))",
+            units="dimensionless",
         )
-        write_attribute(out_filename, f"log10Q/{ion}", "Units", "dex(1/s)")
 
-    write_data_h5py(
-        out_filename, "spectra/incident", data=spectra, overwrite=True
-    )
-    write_attribute(
-        out_filename,
-        "spectra/incident",
-        "Description",
-        "Three-dimensional spectra grid, [metal,Age,wavelength]",
-    )
-    write_attribute(out_filename, "spectra/incident", "Units", "erg/s/Hz")
-
-    write_data_h5py(
-        out_filename, "spectra/wavelength", data=wavelengths, overwrite=True
-    )
-    write_attribute(
-        out_filename,
-        "spectra/wavelength",
-        "Description",
-        "Wavelength of the spectra grid",
-    )
-    write_attribute(out_filename, "spectra/wavelength", "Units", "Angstrom")
-
-    # write out axes
-    write_attribute(out_filename, "/", "axes", ("log10age", "metallicity"))
-
-    # write out log10ages
-    write_data_h5py(
-        out_filename, "axes/log10age", data=log10ages, overwrite=True
-    )
-    write_attribute(
-        out_filename,
-        "axes/log10age",
-        "Description",
-        "Stellar population ages in log10 years",
-    )
-    write_attribute(out_filename, "axes/log10age", "Units", "dex(yr)")
-
-    # write out metallicities
-    write_data_h5py(
-        out_filename, "axes/metallicity", data=metallicities, overwrite=True
-    )
-    write_attribute(
-        out_filename, "axes/metallicity", "Description", "raw abundances"
-    )
-    write_attribute(out_filename, "axes/metallicity", "Units", "dimensionless")
+    out_grid.close()
 
     return out_filename
 
@@ -470,12 +415,18 @@ def make_full_grid(original_model_name, bs="bin"):
             f"Two-dimensional (original) {ion} ionising photon production rate grid, [age,metal]",
         )
         write_attribute(
-            out_filename, f"log10Q_original/{ion}", "Units", "dex(1/s)"
+            out_filename,
+            f"log10Q_original/{ion}",
+            "Units",
+            "dex(1/s)",
         )
 
     for ion in ["HI", "HeII"]:
         write_data_h5py(
-            out_filename, f"log10Q/{ion}", data=log10Q[ion], overwrite=True
+            out_filename,
+            f"log10Q/{ion}",
+            data=log10Q[ion],
+            overwrite=True,
         )
         write_attribute(
             out_filename,
