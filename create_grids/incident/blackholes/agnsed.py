@@ -6,8 +6,8 @@ import h5py
 import numpy as np
 from unyt import c, Angstrom
 
-# from utils import __tag__, broken_power_law, add_log10Q
-from utils import broken_power_law, add_log10Q
+# from utils import __tag__, broken_power_law, add_specific_ionising_luminosity
+from utils import broken_power_law, add_specific_ionising_luminosity
 from datetime import date
 
 # adding relagn to pythonpath
@@ -101,6 +101,6 @@ with h5py.File(filename, "w") as hf:
     hf["spectra/incident"].attrs["Units"] = "erg/s/Hz"
 
 
-# calcualte log10Q
+# calcualte specific_ionising_luminosity
 
-add_log10Q(filename)
+add_specific_ionising_luminosity(filename)
