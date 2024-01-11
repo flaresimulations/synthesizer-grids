@@ -11,7 +11,11 @@ import yaml
 import h5py
 
 # synthesiser modules
-from synthesizer.abundances import Abundances
+from synthesizer.abundances import (
+    Abundances,
+    SolarAbundances,
+    DepletionPatterns
+    )
 from synthesizer.grid import Grid
 from synthesizer.photoionisation import cloudy17 as cloudy
 
@@ -258,13 +262,22 @@ if __name__ == "__main__":
             params_["metallicity"] = 10 ** grid_params_["log10metallicity"]
 
         # create abundances object
+
+        # define abundances that have a non-linear scaling with metallicity
+        scaled_abundances = {
+            'N': params_["nitrogen_abundance"],
+            'C': params_["carbon_abundance"],
+        }
+
         abundances = Abundances(
             metallicity=float(params_["metallicity"]),
-            dust_to_metal_ratio=params_["dust_to_metal_ratio"],
+            solar=params_["solar_abundance"],
             alpha=params_["alpha"],
-            nitrogen_abundance=params_["nitrogen_abundance"],
-            carbon_abundance=params_["carbon_abundance"],
+            abundances=scaled_abundances,
+            depletion_model=params_["depletion_model"],
+            depletion_scale=params_["depletion_scale"],
         )
+        
         # if reference U model is used
         if params_["ionisation_parameter_model"] == "ref":
             # Calculate the difference between the reference log10Q (LyC
