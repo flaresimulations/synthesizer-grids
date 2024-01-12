@@ -132,7 +132,7 @@ def add_specific_ionising_luminosity(
 
 #                     Q = calc_specific_ionising_luminosity(lam, lnu, ionisation_energy=ionisation_energy, limit=limit)
 
-#                     hf[f'specific_ionising_luminosity/{ion}'][ia, iZ] = np.log10(Q)
+#                     hf[f'specific_ionising_luminosity/{ion}'][ia, imetal] = np.log10(Q)
 
 
 def write_data_h5py(filename, name, data, overwrite=False):

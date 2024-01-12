@@ -163,11 +163,9 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
         )  # convert to per M_sol
 
         # get original specific_ionising_luminosity
-        fn_ = (
-            f"{input_dir}/ionizing-{bs}-imf_{bpass_imf}.a{ae}.{Z_to_Zk[Z]}.dat"
-        )
+        fn_ = f"{input_dir}/ionizing-{bs}-imf_{bpass_imf}.a{ae}.{map_met_to_key[metal]}.dat"
         ionising = load.model_output(fn_)
-        specific_ionising_luminosity_original["HI"][:, iZ] = (
+        specific_ionising_luminosity_original["HI"][:, imetal] = (
             ionising["prod_rate"].values - 6
         )  # convert to per M_sol
 
@@ -188,7 +186,7 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
             for ion in ["HI", "HeII"]:
                 limit = 100
                 ionisation_energy = Ions.energy[ion]
-                specific_ionising_luminosity[ion][ia, iZ] = np.log10(
+                specific_ionising_luminosity[ion][ia, imetal] = np.log10(
                     calc_specific_ionising_luminosity(
                         wavelengths,
                         spec_,
@@ -344,7 +342,7 @@ def make_full_grid(original_model_name, bs="bin"):
             # --- get original specific_ionising_luminosity
             fn_ = f"{input_dir}/ionizing-{bs}-imf_{bpass_imf}.a{aek}.{Zk}.dat"
             ionising = load.model_output(fn_)
-            specific_ionising_luminosity_original["HI"][:, iZ, iae] = (
+            specific_ionising_luminosity_original["HI"][:, imetal, iae] = (
                 ionising["prod_rate"].values - 6
             )  # convert to per M_sol
 
@@ -368,7 +366,9 @@ def make_full_grid(original_model_name, bs="bin"):
                 for ion in ["HI", "HeII"]:
                     limit = 100
                     ionisation_energy = Ions.energy[ion]
-                    specific_ionising_luminosity[ion][ia, iZ, iae] = np.log10(
+                    specific_ionising_luminosity[ion][
+                        ia, imetal, iae
+                    ] = np.log10(
                         calc_specific_ionising_luminosity(
                             wavelengths,
                             spec_,

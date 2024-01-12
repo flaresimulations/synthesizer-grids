@@ -196,7 +196,7 @@ def make_grid(synthesizer_data_dir, ver, fcov):
     #     for ia, log10age in enumerate(log10ages):
 
     #         # --- calcualte ionising photon luminosity
-    #         specific_ionising_luminosity[ia, iZ] = np.log10(calc_specific_ionising_luminosity(lam, spec[ia, iZ, :]))
+    #         specific_ionising_luminosity[ia, imetal] = np.log10(calc_specific_ionising_luminosity(lam, spec[ia, imetal, :]))
 
     if fcov == "0":
         write_data_h5py(fname, "ages", data=ages, overwrite=True)
