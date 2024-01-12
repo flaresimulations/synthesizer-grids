@@ -1,5 +1,5 @@
 """
-Download Maraston2011 and convert to HDF5 synthesizer grid.
+Download the Maraston2013 SPS model and convert to HDF5 synthesizer grid.
 """
 import numpy as np
 import os
@@ -35,7 +35,7 @@ def make_grid(model, imf, output_dir):
     """
 
     # define output
-    fname = f"{synthesizer_data_dir}/{model_name}/{model_name}_{imf}.hdf5"
+    fname = f"{synthesizer_data_dir}/{model_name}_{imf}.hdf5"
 
     metallicities = np.array(
         [0.01, 0.001, 0.02, 0.04]
@@ -127,7 +127,7 @@ if __name__ == "__main__":
 
     model_name = "maraston13"
 
-    output_dir = f"{synthesizer_data_dir}/original_data/{model_name}"  # the location to untar the original data
+    output_dir = f"{synthesizer_data_dir}/input_files/{model_name}"  # the location to untar the original data
     imfs = ["salpeter", "kroupa"]
     imf_code = {"salpeter": "ss", "kroupa": "kr"}
 
