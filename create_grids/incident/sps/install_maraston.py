@@ -89,15 +89,15 @@ def make_grid(model, imf, hr_morphology):
 
     spec = np.zeros((len(ages), len(metallicities), len(lam)))
 
-    for iZ, metallicity in enumerate(metallicities):
+    for imetal, metallicity in enumerate(metallicities):
         for ia, age_Gyr in enumerate(ages_Gyr):
             fn = f"{input_dir}/sed.{imf}z{metallicity_code[metallicity]}.{hr_morphology}"
-            print(iZ, ia, fn)
+            print(imetal, ia, fn)
             ages_, _, lam_, flam_ = np.loadtxt(fn).T
 
             flam = flam_[ages_ == age_Gyr]
             fnu = flam_to_fnu(lam, flam)
-            spec[ia, iZ] = fnu
+            spec[ia, imetal] = fnu
 
     write_data_h5py(
         out_filename, "spectra/wavelength", data=lam, overwrite=True
