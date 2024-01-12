@@ -340,7 +340,7 @@ def make_full_grid(original_model_name, bs="bin"):
             )
 
             # --- get original specific_ionising_luminosity
-            fn_ = f"{input_dir}/ionizing-{bs}-imf_{bpass_imf}.a{aek}.{Zk}.dat"
+            fn_ = f"{input_dir}/ionizing-{bs}-imf_{bpass_imf}.a{aek}.{metalk}.dat"
             ionising = load.model_output(fn_)
             specific_ionising_luminosity_original["HI"][:, imetal, iae] = (
                 ionising["prod_rate"].values - 6
