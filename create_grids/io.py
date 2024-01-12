@@ -451,7 +451,7 @@ class GridFile:
 
                 # Write it out
                 self.write_dataset(
-                    f"specific_ionising_luminosity/{ion}",
+                    f"log10_specific_ionising_lum/{ion}",
                     out_arr,
                     "Two-dimensional {ion} ionising photon production rate grid, [age, Z]",
                 )

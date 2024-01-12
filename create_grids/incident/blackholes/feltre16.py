@@ -8,7 +8,7 @@ from unyt import c, Angstrom
 from utils import (
     __tag__,
     broken_power_law,
-    add_specific_ionising_luminosity,
+    add_log10_specific_ionising_lum,
 )
 from datetime import date
 
@@ -93,6 +93,6 @@ with h5py.File(filename, "w") as hf:
     hf["spectra/incident"].attrs["Units"] = "erg/s/Hz"
 
 
-# calcualte specific_ionising_luminosity
+# calcualte log10_specific_ionising_lum
 
-add_specific_ionising_luminosity(filename)
+add_log10_specific_ionising_lum(filename)

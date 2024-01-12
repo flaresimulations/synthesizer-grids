@@ -34,11 +34,11 @@ import argparse
 from incident_utils import (
     write_data_h5py,
     write_attribute,
-    add_specific_ionising_luminosity,
+    add_log10_specific_ionising_lum,
 )
 from unyt import c, Angstrom, s
 
-from synthesizer.sed import calc_specific_ionising_luminosity
+from synthesizer.sed import calc_log10_specific_ionising_lum
 
 
 def download_data(synthesizer_data_dir, ver, fcov):
@@ -188,7 +188,7 @@ def make_grid(synthesizer_data_dir, ver, fcov):
     na = len(ages)
     nZ = len(metallicities)
 
-    specific_ionising_luminosity = np.zeros(
+    log10_specific_ionising_lum = np.zeros(
         (na, nZ)
     )  # the ionising photon production rate
 
@@ -196,7 +196,7 @@ def make_grid(synthesizer_data_dir, ver, fcov):
     #     for ia, log10age in enumerate(log10ages):
 
     #         # --- calcualte ionising photon luminosity
-    #         specific_ionising_luminosity[ia, iZ] = np.log10(calc_specific_ionising_luminosity(lam, spec[ia, iZ, :]))
+    #         log10_specific_ionising_lum[ia, iZ] = np.log10(calc_log10_specific_ionising_lum(lam, spec[ia, iZ, :]))
 
     if fcov == "0":
         write_data_h5py(fname, "ages", data=ages, overwrite=True)
@@ -240,13 +240,13 @@ def make_grid(synthesizer_data_dir, ver, fcov):
 
         write_data_h5py(
             fname,
-            "specific_ionising_luminosity",
-            data=specific_ionising_luminosity,
+            "log10_specific_ionising_lum",
+            data=log10_specific_ionising_lum,
             overwrite=True,
         )
         write_attribute(
             fname,
-            "specific_ionising_luminosity",
+            "log10_specific_ionising_lum",
             "Description",
             (
                 "Two-dimensional ionising photon "
@@ -309,7 +309,7 @@ if __name__ == "__main__":
     for ver in vers:
         for fcov in fcovs:
             make_grid(synthesizer_data_dir, ver, fcov)
-        add_specific_ionising_luminosity(
+        add_log10_specific_ionising_lum(
             f"{synthesizer_data_dir}/grids/yggdrasil_POPIII{ver}.hdf5",
             limit=500,
         )
