@@ -72,9 +72,9 @@ def generate_grid(model):
     nmetal = len(metallicities)
 
     specific_ionising_luminosity = np.zeros(
-        (na, nZ)
+        (na, nmetal)
     )  # the ionising photon production rate
-    spec = np.zeros((na, nZ, len(lam)))
+    spec = np.zeros((na, nmetal, len(lam)))
 
     for imetal in range(nmetal):
         spec_ = sp.get_spectrum(zmet=imetal + 1)[1]  # 2D array Lsol / AA

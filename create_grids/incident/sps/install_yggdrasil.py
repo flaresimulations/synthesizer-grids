@@ -189,7 +189,7 @@ def make_grid(synthesizer_data_dir, ver, fcov):
     nmetal = len(metallicities)
 
     specific_ionising_luminosity = np.zeros(
-        (na, nZ)
+        (nmetal, nZ)
     )  # the ionising photon production rate
 
     # for imetal, metallicity in enumerate(metallicities):

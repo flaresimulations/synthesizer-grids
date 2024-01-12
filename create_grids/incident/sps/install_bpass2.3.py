@@ -140,12 +140,12 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
 
     # the ionising photon production rate
     specific_ionising_luminosity = {}
-    specific_ionising_luminosity["HI"] = np.zeros((na, nZ))
-    specific_ionising_luminosity["HeII"] = np.zeros((na, nZ))
+    specific_ionising_luminosity["HI"] = np.zeros((na, nmetal))
+    specific_ionising_luminosity["HeII"] = np.zeros((na, nmetal))
 
     # provided by BPASS, sanity check for above
     specific_ionising_luminosity_original = {}
-    specific_ionising_luminosity_original["HI"] = np.zeros((na, nZ))
+    specific_ionising_luminosity_original["HI"] = np.zeros((na, nmetal))
 
     spectra = np.zeros((na, nmetal, len(wavelengths)))
 
@@ -315,12 +315,12 @@ def make_full_grid(original_model_name, bs="bin"):
 
     # the ionising photon production rate
     specific_ionising_luminosity = {}
-    specific_ionising_luminosity["HI"] = np.zeros((na, nZ, nae))
-    specific_ionising_luminosity["HeII"] = np.zeros((na, nZ, nae))
+    specific_ionising_luminosity["HI"] = np.zeros((na, nmetal, nae))
+    specific_ionising_luminosity["HeII"] = np.zeros((na, nmetal, nae))
 
     # provided by BPASS, sanity check for above
     specific_ionising_luminosity_original = {}
-    specific_ionising_luminosity_original["HI"] = np.zeros((na, nZ, nae))
+    specific_ionising_luminosity_original["HI"] = np.zeros((na, nmetal, nae))
 
     spectra = np.zeros((na, nmetal, nae, len(wavelengths)))
 

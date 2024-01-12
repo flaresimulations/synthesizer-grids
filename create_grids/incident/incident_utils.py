@@ -108,7 +108,7 @@ def add_specific_ionising_luminosity(
 #         metallicities = hf['axes/metallicity'][()]
 #         log10ages = hf['axes/log10age'][()]
 
-#         nZ = len(metallicities)
+#         nmetal = len(metallicities)
 #         na = len(log10ages)
 
 #         lam = hf['spectra/wavelength'][()]
@@ -120,7 +120,7 @@ def add_specific_ionising_luminosity(
 
 #             ionisation_energy = Ions.energy[ion]
 
-#             hf[f'specific_ionising_luminosity/{ion}'] = np.zeros((na, nZ))
+#             hf[f'specific_ionising_luminosity/{ion}'] = np.zeros((na, nmetal))
 
 #             # ---- determine stellar specific_ionising_luminosity
 
