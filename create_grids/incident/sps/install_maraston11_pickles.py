@@ -17,7 +17,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from incident_utils import (
     write_data_h5py,
     write_attribute,
-    add_log10Q,
+    add_specific_ionising_luminosity,
 )  # , __tag__
 
 # TODO: add way to automatically create /original_data/model_name and /input_data/model_name directories
@@ -192,4 +192,4 @@ if __name__ == "__main__":
                 model, imf, extension, output_dir
             )  # makes the grid and returns the name
 
-            add_log10Q(fname)
+            add_specific_ionising_luminosity(fname)

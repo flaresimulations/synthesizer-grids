@@ -6,7 +6,7 @@ from utils import (
     __tag__,
     write_data_h5py,
     write_attribute,
-    add_log10Q,
+    add_specific_ionising_luminosity,
     get_model_filename,
 )
 
@@ -71,8 +71,10 @@ def generate_grid(model):
     na = len(log10ages)
     nmetal = len(metallicities)
 
-    log10Q = np.zeros((na, nmetal))  # the ionising photon production rate
-    spec = np.zeros((na, nmetal, len(lam)))
+    specific_ionising_luminosity = np.zeros(
+        (na, nZ)
+    )  # the ionising photon production rate
+    spec = np.zeros((na, nZ, len(lam)))
 
     for imetal in range(nmetal):
         spec_ = sp.get_spectrum(zmet=imetal + 1)[1]  # 2D array Lsol / AA
@@ -192,5 +194,5 @@ if __name__ == "__main__":
         # make grid
         out_filename = generate_grid(model)
 
-        # add log10Q for different ions
-        add_log10Q(out_filename)
+        # add specific_ionising_luminosity for different ions
+        add_specific_ionising_luminosity(out_filename)

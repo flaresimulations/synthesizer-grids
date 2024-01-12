@@ -19,7 +19,9 @@ from grid_utils import get_grid_properties_from_hdf5  # need this to work
 # __tag__ = grid_utils.__tag__
 
 
-def add_log10Q(grid_filename, ions=["HI", "HeII"], limit=100):
+def add_specific_ionising_luminosity(
+    grid_filename, ions=["HI", "HeII"], limit=100
+):
     """
     A function to calculate the ionising photon luminosity for different ions.
 
@@ -49,7 +51,7 @@ def add_log10Q(grid_filename, ions=["HI", "HeII"], limit=100):
 
         # set up output arrays
         for ion in ions:
-            hf[f"log10Q/{ion}"] = np.zeros(shape)
+            hf[f"specific_ionising_luminosity/{ion}"] = np.zeros(shape)
 
         # get spectra group
         spectra = hf[f"spectra"]
@@ -79,10 +81,12 @@ def add_log10Q(grid_filename, ions=["HI", "HeII"], limit=100):
                 )
 
                 # save
-                hf[f"log10Q/{ion}"][indices] = np.log10(Q)
+                hf[f"specific_ionising_luminosity/{ion}"][indices] = np.log10(
+                    Q
+                )
 
 
-# def add_log10Q(grid_filename, ions=['HI', 'HeII'], limit=100):
+# def add_specific_ionising_luminosity(grid_filename, ions=['HI', 'HeII'], limit=100):
 #     """
 #     A function to calculate the ionising photon luminosity for different ions.
 
@@ -109,16 +113,16 @@ def add_log10Q(grid_filename, ions=["HI", "HeII"], limit=100):
 
 #         lam = hf['spectra/wavelength'][()]
 
-#         if 'log10Q' in hf.keys():
-#             del hf['log10Q']  # delete log10Q if it already exists
+#         if 'specific_ionising_luminosity' in hf.keys():
+#             del hf['specific_ionising_luminosity']  # delete specific_ionising_luminosity if it already exists
 
 #         for ion in ions:
 
 #             ionisation_energy = Ions.energy[ion]
 
-#             hf[f'log10Q/{ion}'] = np.zeros((na, nmetal))
+#             hf[f'specific_ionising_luminosity/{ion}'] = np.zeros((na, nZ))
 
-#             # ---- determine stellar log10Q
+#             # ---- determine stellar specific_ionising_luminosity
 
 #             for imetal, metal in enumerate(metallicities):
 #                 for ia, log10age in enumerate(log10ages):
@@ -126,9 +130,9 @@ def add_log10Q(grid_filename, ions=["HI", "HeII"], limit=100):
 
 #                     lnu = hf['spectra/stellar'][ia, imetal, :]
 
-#                     Q = calculate_Q(lam, lnu, ionisation_energy=ionisation_energy, limit=limit)
+#                     Q = calc_specific_ionising_luminosity(lam, lnu, ionisation_energy=ionisation_energy, limit=limit)
 
-#                     hf[f'log10Q/{ion}'][ia, imetal] = np.log10(Q)
+#                     hf[f'specific_ionising_luminosity/{ion}'][ia, iZ] = np.log10(Q)
 
 
 def write_data_h5py(filename, name, data, overwrite=False):

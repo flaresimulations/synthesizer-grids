@@ -17,7 +17,7 @@ from utils import (
     __tag__,
     write_data_h5py,
     write_attribute,
-    add_log10Q,
+    add_specific_ionising_luminosity,
     get_model_filename,
 )
 
@@ -338,5 +338,5 @@ if __name__ == "__main__":
     # make grid
     out_filename = make_grid()
 
-    # add log10Q for different ions
-    add_log10Q(out_filename)
+    # add specific_ionising_luminosity for different ions
+    add_specific_ionising_luminosity(out_filename)
