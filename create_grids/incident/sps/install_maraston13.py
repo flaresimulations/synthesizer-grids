@@ -9,14 +9,16 @@ from synthesizer.conversions import llam_to_lnu
 from datetime import date
 import sys
 
-# Allow the file to use incident_utils
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-from incident_utils import (
-    write_data_h5py,
-    write_attribute,
-    add_specific_ionising_luminosity,
-)  # , __tag__
+# to allow access to the grid_io module:
+sys.path.insert(
+    1,
+    os.path.dirname(os.path.abspath(sys.argv[0])) + "../../")
+from io import GridFile
 
+from utils import (
+    __tag__,
+    get_model_filename,
+)
 
 def make_grid(model, imf, output_dir):
     """Main function to convert Maraston 2013 and
@@ -35,7 +37,7 @@ def make_grid(model, imf, output_dir):
     """
 
     # define output
-    fname = f"{synthesizer_data_dir}/{model_name}_{imf}.hdf5"
+    out_filename = f"{synthesizer_data_dir}/{model_name}_{imf}.hdf5"
 
     metallicities = np.array(
         [0.01, 0.001, 0.02, 0.04]
@@ -61,6 +63,9 @@ def make_grid(model, imf, output_dir):
 
     spec = np.zeros((len(ages), len(metallicities), len(lam)))
 
+    # Create the GridFile ready to take outputs
+    out_grid = GridFile(out_filename, mode="a", overwrite=True)
+
     # at each point in spec convert the units
     for iZ, metallicity in enumerate(metallicities):
         for ia, age_Gyr in enumerate(ages_Gyr):
@@ -71,44 +76,21 @@ def make_grid(model, imf, output_dir):
             lnu = llam_to_lnu(lam, llam)
             spec[ia, iZ] = lnu
 
-    # write out spectra
-    write_data_h5py(fname, "spectra/wavelength", data=lam, overwrite=True)
-    write_attribute(
-        fname,
-        "spectra/wavelength",
-        "Description",
-        "Wavelength of the spectra grid",
+    # Write everything out thats common to all models
+    out_grid.write_grid_common(
+        model,
+        axes={"log10age": log10ages, "metallicity": metallicities},
+        wavelength= lam,
+        spectra={"incident": spec}, #check this unit
+        alt_axes=("log10ages", "metallicities"),
     )
-    write_attribute(fname, "spectra/wavelength", "Units", "AA")
 
-    write_data_h5py(fname, "spectra/incident", data=spec, overwrite=True)
-    write_attribute(
-        fname,
-        "spectra/incident",
-        "Description",
-        "Three-dimensional spectra grid, [age, metallicity, wavelength]",
-    )
-    write_attribute(fname, "spectra/incident", "Units", "erg s^-1 Hz^-1")
+    # Include the specific ionising photon luminosity
+    out_grid.add_specific_ionising_lum()
 
-    # write out axes
-    write_attribute(fname, "/", "axes", ("log10age", "metallicity"))
-
-    write_data_h5py(fname, "axes/log10age", data=log10ages, overwrite=True)
-    write_attribute(
-        fname,
-        "axes/log10age",
-        "Description",
-        "Stellar population ages in log10 years",
-    )
-    write_attribute(fname, "axes/log10age", "Units", "log10(yr)")
-
-    write_data_h5py(
-        fname, "axes/metallicity", data=metallicities, overwrite=True
-    )
-    write_attribute(fname, "axes/metallicity", "Description", "raw abundances")
-    write_attribute(fname, "axes/metallicity", "Units", "dimensionless [Z]")
-
-    return fname
+    out_grid.close()
+    
+    return out_filename
 
 
 # Lets include a way to call this script not via an entry point
@@ -139,8 +121,6 @@ if __name__ == "__main__":
     }  #'synthesizer-grids_tag': __tag__,
 
     for imf in imfs:
-        fname = make_grid(
+        out_filename = make_grid(
             model, imf, output_dir
         )  # makes the grid and returns the name
-
-        add_specific_ionising_luminosity(fname)
