@@ -15,7 +15,7 @@ from synthesizer.cloudy import Ions
 from datetime import date
 from unyt import angstrom, erg, s, Hz
 
-from ..io import GridFile
+from ..grid_io import GridFile
 from utils import (
     __tag__,
     write_data_h5py,
