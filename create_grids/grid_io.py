@@ -7,7 +7,7 @@ import h5py
 import numpy as np
 from unyt import unyt_array
 
-from synthesizer.sed import calculate_Q
+from synthesizer.sed import Sed
 from synthesizer.photoionisation import Ions
 
 from grid_utils import get_grid_properties_from_hdf5
@@ -437,9 +437,8 @@ class GridFile:
                 lnu = spectra["incident"][indices]
 
                 # Calculate Q
-                ionising_lum = calculate_Q(
-                    lam,
-                    lnu,
+                sed = Sed(lam, lnu)
+                ionising_lum = sed.calculate_ionising_photon_production_rate(
                     ionisation_energy=ionisation_energy,
                     limit=limit,
                 )

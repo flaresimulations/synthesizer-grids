@@ -1,7 +1,8 @@
 """
 Download BPASS v2.3 and convert to HDF5 synthesizer grid.
 """
-
+import os
+import sys
 from hoki import load
 import argparse
 import numpy as np
@@ -15,7 +16,8 @@ from synthesizer.cloudy import Ions
 from datetime import date
 from unyt import angstrom, erg, s, Hz
 
-from ..io import GridFile
+sys.path.insert(1, os.path.dirname(os.path.abspath(sys.argv[0])) + "/../../")
+from grid_io import GridFile
 from utils import (
     __tag__,
     write_data_h5py,
