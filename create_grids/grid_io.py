@@ -356,7 +356,9 @@ class GridFile:
 
             self.write_dataset(
                 "axes/" + axis_key,
-                axis_arr.value,
+                axis_arr.value
+                if isinstance(axis_arr, unyt_array)
+                else axis_arr,
                 descriptions[axis_key],
                 units=units,
             )
@@ -369,7 +371,9 @@ class GridFile:
         # Write out the wavelength array
         self.write_dataset(
             "spectra/wavelength",
-            wavelength.value,
+            wavelength.value
+            if isinstance(wavelength, unyt_array)
+            else wavelength,
             "Wavelength of the spectra grid",
             units=str(wavelength.units),
         )
