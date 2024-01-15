@@ -13,7 +13,7 @@ import sys
 sys.path.insert(
     1,
     os.path.dirname(os.path.abspath(sys.argv[0])) + "../../")
-from io import GridFile
+from grid_io import GridFile
 
 from utils import (
     __tag__,
