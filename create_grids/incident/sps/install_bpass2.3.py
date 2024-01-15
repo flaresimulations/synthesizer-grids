@@ -1,7 +1,7 @@
 """
 Download BPASS v2.3 and convert to HDF5 synthesizer grid.
 """
-
+import sys
 from hoki import load
 import argparse
 import numpy as np
