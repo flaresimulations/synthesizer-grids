@@ -15,7 +15,8 @@ from synthesizer.cloudy import Ions
 from datetime import date
 from unyt import angstrom, erg, s, Hz
 
-from ..grid_io import GridFile
+sys.path.insert(1, os.path.dirname(os.path.abspath(sys.argv[0])) + "/../../")
+from grid_io import GridFile
 from utils import (
     __tag__,
     write_data_h5py,
