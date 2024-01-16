@@ -12,6 +12,7 @@ from synthesizer.utils import flam_to_fnu
 from synthesizer.sed import calc_log10_specific_ionising_lum
 from datetime import date
 
+from synthesizer_grids.utilities.parser import Parser
 from synthesizer_grids.utilities.grid_io import GridFile
 from utils import (
     __tag__,
@@ -150,40 +151,17 @@ def make_grid(model, imf, hr_morphology):
 
 # Lets include a way to call this script not via an entry point
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Maraston download and grid creation"
-    )
-    parser.add_argument(
-        "--download",
-        default=False,
-        action="store_true",
-        help=(
-            "download bpass data directly in current directory "
-            "and untar in sunthesizer data directory"
-        ),
-    )
-
-    parser.add_argument(
-        "-synthesizer_data_dir",
-        "--synthesizer_data_dir",
-        default="/Users/sw376/Dropbox/Research/data/synthesizer",
-    )
-
+    # Set up the command line arguments
+    parser = Parser(description="Maraston download and grid creation")
     args = parser.parse_args()
 
+    # Unpack the arguments
     synthesizer_data_dir = args.synthesizer_data_dir
+    grid_dir = f"{synthesizer_data_dir}/grids"
 
+    # Define the model metadata
     model_name = "maraston"
-
-    input_dir = f"{synthesizer_data_dir}/input_files/{model_name}"  # the location to untar the original data
-
     imfs = ["ss"]  # , 'kr'
-
-    original_data_url = {}
-    original_data_url[
-        "ss"
-    ] = "http://www.icg.port.ac.uk/~maraston/SSPn/SED/Sed_Mar05_SSP_Salpeter.tar.gz"
-
     model = {
         "sps_name": "maraston",
         "sps_version": False,
@@ -191,6 +169,15 @@ if __name__ == "__main__":
         "synthesizer-grids_tag": __tag__,
         "date": str(date.today()),
     }
+
+    # Define the download URL
+    original_data_url = {}
+    original_data_url[
+        "ss"
+    ] = "http://www.icg.port.ac.uk/~maraston/SSPn/SED/Sed_Mar05_SSP_Salpeter.tar.gz"
+
+    # The location to untar the original data
+    input_dir = f"{synthesizer_data_dir}/input_files/{model_name}"
 
     for imf in imfs:
         if imf == "ss":

@@ -16,11 +16,9 @@ import shutil
 from datetime import date
 from unyt import angstrom, erg, s, Hz
 
-from synthesizer_grids.utilities.grid_io import GridFile
-from utils import (
-    get_model_filename,
-)
-from synthesizer._version import __version__
+from synthesizer_grids.utilities import GridFile
+from synthesizer_grids.utilities import Parser
+from utils import get_model_filename
 
 
 def download_data(variant):
@@ -265,26 +263,16 @@ def make_grid(variant, synthesizer_data_dir, out_filename):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="BC03-2016 download and grid creation"
-    )
-    parser.add_argument(
-        "-synthesizer_data_dir",
-        "--synthesizer_data_dir",
-        default="/Users/sw376/Dropbox/Research/data/synthesizer",
-    )
-    parser.add_argument(
-        "-download_data", "--download_data", type=bool, default=False
-    )
-
+    # Set up the command line arguments
+    parser = Parser(description="BC03-2016 download and grid creation")
     args = parser.parse_args()
 
+    # Unpack the arguments
     synthesizer_data_dir = args.synthesizer_data_dir
-
     grid_dir = f"{synthesizer_data_dir}/grids"
 
-    # download data
-    if args.download_data:
+    # Download data if asked
+    if args.download:
         download_data()
         untar_data()
 
@@ -296,8 +284,6 @@ if __name__ == "__main__":
         "imf_masses": [0.1, 100],
         "imf_slopes": False,
         "alpha": False,
-        "synthesizer-grids_tag": __version__,
-        "date": str(date.today()),
     }
 
     for variant in ["BaSeL", "Miles", "Stelib"]:  # 'BaSeL',

@@ -16,6 +16,7 @@ from synthesizer.cloudy import Ions
 from datetime import date
 from unyt import angstrom, erg, s, Hz
 
+from synthesizer_grids.utilities.parser import Parser
 from synthesizer_grids.utilities.grid_io import GridFile
 from utils import (
     write_data_h5py,
@@ -220,7 +221,7 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
         units="Msun",
     )
     out_grid.write_dataset(
-        f"log10_specific_ionising_lum_original/HI",
+        "log10_specific_ionising_lum_original/HI",
         log10_specific_ionising_lum_original["HI"],
         "Two-dimensional (original) HI ionising photon"
         " production rate grid, [age,Z] (dex(1/s))",
@@ -506,49 +507,19 @@ def make_full_grid(original_model_name, bs="bin"):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="BPASS_2.3 download and grid creation"
+    # Set up the command line arguments
+    parser = Parser(
+        description="BPASS_2.3 download and grid creation",
+        with_alpha=True,
     )
-
-    # flag whether to download data
-    parser.add_argument(
-        "--download",
-        default=False,
-        action="store_true",
-        help=(
-            "download bpass data directly in current directory "
-            "and untar in sunthesizer data directory"
-        ),
-    )
-
-    # path to synthesizer dir
-    parser.add_argument(
-        "-synthesizer_data_dir",
-        "--synthesizer_data_dir",
-        default="/Users/sw376/Dropbox/Research/data/synthesizer",
-    )
-
-    # flag whether to make individual alpha grids
-    parser.add_argument(
-        "-individual", "--individual", action=argparse.BooleanOptionalAction
-    )
-
-    # flag whether to make full grid
-    parser.add_argument(
-        "-full", "--full", action=argparse.BooleanOptionalAction, default=False
-    )
-
-    # models
     parser.add_argument("-models", "--models", default="bpass_v2.3_chab300")
-
-    # arguments
     args = parser.parse_args()
 
+    # Unpack the arguments
     synthesizer_data_dir = args.synthesizer_data_dir
-
-    # get grid dir
     grid_dir = f"{synthesizer_data_dir}/grids"
 
+    # Get the models
     models = args.models.split(",")
 
     print(models)

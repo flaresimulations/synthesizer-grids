@@ -11,6 +11,7 @@ from hoki import load
 from datetime import date
 import sys, os
 from synthesizer_grids.utilities.grid_io import GridFile
+from synthesizer_grids.utilities.parser import Parser
 from utils import (
     __tag__,
     write_data_h5py,
@@ -232,29 +233,18 @@ def make_grid(original_model_name, bin):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="BPASS_2.2.1 download and grid creation"
-    )
-    parser.add_argument(
-        "--download-data",
-        default=False,
-        action="store_true",
-        help=(
-            "download bpass data directly in current directory "
-            "and untar in sunthesizer data directory"
-        ),
-    )
-
-    parser.add_argument(
-        "-synthesizer_data_dir",
-        "--synthesizer_data_dir",
-        default="/Users/sw376/Dropbox/Research/data/synthesizer",
-    )
-
+    # Set up the command line arguments
+    parser = Parser(description="BPASS_2.2.1 download and grid creation")
     args = parser.parse_args()
 
+    # Unpack the arguments
     synthesizer_data_dir = args.synthesizer_data_dir
-    grid_dir = f"{synthesizer_data_dir}/grids/dev"
+    grid_dir = f"{synthesizer_data_dir}/grids"
+
+    # Download data if asked
+    if args.download:
+        download_data()
+        untar_data()
 
     original_model_names = [
         "bpass_v2.2.1_imf_chab100",

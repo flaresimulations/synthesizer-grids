@@ -10,6 +10,8 @@ from datetime import date
 import sys
 
 # Allow the file to use incident_utils
+from synthesizer_grids.utilities import Parser
+
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from synthesizer_grids.utilities.grid_io import GridFile
 from incident_utils import (
@@ -114,32 +116,28 @@ def make_grid(model, imf, output_dir):
     return fname
 
 
-# Lets include a way to call this script not via an entry point
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Maraston+13 download and grid creation"
-    )
-    parser.add_argument("-synthesizer_data_dir", type=str, required=True)
-    parser.add_argument(
-        "-download_data", "--download_data", type=bool, default=False
-    )
-
+    # Set up the command line arguments
+    parser = Parser(description="Maraston+13 download and grid creation")
     args = parser.parse_args()
 
+    # Unpack the arguments
     synthesizer_data_dir = args.synthesizer_data_dir
+    grid_dir = f"{synthesizer_data_dir}/grids"
 
+    # Define the model metadata
     model_name = "maraston13"
-
-    output_dir = f"{synthesizer_data_dir}/original_data/{model_name}"  # the location to untar the original data
     imfs = ["salpeter", "kroupa"]
     imf_code = {"salpeter": "ss", "kroupa": "kr"}
-
     model = {
         "sps_name": "maraston",
         "sps_version": False,
         "alpha": False,
         "date": str(date.today()),
-    }  #'synthesizer-grids_tag': __tag__,
+    }
+
+    # The location to untar the original data
+    output_dir = f"{synthesizer_data_dir}/original_data/{model_name}"
 
     for imf in imfs:
         fname = make_grid(

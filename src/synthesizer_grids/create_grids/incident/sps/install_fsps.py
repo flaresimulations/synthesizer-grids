@@ -1,9 +1,9 @@
-import argparse
 import numpy as np
 import fsps
 from datetime import date
 
-from synthesizer_grids.utilities.grid_io import GridFile
+from synthesizer_grids.utilities.parser import Parser
+from synthesizer_grids.utilities import GridFile
 from utils import (
     __tag__,
     write_data_h5py,
@@ -141,20 +141,17 @@ def generate_grid(model):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="FSPS download and grid creation"
-    )
-    parser.add_argument(
-        "-synthesizer_data_dir",
-        "--synthesizer_data_dir",
-        default="/Users/sw376/Dropbox/Research/data/synthesizer",
-    )
-
+    # Set up the command line arguments
+    parser = Parser(description="FSPS download and grid creation")
     args = parser.parse_args()
 
+    # Unpack the arguments
     synthesizer_data_dir = args.synthesizer_data_dir
+    grid_dir = f"{synthesizer_data_dir}/grids"
 
-    grid_dir = f"{synthesizer_data_dir}/grids/dev"
+    # No download for FSPS
+    if args.download:
+        print("FSPS is a python package, no download required")
 
     default_model = {
         "sps_name": "fsps",

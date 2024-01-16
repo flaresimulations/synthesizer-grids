@@ -38,6 +38,7 @@ from incident_utils import (
 )
 from unyt import c, Angstrom, s
 
+from synthesizer_grids.utilities.parser import Parser
 from synthesizer_grids.utilities.grid_io import GridFile
 
 
@@ -298,17 +299,18 @@ def make_grid(synthesizer_data_dir, ver, fcov):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Install the POPIII grid to the specified directory."
-    )
-    parser.add_argument("-dir", "--directory", type=str, required=True)
+    # Set up the command line arguments
+    parser = Parser(description="Yggdrasil download and grid creation")
     args = parser.parse_args()
 
-    synthesizer_data_dir = args.directory
+    # Unpack the arguments
+    synthesizer_data_dir = args.synthesizer_data_dir
+    grid_dir = f"{synthesizer_data_dir}/grids"
 
     # Different forms of the IMFs
     vers = np.array([".1", ".2", "_kroupa_IMF"])
-    # different gas covering fractions for nebular emission model
+
+    # Different gas covering fractions for nebular emission model
     fcovs = np.array(["0", "0.5", "1"])
 
     for ver in vers:

@@ -14,6 +14,7 @@ import gzip
 import shutil
 from datetime import date
 from synthesizer_grids.utilities.grid_io import GridFile
+from synthesizer_grids.utilities.parser import Parser
 from utils import (
     __tag__,
     write_data_h5py,
@@ -298,23 +299,18 @@ def make_grid():
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="BC03 download and grid creation"
-    )
-    parser.add_argument(
-        "-synthesizer_data_dir",
-        "--synthesizer_data_dir",
-        default="/Users/sw376/Dropbox/Research/data/synthesizer",
-    )
-    parser.add_argument(
-        "-download_data", "--download_data", type=bool, default=False
-    )
-
+    # Set up the command line arguments
+    parser = Parser(description="BC03 download and grid creation")
     args = parser.parse_args()
 
+    # Unpack the arguments
     synthesizer_data_dir = args.synthesizer_data_dir
+    grid_dir = f"{synthesizer_data_dir}/grids"
 
-    grid_dir = f"{synthesizer_data_dir}/grids/dev"
+    # Download data if asked
+    if args.download:
+        download_data()
+        untar_data()
 
     model = {
         "sps_name": "bc03",
@@ -331,10 +327,6 @@ if __name__ == "__main__":
     # create synthesizer style model name
     synthesizer_model_name = get_model_filename(model)
     print(synthesizer_model_name)
-
-    if args.download_data:
-        download_data()
-        untar_data()
 
     # make grid
     out_filename = make_grid()
