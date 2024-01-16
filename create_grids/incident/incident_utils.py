@@ -108,7 +108,7 @@ def add_specific_ionising_luminosity(
 #         metallicities = hf['axes/metallicity'][()]
 #         log10ages = hf['axes/log10age'][()]
 
-#         nZ = len(metallicities)
+#         nmetal = len(metallicities)
 #         na = len(log10ages)
 
 #         lam = hf['spectra/wavelength'][()]
@@ -120,19 +120,19 @@ def add_specific_ionising_luminosity(
 
 #             ionisation_energy = Ions.energy[ion]
 
-#             hf[f'specific_ionising_luminosity/{ion}'] = np.zeros((na, nZ))
+#             hf[f'specific_ionising_luminosity/{ion}'] = np.zeros((na, nmetal))
 
 #             # ---- determine stellar specific_ionising_luminosity
 
-#             for iZ, Z in enumerate(metallicities):
+#             for imetal, metal in enumerate(metallicities):
 #                 for ia, log10age in enumerate(log10ages):
-#                     # print(ia, iZ)
+#                     # print(ia, imetal)
 
-#                     lnu = hf['spectra/stellar'][ia, iZ, :]
+#                     lnu = hf['spectra/stellar'][ia, imetal, :]
 
 #                     Q = calc_specific_ionising_luminosity(lam, lnu, ionisation_energy=ionisation_energy, limit=limit)
 
-#                     hf[f'specific_ionising_luminosity/{ion}'][ia, iZ] = np.log10(Q)
+#                     hf[f'specific_ionising_luminosity/{ion}'][ia, imetal] = np.log10(Q)
 
 
 def write_data_h5py(filename, name, data, overwrite=False):

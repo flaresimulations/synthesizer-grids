@@ -67,14 +67,14 @@ def make_grid(model, imf, output_dir):
     out_grid = GridFile(out_filename, mode="a", overwrite=True)
 
     # at each point in spec convert the units
-    for iZ, metallicity in enumerate(metallicities):
+    for imetal, metallicity in enumerate(metallicities):
         for ia, age_Gyr in enumerate(ages_Gyr):
-            print(iZ, ia, fn)
+            print(imetal, ia, fn)
             ages_, _, lam_, llam_ = np.loadtxt(fn).T
 
             llam = llam_[ages_ == age_Gyr] * erg / s / Angstrom
             lnu = llam_to_lnu(lam, llam)
-            spec[ia, iZ] = lnu
+            spec[ia, imetal] = lnu
 
     # Write everything out thats common to all models
     out_grid.write_grid_common(

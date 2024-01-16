@@ -16,7 +16,8 @@ import shutil
 from datetime import date
 from unyt import angstrom, erg, s, Hz
 
-from ..io import GridFile
+sys.path.insert(1, os.path.dirname(os.path.abspath(sys.argv[0])) + "/../../")
+from grid_io import GridFile
 from utils import (
     __tag__,
     get_model_filename,
@@ -150,8 +151,8 @@ def convertBC03(files=None):
         line = file.readline()
         line = file.readline()
         # These last three lines are identical and contain the metallicity
-        (ZZ,) = re.search("Z=([0-9]+\.?[0-9]*)", line).groups()
-        metalBins[iFile] = eval(ZZ)
+        (jmetal,) = re.search("metal=([0-9]+\.?[0-9]*)", line).groups()
+        metalBins[iFile] = eval(jmetal)
         seds.resize(
             (len(metalBins), seds.shape[1], seds.shape[2]), refcheck=False
         )
@@ -244,7 +245,7 @@ def make_grid(variant, synthesizer_data_dir, out_filename):
     spec *= lam / nu  # erg s^-1 Hz^-1 Msol^-1
 
     na = len(ages)
-    nZ = len(metallicities)
+    nmetal = len(metallicities)
 
     # Create the GridFile ready to take outputs
     out_grid = GridFile(out_filename, mode="a", overwrite=True)
