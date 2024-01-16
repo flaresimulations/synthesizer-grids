@@ -60,7 +60,7 @@ def make_grid(model, imf, output_dir):
     spec = np.zeros((len(ages), len(metallicities), len(lam)))
 
     # Create the GridFile ready to take outputs
-    out_grid = GridFile(out_filename, mode="a", overwrite=True)
+    out_grid = GridFile(out_filename, mode="r+", overwrite=True)
 
     # at each point in spec convert the units
     for imetal, metallicity in enumerate(metallicities):
