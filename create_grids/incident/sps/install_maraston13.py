@@ -12,13 +12,9 @@ import sys
 # to allow access to the grid_io module:
 sys.path.insert(
     1,
-    os.path.dirname(os.path.abspath(sys.argv[0])) + "../../")
-from grid_io import GridFile
+    os.path.dirname(os.path.abspath(sys.argv[0])) + "/../../")
 
-from utils import (
-    __tag__,
-    get_model_filename,
-)
+from grid_io import GridFile
 
 def make_grid(model, imf, output_dir):
     """Main function to convert Maraston 2013 and
@@ -90,8 +86,6 @@ def make_grid(model, imf, output_dir):
 
     out_grid.close()
     
-    return out_filename
-
 
 # Lets include a way to call this script not via an entry point
 if __name__ == "__main__":
@@ -121,6 +115,4 @@ if __name__ == "__main__":
     }  #'synthesizer-grids_tag': __tag__,
 
     for imf in imfs:
-        out_filename = make_grid(
-            model, imf, output_dir
-        )  # makes the grid and returns the name
+        make_grid(model, imf, output_dir)
