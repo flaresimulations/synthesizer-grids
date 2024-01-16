@@ -31,8 +31,7 @@ from synthesizer_grids.create_grids.grid_utils import (
 
 class GridFile:
     """
-    A helper obejct for reading/writing Synthesizer grids from/to HDF5 files
-    in a standardised format.
+    A helper obejct for reading/writing Synthesizer grids from/to HDF5 files.
 
     Attributes:
         filepath (string)
@@ -75,7 +74,6 @@ class GridFile:
             overwrite (bool)
                 Should existing keys be overwritten in append mode?
         """
-
         # Store the filepath for posterity
         self.filepath = filepath
 
@@ -112,16 +110,12 @@ class GridFile:
             self.mode = "r+"
 
     def _open_file(self):
-        """
-        Open the file if it isn't already open.
-        """
+        """Open the file if it isn't already open."""
         if self.hdf is None:
             self.hdf = h5py.File(self.filepath, self.mode)
 
     def _close_file(self):
-        """
-        Close the file if it is open.
-        """
+        """Close the file if it is open."""
         if self.hdf is not None:
             self.hdf.close()
             self.hdf = None
@@ -231,7 +225,6 @@ class GridFile:
                 Any attributes of the dataset can be passed in the form:
                 attr_key=attr_value (like the units kwarg).
         """
-
         # Open the file
         self._open_file()
 
@@ -400,7 +393,6 @@ class GridFile:
             ValueError
                 If arguments disagree with each other an error is thrown.
         """
-
         # Write out model parameters as top level attributes
         for key, value in model.items():
             self.write_attribute("/", key, value)
