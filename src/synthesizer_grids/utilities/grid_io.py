@@ -2,16 +2,31 @@
 
 Example usage:
 
+    # Create a grid file
+    grid = GridFile("grid.hdf5")
+
+    # Write out the common parts of the grid
+    grid.write_grid_common(
+        model={"model": "BPASS v2.2.1"},
+        wavelength=wavelength,
+        axes=axes,
+        spectra=spectra,
+    )
+
 """
 import h5py
 import numpy as np
-from unyt import unyt_array, angstrom
+from unyt import unyt_array
 
 from synthesizer.sed import Sed
 from synthesizer.photoionisation import Ions
-from synthesizer._version import __version__
+from synthesizer._version import __version__ as synthesizer_version
 
-from grid_utils import get_grid_properties_from_hdf5
+from synthesizer.grids._version import __version__ as grids_version
+
+from synthesizer_grids.create_grids.grid_utils import (
+    get_grid_properties_from_hdf5,
+)
 
 
 class GridFile:
@@ -91,7 +106,8 @@ class GridFile:
         """
         if self.mode != "r+" and self.mode != "a":
             self.hdf = h5py.File(self.filepath, self.mode)
-            self.hdf.attrs["synthesizer_version"] = __version__
+            self.hdf.attrs["synthesizer_grids_version"] = grids_version
+            self.hdf.attrs["synthesizer_version"] = synthesizer_version
             self.hdf.close()
             self.mode = "r+"
 
