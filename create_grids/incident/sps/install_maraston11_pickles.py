@@ -105,7 +105,7 @@ def make_grid(model, imf, extension, output_dir):
         model,
         axes={"log10age": log10ages, "metallicity": metallicities},
         wavelength= lam,
-        spectra={"incident": spec}, #check this unit
+        spectra={"incident": spec}, 
         alt_axes=("log10ages", "metallicities"),
     )
 
