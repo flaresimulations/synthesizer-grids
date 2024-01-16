@@ -71,7 +71,7 @@ class GridFile:
         # Tell the user if the mode and overwrite don't make sense
         if self.overwrite and (self.mode != "r+" or self.mode != "a"):
             print(
-                "Overwriting is only possible in append mode ('r+'/"a")."
+                "Overwriting is only possible in append mode ('r+'/'a')."
                 f"Mode was: {self.mode}, The overwrite flag will be ignored."
             )
 
