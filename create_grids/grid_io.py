@@ -1,4 +1,4 @@
-""" A module containing I/O helper functions.
+"""A module containing I/O helper functions.
 
 Example usage:
 
@@ -9,6 +9,7 @@ from unyt import unyt_array
 
 from synthesizer.sed import Sed
 from synthesizer.photoionisation import Ions
+from synthesizer._version import __version__
 
 from grid_utils import get_grid_properties_from_hdf5
 
@@ -86,6 +87,7 @@ class GridFile:
         """
         if self.mode != "r+" and self.mode != "a":
             self.hdf = h5py.File(self.filepath, self.mode)
+            self.hdf.attrs["synthesizer_version"] = __version__
             self.hdf.close()
             self.mode = "r+"
 
