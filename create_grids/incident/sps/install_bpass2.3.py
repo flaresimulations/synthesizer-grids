@@ -165,7 +165,7 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
         )  # convert to per M_sol
 
         # get original log10_specific_ionising_lum
-        fn_ = f"{input_dir}/ionizing-{bs}-imf_{bpass_imf}.a{ae}.{map_metal_to_key[metal]}.dat"
+        fn_ = f"{input_dir}/ionizing-{bs}-imf_{bpass_imf}.a{ae}.{map_met_to_key[metal]}.dat"
         ionising = load.model_output(fn_)
         log10_specific_ionising_lum_original["HI"][:, imetal] = (
             ionising["prod_rate"].values - 6
