@@ -11,7 +11,7 @@ from datetime import date
 import wget
 
 from synthesizer_grids.utilities import GridFile
-from sythesizer_grids.utilities import Parser
+from synthesizer_grids.utilities import Parser
 
 
 def download_data(
