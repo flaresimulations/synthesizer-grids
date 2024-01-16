@@ -23,7 +23,7 @@ from synthesizer.sed import Sed
 from synthesizer.photoionisation import Ions
 from synthesizer._version import __version__ as synthesizer_version
 
-from synthesizer.grids._version import __version__ as grids_version
+from synthesizer_grids._version import __version__ as grids_version
 
 from synthesizer_grids.create_grids.grid_utils import (
     get_grid_properties_from_hdf5,
