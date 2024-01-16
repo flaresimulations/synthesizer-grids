@@ -354,12 +354,12 @@ class GridFile:
 
     def write_grid_common(
         self,
-        model,
         axes,
         wavelength,
         spectra,
         alt_axes=(),
         descriptions={},
+        model={},
     ):
         """
         Write out the common parts of a Synthesizer grid.
@@ -371,8 +371,6 @@ class GridFile:
         explicit calls to write_dataset and write_attribute.
 
         Args:
-            model (dict)
-                A dictionary containing the metadata of the model used.
             wavelength (unyt_array)
                 The wavelength array of the spectra grid.
             axes (dict, unyt_array)
@@ -390,14 +388,15 @@ class GridFile:
                 Keys must match axes. Common descriptions are
                 already included in the descriptions class attribute but can
                 be overidden here.
+            model (dict)
+                A dictionary containing the metadata of the model used.
 
         Raises:
             ValueError
                 If arguments disagree with each other an error is thrown.
         """
-        # Write out model parameters as top level attributes
-        for key, value in model.items():
-            self.write_attribute("/", key, value)
+        if len(model) > 0:
+            self.write_model_metadata(model)
 
         # Write out the axis names to an attribute
         self.write_attribute("/", "axes", list(axes.keys()))
