@@ -10,6 +10,7 @@ import tarfile
 from hoki import load
 from datetime import date
 import sys, os
+from synthesizer_grids.utilities.grid_io import GridFile
 from utils import (
     __tag__,
     write_data_h5py,

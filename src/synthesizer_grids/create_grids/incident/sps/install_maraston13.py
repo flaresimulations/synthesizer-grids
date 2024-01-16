@@ -11,6 +11,7 @@ import sys
 
 # Allow the file to use incident_utils
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+from synthesizer_grids.utilities.grid_io import GridFile
 from incident_utils import (
     write_data_h5py,
     write_attribute,

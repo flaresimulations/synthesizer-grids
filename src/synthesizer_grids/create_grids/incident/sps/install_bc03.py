@@ -13,6 +13,7 @@ import glob
 import gzip
 import shutil
 from datetime import date
+from synthesizer_grids.utilities.grid_io import GridFile
 from utils import (
     __tag__,
     write_data_h5py,

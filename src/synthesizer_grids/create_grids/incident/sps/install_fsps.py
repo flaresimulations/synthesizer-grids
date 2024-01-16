@@ -2,6 +2,8 @@ import argparse
 import numpy as np
 import fsps
 from datetime import date
+
+from synthesizer_grids.utilities.grid_io import GridFile
 from utils import (
     __tag__,
     write_data_h5py,

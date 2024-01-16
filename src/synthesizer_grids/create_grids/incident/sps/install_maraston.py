@@ -11,6 +11,8 @@ import tarfile
 from synthesizer.utils import flam_to_fnu
 from synthesizer.sed import calc_specific_ionising_luminosity
 from datetime import date
+
+from synthesizer_grids.utilities.grid_io import GridFile
 from utils import (
     __tag__,
     write_data_h5py,

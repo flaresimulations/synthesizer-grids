@@ -16,8 +16,7 @@ import shutil
 from datetime import date
 from unyt import angstrom, erg, s, Hz
 
-sys.path.insert(1, os.path.dirname(os.path.abspath(sys.argv[0])) + "/../../")
-from grid_io import GridFile
+from synthesizer_grids.utilities.grid_io import GridFile
 from utils import (
     get_model_filename,
 )

@@ -38,6 +38,7 @@ from incident_utils import (
 )
 from unyt import c, Angstrom, s
 
+from synthesizer_grids.utilities.grid_io import GridFile
 from synthesizer.sed import calc_specific_ionising_luminosity
 
 
