@@ -186,13 +186,13 @@ def make_grid(synthesizer_data_dir, ver, fcov):
     spec *= (lam**2) / light_speed  # now in erg s^-1 Hz^-1 Msol^-1
 
     na = len(ages)
-    nZ = len(metallicities)
+    nmetal = len(metallicities)
 
     log10_specific_ionising_lum = np.zeros(
         (na, nZ)
     )  # the ionising photon production rate
 
-    # for iZ, metallicity in enumerate(metallicities):
+    # for imetal, metallicity in enumerate(metallicities):
     #     for ia, log10age in enumerate(log10ages):
 
     #         # --- calcualte ionising photon luminosity
@@ -220,7 +220,9 @@ def make_grid(synthesizer_data_dir, ver, fcov):
         write_attribute(
             fname, "metallicities", "Description", "raw abundances"
         )
-        write_attribute(fname, "metallicities", "Units", "dimensionless [Z]")
+        write_attribute(
+            fname, "metallicities", "Units", "dimensionless [metal]"
+        )
 
         write_data_h5py(
             fname,
@@ -235,7 +237,10 @@ def make_grid(synthesizer_data_dir, ver, fcov):
             "raw abundances in log10",
         )
         write_attribute(
-            fname, "log10metallicities", "Units", "dimensionless [log10(Z)]"
+            fname,
+            "log10metallicities",
+            "Units",
+            "dimensionless [log10(metal)]",
         )
 
         write_data_h5py(
@@ -250,7 +255,7 @@ def make_grid(synthesizer_data_dir, ver, fcov):
             "Description",
             (
                 "Two-dimensional ionising photon "
-                "production rate grid, [age,Z]"
+                "production rate grid, [age,metal]"
             ),
         )
 

@@ -105,7 +105,7 @@ def add_log10_specific_ionising_lum(
 #         metallicities = hf['axes/metallicity'][()]
 #         log10ages = hf['axes/log10age'][()]
 
-#         nZ = len(metallicities)
+#         nmetal = len(metallicities)
 #         na = len(log10ages)
 
 #         lam = hf['spectra/wavelength'][()]
@@ -121,11 +121,11 @@ def add_log10_specific_ionising_lum(
 
 #             # ---- determine stellar log10_specific_ionising_lum
 
-#             for iZ, Z in enumerate(metallicities):
+#             for imetal, metal in enumerate(metallicities):
 #                 for ia, log10age in enumerate(log10ages):
-#                     # print(ia, iZ)
+#                     # print(ia, imetal)
 
-#                     lnu = hf['spectra/stellar'][ia, iZ, :]
+#                     lnu = hf['spectra/stellar'][ia, imetal, :]
 
 #                     Q = calc_log10_specific_ionising_lum(lam, lnu, ionisation_energy=ionisation_energy, limit=limit)
 
