@@ -69,11 +69,25 @@ class GridFile:
         self.overwrite = overwrite
 
         # Tell the user if the mode and overwrite don't make sense
-        if self.overwrite and self.mode != "r+":
+        if self.overwrite and (self.mode != "r+" or self.mode != "a"):
             print(
-                "Overwriting is only possible in append mode ('r+')."
+                "Overwriting is only possible in append mode ('r+'/"a")."
                 f"Mode was: {self.mode}, The overwrite flag will be ignored."
             )
+
+        # Create the file if it doesn't exist
+        self._create_file()
+
+    def _create_file(self):
+        """
+        Create the file if it doesn't exist.
+
+        NOTE: This will overwrite the mode with and append mode.
+        """
+        if self.mode != "r+" and self.mode != "a":
+            self.hdf = h5py.File(self.filepath, self.mode)
+            self.hdf.close()
+            self.mode = "r+"
 
     def _dataset_exists(self, key):
         """
@@ -127,7 +141,7 @@ class GridFile:
         self.hdf = h5py.File(self.filepath, self.mode)
 
         # If we are overwriting we have some extra work to do
-        if self.mode == "r+" and self.overwrite:
+        if (self.mode == "r+" or self.mode == "a") and self.overwrite:
             # Does the dataset already exist?
             if self._attr_exists(group, attr_key):
                 # Ok, delete it to prepare for replacement
@@ -185,7 +199,7 @@ class GridFile:
         self.hdf = h5py.File(self.filepath, self.mode)
 
         # If we are overwriting we have some extra work to do
-        if self.mode == "r+" and self.overwrite:
+        if (self.mode == "r+" or self.mode == "a") and self.overwrite:
             # Does the dataset already exist?
             if self._dataset_exists(key):
                 # Ok, delete it to prepare for replacement
@@ -352,7 +366,7 @@ class GridFile:
             if "log" in axis_key or not isinstance(axis_arr, unyt_array):
                 units = "dimensionless"
             else:
-                units = str(axis_arr)
+                units = str(axis_arr.units)
 
             self.write_dataset(
                 "axes/" + axis_key,
@@ -366,7 +380,7 @@ class GridFile:
         # Create soft links for the alternative naming
         # No need for logic, if alt_axes is empty there will be no loop
         for alt, key in zip(alt_axes, axes.keys()):
-            self.hdf["axes/" + alt] = self.hdf["axes/" + key]
+            self.hdf["axes/" + alt] = h5py.SoftLink(["axes/" + key])
 
         # Write out the wavelength array
         self.write_dataset(
