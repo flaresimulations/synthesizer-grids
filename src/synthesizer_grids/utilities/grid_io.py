@@ -14,6 +14,7 @@ Example usage:
     )
 
 """
+from datetime import date
 import h5py
 import numpy as np
 from unyt import unyt_array
@@ -106,6 +107,7 @@ class GridFile:
             self.hdf = h5py.File(self.filepath, self.mode)
             self.hdf.attrs["synthesizer_grids_version"] = grids_version
             self.hdf.attrs["synthesizer_version"] = synthesizer_version
+            self.hdf.attrs["date_created"] = str(date.today())
             self.hdf.close()
             self.mode = "r+"
 
