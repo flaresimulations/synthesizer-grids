@@ -85,9 +85,24 @@ class GridFile:
         NOTE: This will overwrite the mode with and append mode.
         """
         if self.mode != "r+" and self.mode != "a":
-            self.hdf = h5py.File(self.filepath, self.mode)
-            self.hdf.close()
+            self._open_file()
+            self._close_file()
             self.mode = "r+"
+
+    def _open_file(self):
+        """
+        Open the file if it isn't already open.
+        """
+        if self.hdf is None:
+            self.hdf = h5py.File(self.filepath, self.mode)
+
+    def _close_file(self):
+        """
+        Close the file if it is open.
+        """
+        if self.hdf is not None:
+            self.hdf.close()
+            self.hdf = None
 
     def _dataset_exists(self, key):
         """
@@ -138,7 +153,7 @@ class GridFile:
                 Are we talking?
         """
         # Open the file
-        self.hdf = h5py.File(self.filepath, self.mode)
+        self._open_file()
 
         # If we are overwriting we have some extra work to do
         if (self.mode == "r+" or self.mode == "a") and self.overwrite:
@@ -161,7 +176,7 @@ class GridFile:
         # Finally, Write it!
         self.hdf[group].attrs[attr_key] = data
 
-        self.hdf.close()
+        self._close_file()
 
     def write_dataset(
         self,
@@ -196,7 +211,7 @@ class GridFile:
         """
 
         # Open the file
-        self.hdf = h5py.File(self.filepath, self.mode)
+        self._open_file()
 
         # If we are overwriting we have some extra work to do
         if (self.mode == "r+" or self.mode == "a") and self.overwrite:
@@ -234,7 +249,7 @@ class GridFile:
         for dset_attr_key, val in kwargs.items():
             dset.attrs[dset_attr_key] = val
 
-        self.hdf.close()
+        self._close_file()
 
     def read_attribute(self, attr_key, group="/"):
         """
@@ -251,9 +266,9 @@ class GridFile:
             array-like/float/int/str
                 The attribute stored at hdf[group].attrs[attr_key].
         """
-        self.hdf = h5py.File(self.filepath, self.mode)
+        self._open_file()
         attr = self.hdf[group].attrs[attr_key]
-        self.hdf.close()
+        self._close_file()
         return attr
 
     def read_dataset(self, key, print_description=False):
@@ -271,8 +286,8 @@ class GridFile:
             unyt_array/array-like
                 The dataset stored at hdf[key].
         """
-        # Open the file
-        self.hdf = h5py.File(self.filepath, self.mode)
+        # Open the file if necessary
+        self._open_file()
 
         # Get the data
         data = self.hdf[key]
@@ -287,9 +302,27 @@ class GridFile:
         if unit_str != "dimensionless":
             return unyt_array(data, unit_str)
 
-        self.hdf.close()
+        self._close_file()
 
         return data
+
+    def make_soft_link(self, key, link):
+        """
+        Make a soft link between and existing key and a "link" key.
+
+        Args:
+            key (str)
+                The key to make a soft link to.
+            link (str)
+                The key for the soft link.
+        """
+        # Open the file
+        self._open_file()
+
+        # Make the link
+        self.hdf[key] = h5py.SoftLink(link)
+
+        self._close_file()
 
     def write_grid_common(
         self,
@@ -334,6 +367,7 @@ class GridFile:
             ValueError
                 If arguments disagree with each other an error is thrown.
         """
+
         # Write out model parameters as top level attributes
         for key, value in model.items():
             self.write_attribute("/", key, value)
@@ -380,7 +414,7 @@ class GridFile:
         # Create soft links for the alternative naming
         # No need for logic, if alt_axes is empty there will be no loop
         for alt, key in zip(alt_axes, axes.keys()):
-            self.hdf["axes/" + alt] = h5py.SoftLink(["axes/" + key])
+            self.make_soft_link("axes/" + alt, "axes/" + key)
 
         # Write out the wavelength array
         self.write_dataset(
@@ -418,7 +452,7 @@ class GridFile:
 
         """
         # Open the file
-        self.hdf = h5py.File(self.filepath, self.mode)
+        self._open_file()
 
         # Get the properties of the grid including the dimensions etc.
         (
@@ -473,7 +507,7 @@ class GridFile:
                     "Two-dimensional {ion} ionising photon production rate grid, [age, Z]",
                 )
 
-        self.hdf.close()
+        self._close_file()
 
 
 def read_params(param_file):
