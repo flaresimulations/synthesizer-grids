@@ -171,15 +171,15 @@ if __name__ == "__main__":
             # add attribute with the original incident grid axes
             hf.attrs["incident_axes"] = hf_incident.attrs["axes"]
 
-            # we want to copy over specific_ionising_luminosity from the incident grid to allow us to
+            # we want to copy over log10_specific_ionising_lum from the incident grid to allow us to
             # normalise the cloudy outputs. However, the axes of the incident
             # grid may be different from the cloudy grid due to additional
-            # parameters, in which we need to extend the axes of specific_ionising_luminosity
+            # parameters, in which we need to extend the axes of log10_specific_ionising_lum
 
             # if there are no additional axes simply copy over the incident
-            # specific_ionising_luminosity
+            # log10_specific_ionising_lum
             if len(axes) == len(hf.attrs["incident_axes"]):
-                hf_incident.copy("specific_ionising_luminosity", hf)
+                hf_incident.copy("log10_specific_ionising_lum", hf)
 
             # else we need to expand the axis
             else:
@@ -187,27 +187,27 @@ if __name__ == "__main__":
                 expansion = int(
                     np.product(shape)
                     / np.product(
-                        hf_incident["specific_ionising_luminosity/HI"].shape
+                        hf_incident["log10_specific_ionising_lum/HI"].shape
                     )
                 )
 
                 # loop over ions
-                for ion in hf_incident["specific_ionising_luminosity"].keys():
-                    # get the incident specific_ionising_luminosity array
-                    specific_ionising_luminosity_incident = hf_incident[
-                        f"specific_ionising_luminosity/{ion}"
+                for ion in hf_incident["log10_specific_ionising_lum"].keys():
+                    # get the incident log10_specific_ionising_lum array
+                    log10_specific_ionising_lum_incident = hf_incident[
+                        f"log10_specific_ionising_lum/{ion}"
                     ][()]
 
                     # create new array with repeated elements
-                    specific_ionising_luminosity = np.repeat(
-                        specific_ionising_luminosity_incident,
+                    log10_specific_ionising_lum = np.repeat(
+                        log10_specific_ionising_lum_incident,
                         expansion,
                         axis=-1,
                     )
 
                     # reshape array to match new shape and save
-                    hf[f"specific_ionising_luminosity/{ion}"] = np.reshape(
-                        specific_ionising_luminosity, shape
+                    hf[f"log10_specific_ionising_lum/{ion}"] = np.reshape(
+                        log10_specific_ionising_lum, shape
                     )
 
         # add attribute with full grid axes
@@ -269,11 +269,11 @@ if __name__ == "__main__":
         if params_["ionisation_parameter_model"] == "ref":
             # Calculate the difference between the reference log10Q (LyC
             # continuum luminosity) and the current grid point
-            delta_specific_ionising_luminosity = (
-                incident_grid.specific_ionising_luminosity["HI"][
+            delta_log10_specific_ionising_lum = (
+                incident_grid.log10_specific_ionising_lum["HI"][
                     incident_grid_point
                 ]
-                - incident_grid.specific_ionising_luminosity["HI"][
+                - incident_grid.log10_specific_ionising_lum["HI"][
                     incident_ref_grid_point
                 ]
             )
@@ -282,15 +282,15 @@ if __name__ == "__main__":
             if params_["geometry"] == "spherical":
                 log10U = (
                     np.log10(params_["reference_ionisation_parameter"])
-                    + (1 / 3) * delta_specific_ionising_luminosity
+                    + (1 / 3) * delta_log10_specific_ionising_lum
                 )
 
             # For plane-parallel geometry the effective just scales with
-            # specific_ionising_luminosity
+            # log10_specific_ionising_lum
             elif params_["geometry"] == "planeparallel":
                 log10U = (
                     np.log10(params_["reference_ionisation_parameter"])
-                    + delta_specific_ionising_luminosity
+                    + delta_log10_specific_ionising_lum
                 )
 
             else:

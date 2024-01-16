@@ -9,13 +9,13 @@ import argparse
 from pathlib import Path
 import tarfile
 from synthesizer.utils import flam_to_fnu
-from synthesizer.sed import calc_specific_ionising_luminosity
+from synthesizer.sed import calc_log10_specific_ionising_lum
 from datetime import date
 from utils import (
     __tag__,
     write_data_h5py,
     write_attribute,
-    add_specific_ionising_luminosity,
+    add_log10_specific_ionising_lum,
     get_model_filename,
 )
 
@@ -200,4 +200,4 @@ if __name__ == "__main__":
             model["sps_variant"] = hr_morphology
             out_filename = make_grid(model, imf, hr_morphology)
 
-            add_specific_ionising_luminosity(out_filename)
+            add_log10_specific_ionising_lum(out_filename)
