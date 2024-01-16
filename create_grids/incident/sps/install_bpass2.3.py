@@ -142,12 +142,12 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
 
     # the ionising photon production rate
     log10_specific_ionising_lum = {}
-    log10_specific_ionising_lum["HI"] = np.zeros((na, nZ))
-    log10_specific_ionising_lum["HeII"] = np.zeros((na, nZ))
+    log10_specific_ionising_lum["HI"] = np.zeros((na, nmetal))
+    log10_specific_ionising_lum["HeII"] = np.zeros((na, nmetal))
 
     # provided by BPASS, sanity check for above
     log10_specific_ionising_lum_original = {}
-    log10_specific_ionising_lum_original["HI"] = np.zeros((na, nZ))
+    log10_specific_ionising_lum_original["HI"] = np.zeros((na, nmetal))
 
     spectra = np.zeros((na, nmetal, len(wavelengths)))
 
@@ -165,11 +165,9 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
         )  # convert to per M_sol
 
         # get original log10_specific_ionising_lum
-        fn_ = (
-            f"{input_dir}/ionizing-{bs}-imf_{bpass_imf}.a{ae}.{Z_to_Zk[Z]}.dat"
-        )
+        fn_ = f"{input_dir}/ionizing-{bs}-imf_{bpass_imf}.a{ae}.{map_metal_to_key[metal]}.dat"
         ionising = load.model_output(fn_)
-        log10_specific_ionising_lum_original["HI"][:, iZ] = (
+        log10_specific_ionising_lum_original["HI"][:, imetal] = (
             ionising["prod_rate"].values - 6
         )  # convert to per M_sol
 
@@ -190,7 +188,7 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
             for ion in ["HI", "HeII"]:
                 limit = 100
                 ionisation_energy = Ions.energy[ion]
-                log10_specific_ionising_lum[ion][ia, iZ] = np.log10(
+                log10_specific_ionising_lum[ion][ia, imetal] = np.log10(
                     calc_log10_specific_ionising_lum(
                         wavelengths,
                         spec_,
@@ -317,12 +315,12 @@ def make_full_grid(original_model_name, bs="bin"):
 
     # the ionising photon production rate
     log10_specific_ionising_lum = {}
-    log10_specific_ionising_lum["HI"] = np.zeros((na, nZ, nae))
-    log10_specific_ionising_lum["HeII"] = np.zeros((na, nZ, nae))
+    log10_specific_ionising_lum["HI"] = np.zeros((na, nmetal, nae))
+    log10_specific_ionising_lum["HeII"] = np.zeros((na, nmetal, nae))
 
     # provided by BPASS, sanity check for above
     log10_specific_ionising_lum_original = {}
-    log10_specific_ionising_lum_original["HI"] = np.zeros((na, nZ, nae))
+    log10_specific_ionising_lum_original["HI"] = np.zeros((na, nmetal, nae))
 
     spectra = np.zeros((na, nmetal, nae, len(wavelengths)))
 
@@ -344,9 +342,9 @@ def make_full_grid(original_model_name, bs="bin"):
             )
 
             # --- get original log10_specific_ionising_lum
-            fn_ = f"{input_dir}/ionizing-{bs}-imf_{bpass_imf}.a{aek}.{Zk}.dat"
+            fn_ = f"{input_dir}/ionizing-{bs}-imf_{bpass_imf}.a{aek}.{metalk}.dat"
             ionising = load.model_output(fn_)
-            log10_specific_ionising_lum_original["HI"][:, iZ, iae] = (
+            log10_specific_ionising_lum_original["HI"][:, imetal, iae] = (
                 ionising["prod_rate"].values - 6
             )  # convert to per M_sol
 
@@ -370,7 +368,9 @@ def make_full_grid(original_model_name, bs="bin"):
                 for ion in ["HI", "HeII"]:
                     limit = 100
                     ionisation_energy = Ions.energy[ion]
-                    log10_specific_ionising_lum[ion][ia, iZ, iae] = np.log10(
+                    log10_specific_ionising_lum[ion][
+                        ia, imetal, iae
+                    ] = np.log10(
                         calc_log10_specific_ionising_lum(
                             wavelengths,
                             spec_,

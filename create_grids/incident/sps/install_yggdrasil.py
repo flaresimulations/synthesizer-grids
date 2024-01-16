@@ -189,14 +189,14 @@ def make_grid(synthesizer_data_dir, ver, fcov):
     nmetal = len(metallicities)
 
     log10_specific_ionising_lum = np.zeros(
-        (na, nZ)
+        (na, nmetal)
     )  # the ionising photon production rate
 
     # for imetal, metallicity in enumerate(metallicities):
     #     for ia, log10age in enumerate(log10ages):
 
     #         # --- calcualte ionising photon luminosity
-    #         log10_specific_ionising_lum[ia, iZ] = np.log10(calc_log10_specific_ionising_lum(lam, spec[ia, iZ, :]))
+    #         log10_specific_ionising_lum[ia, imetal] = np.log10(calc_log10_specific_ionising_lum(lam, spec[ia, imetal, :]))
 
     if fcov == "0":
         write_data_h5py(fname, "ages", data=ages, overwrite=True)

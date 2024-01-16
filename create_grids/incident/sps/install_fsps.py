@@ -72,7 +72,7 @@ def generate_grid(model):
     nmetal = len(metallicities)
 
     log10_specific_ionising_lum = np.zeros(
-        (na, nZ)
+        (na, nmetal)
     )  # the ionising photon production rate
     spec = np.zeros((na, nmetal, len(lam)))
 

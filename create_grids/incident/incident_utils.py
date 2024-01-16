@@ -117,7 +117,7 @@ def add_log10_specific_ionising_lum(
 
 #             ionisation_energy = Ions.energy[ion]
 
-#             hf[f'log10_specific_ionising_lum/{ion}'] = np.zeros((na, nZ))
+#             hf[f'log10_specific_ionising_lum/{ion}'] = np.zeros((na, nmetal))
 
 #             # ---- determine stellar log10_specific_ionising_lum
 
@@ -129,7 +129,7 @@ def add_log10_specific_ionising_lum(
 
 #                     Q = calc_log10_specific_ionising_lum(lam, lnu, ionisation_energy=ionisation_energy, limit=limit)
 
-#                     hf[f'log10_specific_ionising_lum/{ion}'][ia, iZ] = np.log10(Q)
+#                     hf[f'log10_specific_ionising_lum/{ion}'][ia, imetal] = np.log10(Q)
 
 
 def write_data_h5py(filename, name, data, overwrite=False):
