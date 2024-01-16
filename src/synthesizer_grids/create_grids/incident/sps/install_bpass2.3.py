@@ -39,8 +39,6 @@ def resolve_name(original_model_name, bin, alpha=False):
         "imf_masses": imf_masses,
         "imf_slopes": imf_slopes,
         "alpha": alpha,
-        "synthesizer-grids_tag": __tag__,
-        "date": str(date.today()),
     }
 
     print(model)
