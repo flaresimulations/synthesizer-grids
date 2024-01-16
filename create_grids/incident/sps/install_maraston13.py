@@ -60,7 +60,7 @@ def make_grid(model, imf, output_dir):
     spec = np.zeros((len(ages), len(metallicities), len(lam)))
 
     # Create the GridFile ready to take outputs
-    out_grid = GridFile(out_filename, mode="r+", overwrite=True)
+    out_grid = GridFile(out_filename, mode="w", overwrite=True)
 
     # at each point in spec convert the units
     for imetal, metallicity in enumerate(metallicities):
@@ -83,8 +83,6 @@ def make_grid(model, imf, output_dir):
 
     # Include the specific ionising photon luminosity
     out_grid.add_specific_ionising_lum()
-
-    out_grid.close()
     
 
 # Lets include a way to call this script not via an entry point
