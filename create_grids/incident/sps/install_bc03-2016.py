@@ -19,9 +19,9 @@ from unyt import angstrom, erg, s, Hz
 sys.path.insert(1, os.path.dirname(os.path.abspath(sys.argv[0])) + "/../../")
 from grid_io import GridFile
 from utils import (
-    __tag__,
     get_model_filename,
 )
+from synthesizer._version import __version__
 
 
 def download_data(variant):
@@ -297,7 +297,7 @@ if __name__ == "__main__":
         "imf_masses": [0.1, 100],
         "imf_slopes": False,
         "alpha": False,
-        "synthesizer-grids_tag": __tag__,
+        "synthesizer-grids_tag": __version__,
         "date": str(date.today()),
     }
 
