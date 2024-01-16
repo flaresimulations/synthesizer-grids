@@ -109,6 +109,7 @@ class GridFile:
             self.hdf.attrs["synthesizer_version"] = synthesizer_version
             self.hdf.attrs["date_created"] = str(date.today())
             self.hdf.close()
+            self.hdf = None
             self.mode = "r+"
 
     def _open_file(self):
@@ -547,6 +548,7 @@ class GridFile:
         self._open_file()
 
         # Create a group for the model metadata
+        print(self.hdf)
         grp = self.hdf.create_group("Model")
 
         # Write out model parameters as attributes
