@@ -110,4 +110,4 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools_scm]
 
 # Make a version file at build time
-version_file = "src/synthesizer-grids/_version.py"
+version_file = "src/synthesizer_grids/_version.py"
