@@ -10,11 +10,10 @@ from datetime import date
 import sys
 
 # to allow access to the grid_io module:
-sys.path.insert(
-    1,
-    os.path.dirname(os.path.abspath(sys.argv[0])) + "/../../")
+sys.path.insert(1, os.path.dirname(os.path.abspath(sys.argv[0])) + "/../../")
 
 from grid_io import GridFile
+
 
 def make_grid(model, imf, output_dir):
     """Main function to convert Maraston 2013 and
@@ -76,14 +75,14 @@ def make_grid(model, imf, output_dir):
     out_grid.write_grid_common(
         model,
         axes={"log10age": log10ages, "metallicity": metallicities},
-        wavelength= lam,
-        spectra={"incident": spec}, #check this unit
+        wavelength=lam,
+        spectra={"incident": spec},  # check this unit
         alt_axes=("log10ages", "metallicities"),
     )
 
     # Include the specific ionising photon luminosity
     out_grid.add_specific_ionising_lum()
-    
+
 
 # Lets include a way to call this script not via an entry point
 if __name__ == "__main__":
@@ -91,9 +90,7 @@ if __name__ == "__main__":
         description="Maraston+13 download and grid creation"
     )
     parser.add_argument("-synthesizer_data_dir", type=str, required=True)
-    parser.add_argument(
-        "-download_data", "--download_data", type=bool, default=False
-    )
+    parser.add_argument("-download_data", "--download_data", type=bool, default=False)
 
     args = parser.parse_args()
 
