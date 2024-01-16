@@ -536,6 +536,26 @@ class GridFile:
 
         self._close_file()
 
+    def write_model_metadata(self, model):
+        """
+        Write out the model metadata.
+
+        Args:
+            model (dict)
+                A dictionary containing the metadata of the model used.
+        """
+        # Open the file
+        self._open_file()
+
+        # Create a group for the model metadata
+        grp = self.hdf.create_group("Model")
+
+        # Write out model parameters as attributes
+        for key, value in model.items():
+            grp.attrs[key] = value
+
+        self._close_file()
+
 
 def read_params(param_file):
     """
