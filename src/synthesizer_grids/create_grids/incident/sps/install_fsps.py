@@ -1,16 +1,10 @@
 import numpy as np
 import fsps
-from datetime import date
+from unyt import angstrom, erg, s, Hz
 
 from synthesizer_grids.utilities.parser import Parser
 from synthesizer_grids.utilities import GridFile
-from utils import (
-    __tag__,
-    write_data_h5py,
-    write_attribute,
-    add_log10_specific_ionising_lum,
-    get_model_filename,
-)
+from utils import get_model_filename
 
 
 def generate_grid(model):
@@ -66,16 +60,11 @@ def generate_grid(model):
 
     lam = sp.wavelengths  # units: Angstroms
     log10ages = sp.log_age  # units: log10(years)
-    ages = 10**log10ages
     metallicities = sp.zlegend  # units: log10(metal)
-    log10metallicities = np.log10(metallicities)
 
     na = len(log10ages)
     nmetal = len(metallicities)
 
-    log10_specific_ionising_lum = np.zeros(
-        (na, nmetal)
-    )  # the ionising photon production rate
     spec = np.zeros((na, nmetal, len(lam)))
 
     for imetal in range(nmetal):
@@ -85,59 +74,20 @@ def generate_grid(model):
             lnu *= 3.826e33  # erg s^-1 Hz^-1 Msol^-1
             spec[ia, imetal] = lnu
 
-    # write out model parameters as top level attribute
-    for key, value in model.items():
-        write_attribute(out_filename, "/", key, (value))
+    # Create the GridFile ready to take outputs
+    out_grid = GridFile(out_filename, mode="a", overwrite=True)
 
-    # write wavelength grid
-    write_data_h5py(
-        out_filename, "spectra/wavelength", data=lam, overwrite=True
+    # Write everything out thats common to all models
+    out_grid.write_grid_common(
+        model=model,
+        axes={"log10age": log10ages, "metallicity": metallicities},
+        wavelength=lam * angstrom,
+        spectra={"incident": spec * erg / s / Hz},
+        alt_axes=("log10ages", "metallicities"),
     )
-    write_attribute(
-        out_filename,
-        "spectra/wavelength",
-        "Description",
-        "Wavelength of the spectra grid",
-    )
-    write_attribute(out_filename, "spectra/wavelength", "Units", "Angstrom")
 
-    # write stellar spectra
-    write_data_h5py(
-        out_filename, "spectra/incident", data=spec, overwrite=True
-    )
-    write_attribute(
-        out_filename,
-        "spectra/incident",
-        "Description",
-        "Three-dimensional spectra grid, [age, metallicity, wavelength]",
-    )
-    write_attribute(out_filename, "spectra/incident", "Units", "erg/s/Hz")
-
-    # write out axes
-    write_attribute(out_filename, "/", "axes", ("log10age", "metallicity"))
-
-    # write out log10ages
-    write_data_h5py(
-        out_filename, "axes/log10age", data=log10ages, overwrite=True
-    )
-    write_attribute(
-        out_filename,
-        "axes/log10age",
-        "Description",
-        "Stellar population ages in log10 years",
-    )
-    write_attribute(out_filename, "axes/log10age", "Units", "dex(yr)")
-
-    # write out metallicities
-    write_data_h5py(
-        out_filename, "axes/metallicity", data=metallicities, overwrite=True
-    )
-    write_attribute(
-        out_filename, "axes/metallicity", "Description", "raw abundances"
-    )
-    write_attribute(out_filename, "axes/metallicity", "Units", "dimensionless")
-
-    return out_filename
+    # Include the specific ionising photon luminosity
+    out_grid.add_specific_ionising_lum()
 
 
 if __name__ == "__main__":
@@ -160,8 +110,6 @@ if __name__ == "__main__":
         "imf_masses": [0.08, 0.5, 1, 120],
         "imf_slopes": [1.3, 2.3, 2.3],
         "alpha": False,
-        "synthesizer-grids_tag": __tag__,
-        "date": str(date.today()),
         "pyfsps_version": str(fsps.__version__),
         "sps_version": "3.2",
     }
@@ -191,7 +139,4 @@ if __name__ == "__main__":
         model = default_model | model_
 
         # make grid
-        out_filename = generate_grid(model)
-
-        # add log10_specific_ionising_lum for different ions
-        add_log10_specific_ionising_lum(out_filename)
+        generate_grid(model)

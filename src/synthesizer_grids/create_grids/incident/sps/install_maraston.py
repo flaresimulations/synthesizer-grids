@@ -1,26 +1,17 @@
 """
 Download BC03 and convert to HDF5 synthesizer grid.
 """
-
 import numpy as np
 import os
 import wget
-import argparse
 from pathlib import Path
 import tarfile
 from synthesizer.utils import flam_to_fnu
-from synthesizer.sed import calc_log10_specific_ionising_lum
 from datetime import date
 
 from synthesizer_grids.utilities.parser import Parser
-from synthesizer_grids.utilities.grid_io import GridFile
-from utils import (
-    __tag__,
-    write_data_h5py,
-    write_attribute,
-    add_log10_specific_ionising_lum,
-    get_model_filename,
-)
+from synthesizer_grids.utilities import GridFile
+from utils import get_model_filename
 
 
 def download_data(input_dir):
@@ -102,51 +93,20 @@ def make_grid(model, imf, hr_morphology):
             fnu = flam_to_fnu(lam, flam)
             spec[ia, imetal] = fnu
 
-    write_data_h5py(
-        out_filename, "spectra/wavelength", data=lam, overwrite=True
-    )
-    write_attribute(
-        out_filename,
-        "spectra/wavelength",
-        "Description",
-        "Wavelength of the spectra grid",
-    )
-    write_attribute(out_filename, "spectra/wavelength", "Units", "AA")
+    # Create the GridFile ready to take outputs
+    out_grid = GridFile(out_filename, mode="w", overwrite=True)
 
-    write_data_h5py(
-        out_filename, "spectra/incident", data=spec, overwrite=True
+    # Write everything out thats common to all models
+    out_grid.write_grid_common(
+        model=model,
+        axes={"log10age": log10ages, "metallicity": metallicities},
+        wavelength=lam,
+        spectra={"incident": spec},
+        alt_axes=("log10ages", "metallicities"),
     )
-    write_attribute(
-        out_filename,
-        "spectra/incident",
-        "Description",
-        "Three-dimensional spectra grid, [age, metallicity, wavelength]",
-    )
-    write_attribute(out_filename, "spectra/incident", "Units", "erg/s/Hz")
 
-    # write out axes
-    write_attribute(out_filename, "/", "axes", ("log10age", "metallicity"))
-
-    write_data_h5py(
-        out_filename, "axes/log10age", data=log10ages, overwrite=True
-    )
-    write_attribute(
-        out_filename,
-        "axes/log10age",
-        "Description",
-        "Stellar population ages in log10 years",
-    )
-    write_attribute(out_filename, "axes/log10age", "Units", "dex(yr)")
-
-    write_data_h5py(
-        out_filename, "axes/metallicity", data=metallicities, overwrite=True
-    )
-    write_attribute(
-        out_filename, "axes/metallicity", "Description", "raw abundances"
-    )
-    write_attribute(out_filename, "axes/metallicity", "Units", "dimensionless")
-
-    return out_filename
+    # Include the specific ionising photon luminosity
+    out_grid.add_specific_ionising_lum()
 
 
 # Lets include a way to call this script not via an entry point
@@ -166,8 +126,6 @@ if __name__ == "__main__":
         "sps_name": "maraston",
         "sps_version": False,
         "alpha": False,
-        "synthesizer-grids_tag": __tag__,
-        "date": str(date.today()),
     }
 
     # Define the download URL
@@ -187,6 +145,6 @@ if __name__ == "__main__":
 
         for hr_morphology in ["rhb"]:
             model["sps_variant"] = hr_morphology
-            out_filename = make_grid(model, imf, hr_morphology)
 
-            add_log10_specific_ionising_lum(out_filename)
+            # Get and write the grid
+            make_grid(model, imf, hr_morphology)

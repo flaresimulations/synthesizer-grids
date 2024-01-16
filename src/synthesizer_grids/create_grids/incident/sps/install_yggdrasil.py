@@ -24,19 +24,11 @@ nebular processing implementation in synthesizer, where we self consistently
 run pure stellar spectra through CLOUDY. For full self consistency the
 nebular grids here should not be used, but we provide anyway for reference.
 """
-
 import numpy as np
-import os
 import pathlib
 import re
 import subprocess
-import argparse
-from incident_utils import (
-    write_data_h5py,
-    write_attribute,
-    add_log10_specific_ionising_lum,
-)
-from unyt import c, Angstrom, s
+from unyt import erg, s, angstrom, c, Hz
 
 from synthesizer_grids.utilities.parser import Parser
 from synthesizer_grids.utilities.grid_io import GridFile
@@ -152,150 +144,58 @@ def make_grid(synthesizer_data_dir, ver, fcov):
     """Main function to convert POPIII grids and
     produce grids used by synthesizer"""
 
-    # Define base path
-    # basepath = (f"{synthesizer_data_dir}/input_files/popIII/"
-    #             "Yggdrasil/")
-
-    # Define output
-    if not os.path.exists(f"{synthesizer_data_dir}/grids/"):
-        os.makedirs(f"{synthesizer_data_dir}/grids/")
-
     model_name = f"yggdrasil_POPIII{ver}"
-    fname = f"{synthesizer_data_dir}/grids/{model_name}.hdf5"
+    out_filename = f"{synthesizer_data_dir}/grids/{model_name}.hdf5"
 
     # Get spectra and attributes
     out = convertPOPIII(synthesizer_data_dir, ver, fcov)
 
     metallicities = out[1]
-    log10metallicities = np.log10(metallicities)
 
     ages = out[2] * 1e6  # since ages are quoted in Myr
     log10ages = np.log10(ages)
 
     lam = out[3]
 
-    """
-    Converting L_lam to L_nu using 
-    L_lam dlam = L_nu dnu
-    L_nu = L_lam (lam)^2 / c
-    c in units of AA/s for conversion
-    """
+    # Converting L_lam to L_nu using
+    # L_lam dlam = L_nu dnu
+    # L_nu = L_lam (lam)^2 / c
+    # c in units of AA/s for conversion
 
-    light_speed = c.to(Angstrom / s).value  # in AA/s
+    light_speed = c.to(angstrom / s).value  # in AA/s
     spec = out[0]
 
     spec *= (lam**2) / light_speed  # now in erg s^-1 Hz^-1 Msol^-1
 
-    na = len(ages)
-    nmetal = len(metallicities)
-
-    log10_specific_ionising_lum = np.zeros(
-        (na, nmetal)
-    )  # the ionising photon production rate
-
-    # for imetal, metallicity in enumerate(metallicities):
-    #     for ia, log10age in enumerate(log10ages):
-
-    #         # --- calcualte ionising photon luminosity
-    #         log10_specific_ionising_lum[ia, imetal] = np.log10(calc_log10_specific_ionising_lum(lam, spec[ia, imetal, :]))
+    # Create the grid file
+    out_grid = GridFile(out_filename, mode="a", overwrite=True)
 
     if fcov == "0":
-        write_data_h5py(fname, "ages", data=ages, overwrite=True)
-        write_attribute(
-            fname, "ages", "Description", "Stellar population ages years"
-        )
-        write_attribute(fname, "ages", "Units", "yr")
-
-        write_data_h5py(fname, "log10ages", data=log10ages, overwrite=True)
-        write_attribute(
-            fname,
-            "log10ages",
-            "Description",
-            "Stellar population ages in log10 years",
-        )
-        write_attribute(fname, "log10ages", "Units", "log10(yr)")
-
-        write_data_h5py(
-            fname, "metallicities", data=metallicities, overwrite=True
-        )
-        write_attribute(
-            fname, "metallicities", "Description", "raw abundances"
-        )
-        write_attribute(
-            fname, "metallicities", "Units", "dimensionless [metal]"
+        # Write everything out thats common to all models
+        out_grid.write_grid_common(
+            axes={"log10age": log10ages, "metallicity": metallicities},
+            wavelength=lam * angstrom,
+            spectra={"incident": spec * erg / s / Hz},
+            alt_axes=("log10ages", "metallicities"),
         )
 
-        write_data_h5py(
-            fname,
-            "log10metallicities",
-            data=log10metallicities,
-            overwrite=True,
-        )
-        write_attribute(
-            fname,
-            "log10metallicities",
-            "Description",
-            "raw abundances in log10",
-        )
-        write_attribute(
-            fname,
-            "log10metallicities",
-            "Units",
-            "dimensionless [log10(metal)]",
-        )
-
-        write_data_h5py(
-            fname,
-            "log10_specific_ionising_lum",
-            data=log10_specific_ionising_lum,
-            overwrite=True,
-        )
-        write_attribute(
-            fname,
-            "log10_specific_ionising_lum",
-            "Description",
-            (
-                "Two-dimensional ionising photon "
-                "production rate grid, [age,metal]"
-            ),
-        )
-
-        write_data_h5py(fname, "spectra/wavelength", data=lam, overwrite=True)
-        write_attribute(
-            fname,
-            "spectra/wavelength",
-            "Description",
-            "Wavelength of the spectra grid",
-        )
-        write_attribute(fname, "spectra/wavelength", "Units", "AA")
-
-        write_data_h5py(fname, "spectra/stellar", data=spec, overwrite=True)
-        write_attribute(
-            fname,
-            "spectra/stellar",
-            "Description",
-            """Three-dimensional spectra grid, [age, metallicity
-                        , wavelength]""",
-        )
-        write_attribute(fname, "spectra/stellar", "Units", "erg s^-1 Hz^-1")
     else:
+        # Do we needa  suffix?
         if fcov == "1":
             add = ""
         else:
             add = f"_fcov_{fcov}"
-        write_data_h5py(
-            fname, f"spectra/nebular{add}", data=spec, overwrite=True
+
+        # Write everything out thats common to all models
+        out_grid.write_grid_common(
+            axes={"log10age": log10ages, "metallicity": metallicities},
+            wavelength=lam * angstrom,
+            spectra={f"nebular{add}": spec * erg / s / Hz},
+            alt_axes=("log10ages", "metallicities"),
         )
-        write_attribute(
-            fname,
-            f"spectra/nebular{add}",
-            "Description",
-            """Three-dimensional spectra grid, [age, metallicity
-                        , wavelength]""",
-        )
-        write_attribute(
-            fname, f"spectra/nebular{add}", "Units", "erg s^-1 Hz^-1"
-        )
+
+    # Include the specific ionising photon luminosity
+    out_grid.add_specific_ionising_lum()
 
 
 if __name__ == "__main__":
@@ -316,7 +216,3 @@ if __name__ == "__main__":
     for ver in vers:
         for fcov in fcovs:
             make_grid(synthesizer_data_dir, ver, fcov)
-        add_log10_specific_ionising_lum(
-            f"{synthesizer_data_dir}/grids/yggdrasil_POPIII{ver}.hdf5",
-            limit=500,
-        )

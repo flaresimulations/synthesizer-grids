@@ -3,22 +3,15 @@ Download Maraston2011 and convert to HDF5 synthesizer grid.
 """
 import numpy as np
 import os
-import argparse
 from pathlib import Path
 import tarfile
 from unyt import erg, s, Angstrom, yr
 from synthesizer.conversions import llam_to_lnu
 from datetime import date
 import wget
-import sys
 
 from synthesizer_grids.utilities import GridFile
 from sythesizer_grids.utilities import Parser
-from incident_utils import (
-    write_data_h5py,
-    write_attribute,
-    add_log10_specific_ionising_lum,
-)  # , __tag__
 
 
 def download_data(
@@ -90,9 +83,6 @@ def make_grid(model, imf, extension, output_dir):
 
     spec = np.zeros((len(ages), len(metallicities), len(lam)))
 
-    # Create the GridFile ready to take outputs
-    out_grid = GridFile(out_filename, mode="w", overwrite=True)
-
     # at each point in spec convert the units
     for imetal, metallicity in enumerate(metallicities):
         for ia, age_Gyr in enumerate(ages_Gyr):
@@ -103,9 +93,12 @@ def make_grid(model, imf, extension, output_dir):
             lnu = llam_to_lnu(lam, llam)
             spec[ia, imetal] = lnu
 
-        # Write everything out thats common to all models
+    # Create the GridFile ready to take outputs
+    out_grid = GridFile(out_filename, mode="w", overwrite=True)
+
+    # Write everything out thats common to all models
     out_grid.write_grid_common(
-        model,
+        model=model,
         axes={"log10age": log10ages, "metallicity": metallicities},
         wavelength=lam,
         spectra={"incident": spec},
@@ -133,7 +126,6 @@ if __name__ == "__main__":
         "sps_name": "maraston",
         "sps_version": False,
         "alpha": False,
-        "date": str(date.today()),
     }
 
     # The location to untar the original data
@@ -160,6 +152,5 @@ if __name__ == "__main__":
         for imf in imfs:
             print(extension)
 
-            make_grid(
-                model, imf, extension, output_dir
-            )  # makes the grid and returns the name
+            # Get and write the grid
+            make_grid(model, imf, extension, output_dir)

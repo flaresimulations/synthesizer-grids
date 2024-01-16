@@ -1,16 +1,8 @@
 """
 Download BPASS v2.3 and convert to HDF5 synthesizer grid.
 """
-import os
-import sys
 from hoki import load
-import argparse
 import numpy as np
-import gdown
-import tarfile
-import h5py
-from scipy import integrate
-from unyt import h, c
 from synthesizer.sed import calc_log10_specific_ionising_lum
 from synthesizer.cloudy import Ions
 from datetime import date
@@ -18,15 +10,12 @@ from unyt import angstrom, erg, s, Hz
 
 from synthesizer_grids.utilities.parser import Parser
 from synthesizer_grids.utilities.grid_io import GridFile
-from utils import (
-    write_data_h5py,
-    write_attribute,
-    get_model_filename,
-)
+from utils import get_model_filename
 
 
 def resolve_name(original_model_name, bin, alpha=False):
-    """Resolve the original BPASS model name into what we need. This is specific to 2.3. e.g. 'bpass_v2.3_chab300'"""
+    """Resolve the original BPASS model name into what we need. This is
+    specific to 2.3. e.g. 'bpass_v2.3_chab300'"""
 
     bpass_imf = original_model_name.split("_")[-1]
     hmc = float(bpass_imf[-3:])  # high-mass cutoff
@@ -200,7 +189,7 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
 
     # Write everything out thats common to all models
     out_grid.write_grid_common(
-        model,
+        model=model,
         axes={"log10age": log10ages, "metallicity": metallicities},
         wavelength=wavelengths * angstrom,
         spectra={"incident": spectra * erg / s / Hz},
@@ -221,25 +210,15 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
         units="Msun",
     )
     out_grid.write_dataset(
-        "log10_specific_ionising_lum_original/HI",
+        f"log10_specific_ionising_lum_original/{ion}",
         log10_specific_ionising_lum_original["HI"],
-        "Two-dimensional (original) HI ionising photon"
-        " production rate grid, [age,Z] (dex(1/s))",
+        "Two-dimensional (original) HI ionising photon production "
+        "rate grid, [age,metal]",
         units="dimensionless",
     )
 
-    for ion in ["HI", "HeII"]:
-        out_grid.write_dataset(
-            f"log10_specific_ionising_lum/{ion}",
-            log10_specific_ionising_lum[ion],
-            f"Two-dimensional {ion} ionising photon"
-            " production rate grid, [age, Z] (desc(1/s))",
-            units="dimensionless",
-        )
-
-    out_grid.close()
-
-    return out_filename
+    # Include the specific ionising photon luminosity
+    out_grid.add_specific_ionising_lum()
 
 
 def make_full_grid(original_model_name, bs="bin"):
@@ -378,132 +357,45 @@ def make_full_grid(original_model_name, bs="bin"):
                         )
                     )
 
-    # write out model parameters as top level attribute
-    for key, value in model.items():
-        # print(key, value)
-        write_attribute(out_filename, "/", key, (value))
+    # Create the GridFile ready to take outputs
+    out_grid = GridFile(out_filename, mode="a", overwrite=True)
 
-    write_data_h5py(
-        out_filename, "star_fraction", data=stellar_mass, overwrite=True
+    # Write everything out thats common to all models
+    out_grid.write_grid_common(
+        model=model,
+        axes={
+            "log10age": log10ages,
+            "metallicity": metallicities,
+            "log10alpha": alpha_enhancements,
+        },
+        wavelength=wavelengths * angstrom,
+        spectra={"incident": spectra * erg / s / Hz},
+        alt_axes=("log10ages", "metallicities", "log10alphas"),
     )
-    write_attribute(
-        out_filename,
+
+    # Write datasets specific to BPASS 2.3
+    out_grid.write_dataset(
         "star_fraction",
-        "Description",
-        "Two-dimensional remaining stellar fraction grid, [age,metal]",
+        stellar_mass,
+        "Two-dimensional remaining stellar fraction grid, [age, Z]",
+        units="Msun",
     )
-
-    write_data_h5py(
-        out_filename, "remnant_fraction", data=remnant_mass, overwrite=True
-    )
-    write_attribute(
-        out_filename,
+    out_grid.write_dataset(
         "remnant_fraction",
-        "Description",
-        "Two-dimensional remaining remnant fraction grid, [age,metal]",
+        remnant_mass,
+        "Two-dimensional remaining remnant fraction grid, [age, Z]",
+        units="Msun",
+    )
+    out_grid.write_dataset(
+        f"log10_specific_ionising_lum_original/{ion}",
+        log10_specific_ionising_lum_original["HI"],
+        "Two-dimensional (original) HI ionising photon production "
+        "rate grid, [age,metal]",
+        units="dimensionless",
     )
 
-    # write out ionising photon production rate
-    for ion in ["HI"]:
-        write_data_h5py(
-            out_filename,
-            f"log10_specific_ionising_lum_original/{ion}",
-            data=log10_specific_ionising_lum_original[ion],
-            overwrite=True,
-        )
-        write_attribute(
-            out_filename,
-            f"log10_specific_ionising_lum_original/{ion}",
-            "Description",
-            f"Two-dimensional (original) {ion} ionising photon production rate grid, [age,metal]",
-        )
-        write_attribute(
-            out_filename,
-            f"log10_specific_ionising_lum_original/{ion}",
-            "Units",
-            "dex(1/s)",
-        )
-
-    for ion in ["HI", "HeII"]:
-        write_data_h5py(
-            out_filename,
-            f"log10_specific_ionising_lum/{ion}",
-            data=log10_specific_ionising_lum[ion],
-            overwrite=True,
-        )
-        write_attribute(
-            out_filename,
-            f"log10_specific_ionising_lum/{ion}",
-            "Description",
-            f"Two-dimensional {ion} ionising photon production rate grid, [age,metal]",
-        )
-        write_attribute(
-            out_filename,
-            f"log10_specific_ionising_lum/{ion}",
-            "Units",
-            "dex(1/s)",
-        )
-
-    # write out axes
-    write_attribute(
-        out_filename, "/", "axes", ("log10age", "metallicity", "alpha")
-    )
-
-    # write out log10ages
-    write_data_h5py(
-        out_filename, "axes/log10age", data=log10ages, overwrite=True
-    )
-    write_attribute(
-        out_filename,
-        "axes/log10age",
-        "Description",
-        "Stellar population ages in log10 years",
-    )
-    write_attribute(out_filename, "axes/log10age", "Units", "dex(yr)")
-
-    # write out metallicities
-    write_data_h5py(
-        out_filename, "axes/metallicity", data=metallicities, overwrite=True
-    )
-    write_attribute(
-        out_filename, "axes/metallicity", "Description", "raw abundances"
-    )
-    write_attribute(out_filename, "axes/metallicity", "Units", "dimensionless")
-
-    # write of alpha values
-    write_data_h5py(
-        out_filename, "axes/alpha", data=alpha_enhancements, overwrite=True
-    )
-    write_attribute(
-        out_filename, "axes/alpha", "Description", "log10(alpha enhancement)"
-    )
-    write_attribute(out_filename, "axes/alpha", "Units", "dimensionless")
-
-    # write wavelength grid
-    write_data_h5py(
-        out_filename, "spectra/wavelength", data=wavelengths, overwrite=True
-    )
-    write_attribute(
-        out_filename,
-        "spectra/wavelength",
-        "Description",
-        "Wavelength of the spectra grid",
-    )
-    write_attribute(out_filename, "spectra/wavelength", "Units", "Angstrom")
-
-    # write stellar spectra
-    write_data_h5py(
-        out_filename, "spectra/stellar", data=spectra, overwrite=True
-    )
-    write_attribute(
-        out_filename,
-        "spectra/stellar",
-        "Description",
-        "Three-dimensional spectra grid, [age, metal, ae, wavelength]",
-    )
-    write_attribute(out_filename, "spectra/stellar", "Units", "erg/s/Hz")
-
-    return out_filename
+    # Include the specific ionising photon luminosity
+    out_grid.add_specific_ionising_lum()
 
 
 if __name__ == "__main__":
@@ -512,19 +404,23 @@ if __name__ == "__main__":
         description="BPASS_2.3 download and grid creation",
         with_alpha=True,
     )
-    parser.add_argument("-models", "--models", default="bpass_v2.3_chab300")
+    parser.add_argument(
+        "-models",
+        "--models",
+        default="bpass_v2.3_chab300",
+        type=lambda arg: arg.split(","),
+    )
     args = parser.parse_args()
 
     # Unpack the arguments
     synthesizer_data_dir = args.synthesizer_data_dir
     grid_dir = f"{synthesizer_data_dir}/grids"
-
-    # Get the models
-    models = args.models.split(",")
+    models = args.models
 
     print(models)
 
     for model in models:
+        # The download currently doesn't work since these is no mirror
         # if args.download:
         #     download_data(model)
         #     untar_data(model)

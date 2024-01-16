@@ -68,7 +68,7 @@ def make_grid(model, imf, output_dir):
 
     # Write everything out thats common to all models
     out_grid.write_grid_common(
-        model,
+        model=model,
         axes={"log10age": log10ages, "metallicity": metallicities},
         wavelength=lam,
         spectra={"incident": spec},  # check this unit
@@ -96,7 +96,6 @@ if __name__ == "__main__":
         "sps_name": "maraston",
         "sps_version": False,
         "alpha": False,
-        "date": str(date.today()),
     }
 
     # The location to untar the original data

@@ -5,7 +5,6 @@ TODO: data download does not currently work, directories need to be updated
 """
 import os
 import sys
-import argparse
 import numpy as np
 import re
 import wget
@@ -13,7 +12,6 @@ import tarfile
 import glob
 import gzip
 import shutil
-from datetime import date
 from unyt import angstrom, erg, s, Hz
 
 from synthesizer_grids.utilities import GridFile
@@ -225,7 +223,6 @@ def make_grid(variant, synthesizer_data_dir, out_filename):
     out = convertBC03([basepath + s for s in files])
 
     metallicities = out[1]
-    log10metallicities = np.log10(metallicities)
 
     ages = out[2]
     ages[0] = 1e5
@@ -241,15 +238,12 @@ def make_grid(variant, synthesizer_data_dir, out_filename):
     spec *= 3.826e33  # erg s^-1 AA^-1 Msol^-1
     spec *= lam / nu  # erg s^-1 Hz^-1 Msol^-1
 
-    na = len(ages)
-    nmetal = len(metallicities)
-
     # Create the GridFile ready to take outputs
-    out_grid = GridFile(out_filename, mode="a", overwrite=True)
+    out_grid = GridFile(out_filename, mode="w", overwrite=True)
 
     # Write everything out thats common to all models
     out_grid.write_grid_common(
-        model,
+        model=model,
         axes={"log10age": log10ages, "metallicity": metallicities},
         wavelength=lam * angstrom,
         spectra={"incident": spec * erg / s / Hz},
@@ -258,8 +252,6 @@ def make_grid(variant, synthesizer_data_dir, out_filename):
 
     # Include the specific ionising photon luminosity
     out_grid.add_specific_ionising_lum()
-
-    out_grid.close()
 
 
 if __name__ == "__main__":

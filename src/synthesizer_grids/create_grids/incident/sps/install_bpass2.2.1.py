@@ -3,22 +3,15 @@ Download BPASS v2.2.1 and convert to HDF5 synthesizer grid.
 """
 
 import os
-import argparse
 import numpy as np
 import gdown
 import tarfile
 from hoki import load
-from datetime import date
-import sys, os
+from unyt import angstrom, erg, s, Hz
+
 from synthesizer_grids.utilities.grid_io import GridFile
 from synthesizer_grids.utilities.parser import Parser
-from utils import (
-    __tag__,
-    write_data_h5py,
-    write_attribute,
-    add_log10_specific_ionising_lum,
-    get_model_filename,
-)
+from utils import get_model_filename
 
 
 def resolve_name(original_model_name, bin):
@@ -45,15 +38,18 @@ def resolve_name(original_model_name, bin):
         "imf_masses": imf_masses,
         "imf_slopes": imf_slopes,
         "alpha": False,
-        "synthesizer-grids_tag": __tag__,
-        "date": str(date.today()),
     }
 
     return model, bpass_imf
 
 
 def download_data(model):
-    """At the moment this is downloading data from a mirror I set up since I can't automate downloading the grids"""
+    """
+    Download the grids.
+
+    At the moment this is downloading data from a mirror I set up since
+    I can't automate downloading the grids
+    """
 
     model_url = {}
     model_url[
@@ -86,12 +82,12 @@ def make_grid(original_model_name, bin):
     synthesizer_model_name = get_model_filename(model)
 
     # this is the full path to the ultimate HDF5 grid file
-    out_filename = (
-        f"{synthesizer_data_dir}/grids/{synthesizer_model_name}.hdf5"
-    )
+    out_filename = f"{synthesizer_data_dir}/grids/{synthesizer_model_name}.hdf5"
 
     # input directory
-    input_dir = f'{synthesizer_data_dir}/input_files/bpass/{model["original_model_name"]}/'
+    input_dir = (
+        f'{synthesizer_data_dir}/input_files/bpass/{model["original_model_name"]}/'
+    )
 
     # --- ccreate metallicity grid and dictionary
     map_key_to_met = {
@@ -150,86 +146,39 @@ def make_grid(original_model_name, bin):
                 str(log10age)
             ].values  # Lsol AA^-1 10^6 Msol^-1
 
-    # convert spectra to synthesizer base units
+    # Convert spectra to synthesizer base units
     spectra /= 1e6  # Lsol AA^-1 Msol^-1
     spectra *= 3.826e33  # erg s^-1 AA^-1 Msol^-1
     spectra *= wavelengths / nu  # erg s^-1 Hz^-1 Msol^-1
 
-    # write out model parameters as top level attribute
-    for key, value in model.items():
-        # print(key, value)
-        write_attribute(out_filename, "/", key, (value))
+    # Create the GridFile ready to take outputs
+    out_grid = GridFile(out_filename, mode="a", overwrite=True)
 
-    # write out remaining stellar mass and remnant fractions
-    write_data_h5py(
-        out_filename, "star_fraction", data=stellar_mass, overwrite=True
+    # Write everything out thats common to all models
+    out_grid.write_grid_common(
+        model=model,
+        axes={"log10age": log10ages, "metallicity": metallicities},
+        wavelength=wavelengths * angstrom,
+        spectra={"incident": spectra * erg / s / Hz},
+        alt_axes=("log10ages", "metallicities"),
     )
-    write_attribute(
-        out_filename,
+
+    # Write datasets specific to BPASS 2.3
+    out_grid.write_dataset(
         "star_fraction",
-        "Description",
-        ("Two-dimensional remaining stellar " "fraction grid, [age,metal]"),
+        stellar_mass,
+        "Two-dimensional remaining stellar fraction grid, [age, Z]",
+        units="Msun",
     )
-
-    write_data_h5py(
-        out_filename, "remnant_fraction", data=remnant_mass, overwrite=True
-    )
-    write_attribute(
-        out_filename,
+    out_grid.write_dataset(
         "remnant_fraction",
-        "Description",
-        ("Two-dimensional remaining remnant " "fraction grid, [age,metal]"),
+        remnant_mass,
+        "Two-dimensional remaining remnant fraction grid, [age, Z]",
+        units="Msun",
     )
 
-    # write out stellar spectra
-    write_data_h5py(
-        out_filename, "spectra/incident", data=spectra, overwrite=True
-    )
-    write_attribute(
-        out_filename,
-        "spectra/incident",
-        "Description",
-        "Three-dimensional spectra grid, [metal,Age,wavelength]",
-    )
-    write_attribute(out_filename, "spectra/incident", "Units", "erg/s/Hz")
-
-    # write out axes
-    write_attribute(out_filename, "/", "axes", ("log10age", "metallicity"))
-
-    # write out log10ages
-    write_data_h5py(
-        out_filename, "axes/log10age", data=log10ages, overwrite=True
-    )
-    write_attribute(
-        out_filename,
-        "axes/log10age",
-        "Description",
-        "Stellar population ages in log10 years",
-    )
-    write_attribute(out_filename, "axes/log10age", "Units", "dex(yr)")
-
-    # write out metallicities
-    write_data_h5py(
-        out_filename, "axes/metallicity", data=metallicities, overwrite=True
-    )
-    write_attribute(
-        out_filename, "axes/metallicity", "Description", "raw abundances"
-    )
-    write_attribute(out_filename, "axes/metallicity", "Units", "dimensionless")
-
-    # write out wavelength grid
-    write_data_h5py(
-        out_filename, "spectra/wavelength", data=wavelengths, overwrite=True
-    )
-    write_attribute(
-        out_filename,
-        "spectra/wavelength",
-        "Description",
-        "Wavelength of the spectra grid",
-    )
-    write_attribute(out_filename, "spectra/wavelength", "Units", "Angstrom")
-
-    return out_filename
+    # Include the specific ionising photon luminosity
+    out_grid.add_specific_ionising_lum()
 
 
 if __name__ == "__main__":
@@ -261,13 +210,4 @@ if __name__ == "__main__":
         print("-" * 50)
         print(original_model_name)
         for bin in ["bin", "sin"]:
-            out_filename = make_grid(original_model_name, bin)
-
-            # get filename. This is useful if you want to simply add Q
-            # model, bpass_imf = resolve_name(original_model_name, bin)
-            # synthesizer_model_name = get_model_filename(model)
-            # out_filename = f'{synthesizer_data_dir}/grids/{synthesizer_model_name}.hdf5'
-
-            # add log10_specific_ionising_lum, can specify the desired ions with ions keyword.
-            # by default calculates [HI, HeII]
-            add_log10_specific_ionising_lum(out_filename)
+            make_grid(original_model_name, bin)
