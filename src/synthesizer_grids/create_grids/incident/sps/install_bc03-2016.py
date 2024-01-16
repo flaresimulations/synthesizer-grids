@@ -1,14 +1,14 @@
 """
 Download BC03 and convert to HDF5 synthesizer grid.
 
-TODO: data download does not currently work, directories need to be updated
 """
 import os
 import sys
 import numpy as np
 import re
-import wget
+import requests
 import tarfile
+from tqdm import tqdm
 import glob
 import gzip
 import shutil
@@ -19,37 +19,52 @@ from synthesizer_grids.utilities import Parser
 from utils import get_model_filename
 
 
-def download_data(variant):
+def decompress_gz_recursively(directory):
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if file.endswith(".gz"):
+                gz_file_path = os.path.join(root, file)
+                with gzip.open(gz_file_path, "rb") as gz_file:
+                    with open(gz_file_path[:-3], "wb") as decompressed_file:
+                        shutil.copyfileobj(gz_file, decompressed_file)
+                os.remove(gz_file_path)
+
+
+def extract_and_decompress_tgz(file_path, extract_path):
+    with tarfile.open(file_path, "r:gz") as tar:
+        tar.extractall(path=extract_path)
+
+    decompress_gz_recursively(extract_path)
+
+
+def download_data(variant, synthesizer_data_dir):
+    # Define base path
+    input_dir = f"{synthesizer_data_dir}/input_files/"
+    save_path = f"{input_dir}BC03_{variant.lower()}_chabrier.tgz"
+
+    # Define the url
     url = (
         "http://www.bruzual.org/bc03/Updated_version_2016/"
         f"BC03_{variant.lower()}_chabrier.tgz"
     )
 
-    filename = wget.download(url)
-    return filename
+    # Call the server and get the response
+    response = requests.get(url, stream=True)
 
+    # Sizes in bytes.
+    total_size = int(response.headers.get("content-length", 0))
+    block_size = 1024
 
-def untar_data(synthesizer_data_dir):
-    input_dir = f"{synthesizer_data_dir}/input_files/"
-    fn = "bc03.models.padova_2000_chabrier_imf.tar.gz"
+    # Stream the file to disk with a nice progress bar.
+    with tqdm(total=total_size, unit="B", unit_scale=True) as progress_bar:
+        with open(save_path, "wb") as f:
+            for chunk in response.iter_content(block_size):
+                progress_bar.update(len(chunk))
+                f.write(chunk)
 
-    # --- untar main directory
-    tar = tarfile.open(fn)
-    tar.extractall(path=input_dir)
-    tar.close()
-    os.remove(fn)
-
-    # --- unzip the individual files that need reading
-    model_dir = (
-        f"{synthesizer_data_dir}/input_files/"
-        "bc03/models/Padova2000/chabrier"
-    )
-    files = glob.glob(f"{model_dir}/bc2003_hr_m*_chab_ssp.ised_ASCII.gz")
-
-    for file in files:
-        with gzip.open(file, "rb") as f_in:
-            with open(".".join(file.split(".")[:-1]), "wb") as f_out:
-                shutil.copyfileobj(f_in, f_out)
+    # Untar the file and uncompress the contents
+    extract_and_decompress_tgz(save_path, input_dir)
+    os.remove(save_path)
 
 
 def readBC03Array(file, lastLineFloat=None):
@@ -263,11 +278,6 @@ if __name__ == "__main__":
     synthesizer_data_dir = args.synthesizer_data_dir
     grid_dir = f"{synthesizer_data_dir}/grids"
 
-    # Download data if asked
-    if args.download:
-        download_data()
-        untar_data()
-
     default_model = {
         "sps_name": "bc03-2016",
         "sps_version": False,
@@ -280,6 +290,10 @@ if __name__ == "__main__":
 
     for variant in ["BaSeL", "Miles", "Stelib"]:  # 'BaSeL',
         model = default_model | {"sps_variant": variant}
+
+        # Download data if asked
+        if args.download:
+            download_data(variant, synthesizer_data_dir)
 
         synthesizer_model_name = get_model_filename(model)
         print(synthesizer_model_name)
