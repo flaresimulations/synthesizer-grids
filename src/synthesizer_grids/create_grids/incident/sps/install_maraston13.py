@@ -15,7 +15,7 @@ from synthesizer_grids.utilities.grid_io import GridFile
 from incident_utils import (
     write_data_h5py,
     write_attribute,
-    add_specific_ionising_luminosity,
+    add_log10_specific_ionising_lum,
 )  # , __tag__
 
 
@@ -146,4 +146,4 @@ if __name__ == "__main__":
             model, imf, output_dir
         )  # makes the grid and returns the name
 
-        add_specific_ionising_luminosity(fname)
+        add_log10_specific_ionising_lum(fname)

@@ -109,10 +109,10 @@ if __name__ == "__main__":
             hf["axes/metallicity"] = hf_original["axes/metallicity"][:]
             hf["axes/log10age"] = hf_original["axes/log10age"][indices]
 
-            # copy specific_ionising_luminosity
-            for ion in hf_original["specific_ionising_luminosity"].keys():
-                hf[f"specific_ionising_luminosity/{ion}"] = hf_original[
-                    "specific_ionising_luminosity"
+            # copy log10_specific_ionising_lum
+            for ion in hf_original["log10_specific_ionising_lum"].keys():
+                hf[f"log10_specific_ionising_lum/{ion}"] = hf_original[
+                    "log10_specific_ionising_lum"
                 ][ion][indices, :]
 
             # copy wavelength grid

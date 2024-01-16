@@ -34,12 +34,11 @@ import argparse
 from incident_utils import (
     write_data_h5py,
     write_attribute,
-    add_specific_ionising_luminosity,
+    add_log10_specific_ionising_lum,
 )
 from unyt import c, Angstrom, s
 
 from synthesizer_grids.utilities.grid_io import GridFile
-from synthesizer.sed import calc_specific_ionising_luminosity
 
 
 def download_data(synthesizer_data_dir, ver, fcov):
@@ -189,15 +188,15 @@ def make_grid(synthesizer_data_dir, ver, fcov):
     na = len(ages)
     nmetal = len(metallicities)
 
-    specific_ionising_luminosity = np.zeros(
-        (nmetal, nmetal)
+    log10_specific_ionising_lum = np.zeros(
+        (na, nmetal)
     )  # the ionising photon production rate
 
     # for imetal, metallicity in enumerate(metallicities):
     #     for ia, log10age in enumerate(log10ages):
 
     #         # --- calcualte ionising photon luminosity
-    #         specific_ionising_luminosity[ia, imetal] = np.log10(calc_specific_ionising_luminosity(lam, spec[ia, imetal, :]))
+    #         log10_specific_ionising_lum[ia, imetal] = np.log10(calc_log10_specific_ionising_lum(lam, spec[ia, imetal, :]))
 
     if fcov == "0":
         write_data_h5py(fname, "ages", data=ages, overwrite=True)
@@ -246,13 +245,13 @@ def make_grid(synthesizer_data_dir, ver, fcov):
 
         write_data_h5py(
             fname,
-            "specific_ionising_luminosity",
-            data=specific_ionising_luminosity,
+            "log10_specific_ionising_lum",
+            data=log10_specific_ionising_lum,
             overwrite=True,
         )
         write_attribute(
             fname,
-            "specific_ionising_luminosity",
+            "log10_specific_ionising_lum",
             "Description",
             (
                 "Two-dimensional ionising photon "
@@ -315,7 +314,7 @@ if __name__ == "__main__":
     for ver in vers:
         for fcov in fcovs:
             make_grid(synthesizer_data_dir, ver, fcov)
-        add_specific_ionising_luminosity(
+        add_log10_specific_ionising_lum(
             f"{synthesizer_data_dir}/grids/yggdrasil_POPIII{ver}.hdf5",
             limit=500,
         )

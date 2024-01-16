@@ -5,7 +5,7 @@ Example usage:
 """
 import h5py
 import numpy as np
-from unyt import unyt_array
+from unyt import unyt_array, angstrom
 
 from synthesizer.sed import Sed
 from synthesizer.photoionisation import Ions
@@ -35,8 +35,12 @@ class GridFile:
     # Define common descriptions
     descriptions = {
         "log10age": "Logged stellar population ages (dex(yr))",
+        "log10ages": "Logged stellar population ages (dex(yr))",
         "age": "Stellar population ages",
+        "ages": "Stellar population ages",
+        "log10metallicities": "Logged stellar population metallicity",
         "log10metallicity": "Logged stellar population metallicity",
+        "metallicities": "Stellar population metallicity",
         "metallicity": "Stellar population metallicity",
     }
 
@@ -91,6 +95,21 @@ class GridFile:
             self.hdf.close()
             self.mode = "r+"
 
+    def _open_file(self):
+        """
+        Open the file if it isn't already open.
+        """
+        if self.hdf is None:
+            self.hdf = h5py.File(self.filepath, self.mode)
+
+    def _close_file(self):
+        """
+        Close the file if it is open.
+        """
+        if self.hdf is not None:
+            self.hdf.close()
+            self.hdf = None
+
     def _dataset_exists(self, key):
         """
         Check to see if a dataset exists already.
@@ -140,7 +159,7 @@ class GridFile:
                 Are we talking?
         """
         # Open the file
-        self.hdf = h5py.File(self.filepath, self.mode)
+        self._open_file()
 
         # If we are overwriting we have some extra work to do
         if (self.mode == "r+" or self.mode == "a") and self.overwrite:
@@ -163,7 +182,7 @@ class GridFile:
         # Finally, Write it!
         self.hdf[group].attrs[attr_key] = data
 
-        self.hdf.close()
+        self._close_file()
 
     def write_dataset(
         self,
@@ -198,7 +217,7 @@ class GridFile:
         """
 
         # Open the file
-        self.hdf = h5py.File(self.filepath, self.mode)
+        self._open_file()
 
         # If we are overwriting we have some extra work to do
         if (self.mode == "r+" or self.mode == "a") and self.overwrite:
@@ -236,7 +255,7 @@ class GridFile:
         for dset_attr_key, val in kwargs.items():
             dset.attrs[dset_attr_key] = val
 
-        self.hdf.close()
+        self._close_file()
 
     def read_attribute(self, attr_key, group="/"):
         """
@@ -253,12 +272,12 @@ class GridFile:
             array-like/float/int/str
                 The attribute stored at hdf[group].attrs[attr_key].
         """
-        self.hdf = h5py.File(self.filepath, self.mode)
+        self._open_file()
         attr = self.hdf[group].attrs[attr_key]
-        self.hdf.close()
+        self._close_file()
         return attr
 
-    def read_dataset(self, key, print_description=False):
+    def read_dataset(self, key, print_description=False, indices=None):
         """
         Read a dataset and return it.
 
@@ -273,11 +292,14 @@ class GridFile:
             unyt_array/array-like
                 The dataset stored at hdf[key].
         """
-        # Open the file
-        self.hdf = h5py.File(self.filepath, self.mode)
+        # Open the file if necessary
+        self._open_file()
 
-        # Get the data
-        data = self.hdf[key]
+        # Get the data, handling whether we get everything or a subset
+        if indices is None:
+            data = self.hdf[key][...]
+        else:
+            data = self.hdf[key][indices]
 
         # Get the units
         unit_str = self.hdf[key].attrs["Units"]
@@ -287,11 +309,37 @@ class GridFile:
             print(self.hdf[key].attrs["Description"])
 
         if unit_str != "dimensionless":
-            return unyt_array(data, unit_str)
+            data = unyt_array(data, unit_str)
 
-        self.hdf.close()
+        self._close_file()
 
         return data
+
+    def copy_dataset(self, alt_key, key):
+        """
+        Make a link between an existing dataset and an alternative key.
+
+        This make a duplicate so descriptions and units can be associated. It
+        should therefore only be used for small datasets.
+
+        Args:
+            alt_key (str)
+                The alternative key to copy to.
+            key (str)
+                The existing key to copy.
+        """
+        # Open the file
+        self._open_file()
+
+        # Get the data to copy
+        data = self.hdf[key][...]
+        des = self.hdf[key].attrs["Description"]
+        units = self.hdf[key].attrs["Units"]
+
+        # Write the alternative version
+        self.write_dataset(alt_key, data, des, units=units)
+
+        self._close_file()
 
     def write_grid_common(
         self,
@@ -336,6 +384,7 @@ class GridFile:
             ValueError
                 If arguments disagree with each other an error is thrown.
         """
+
         # Write out model parameters as top level attributes
         for key, value in model.items():
             self.write_attribute("/", key, value)
@@ -345,6 +394,8 @@ class GridFile:
 
         # Parse descriptions and use defaults if not given
         for key in axes:
+            if key in descriptions:
+                continue
             if key not in descriptions and key in self.descriptions:
                 descriptions[key] = self.descriptions[key]
             else:
@@ -382,7 +433,7 @@ class GridFile:
         # Create soft links for the alternative naming
         # No need for logic, if alt_axes is empty there will be no loop
         for alt, key in zip(alt_axes, axes.keys()):
-            self.hdf["axes/" + alt] = h5py.SoftLink(["axes/" + key])
+            self.copy_dataset(alt_key="axes/" + alt, key="axes/" + key)
 
         # Write out the wavelength array
         self.write_dataset(
@@ -398,9 +449,9 @@ class GridFile:
         for key, val in spectra.items():
             self.write_dataset(
                 "spectra/" + key,
-                val.value,
+                val.value if isinstance(val, unyt_array) else val,
                 "Three-dimensional spectra grid, [age, metallicity, wavelength]",
-                val.units,
+                val.units if isinstance(val, unyt_array) else "dimensionless",
             )
 
     def add_specific_ionising_lum(self, ions=("HI", "HeII"), limit=100):
@@ -420,7 +471,7 @@ class GridFile:
 
         """
         # Open the file
-        self.hdf = h5py.File(self.filepath, self.mode)
+        self._open_file()
 
         # Get the properties of the grid including the dimensions etc.
         (
@@ -432,29 +483,27 @@ class GridFile:
             index_list,
         ) = get_grid_properties_from_hdf5(self.hdf)
 
+        self._close_file()
+
         # Set up output arrays in a dict
         out_arrs = {}
         for ion in ions:
             out_arrs[ion] = np.zeros(shape)
 
-        # Get the spectra group
-        spectra = self.hdf["spectra"]
-
-        # Get wavelength grid, no units necessary since we know they'll
-        # be in the Synthesizer standard (AA)
-        lam = spectra["wavelength"]
+        # Get wavelength grid
+        lam = self.read_dataset("spectra/wavelength")
 
         # Loop over grid points and calculate Q and store it
         for indices in index_list:
             indices = tuple(indices)
 
-            # loop over ions
+            # Loop over ions
             for ion in ions:
                 # Get the ionisation energy
                 ionisation_energy = Ions.energy[ion]
 
                 # Get incident spectrum
-                lnu = spectra["incident"][indices]
+                lnu = self.read_dataset("spectra/incident", indices=indices)
 
                 # Calculate Q
                 sed = Sed(lam, lnu)
@@ -463,19 +512,19 @@ class GridFile:
                     limit=limit,
                 )
 
-                # Set up the output and store the results at the correct
-                # indices
-                out_arr = np.zeros(shape)
-                out_arr[indices] = np.log10(ionising_lum)
+                # Store the results at the correct indices
+                out_arrs[ion][indices] = np.log10(ionising_lum)
 
-                # Write it out
-                self.write_dataset(
-                    f"specific_ionising_lum/{ion}",
-                    out_arr,
-                    "Two-dimensional {ion} ionising photon production rate grid, [age, Z]",
-                )
+        # Loop over the iopns and write out their arrays
+        for ion in ions:
+            self.write_dataset(
+                f"log10_specific_ionising_luminosity/{ion}",
+                out_arrs[ion],
+                "Two-dimensional {ion} ionising photon "
+                "production rate grid, [age, Z]",
+            )
 
-        self.hdf.close()
+        self._close_file()
 
 
 def read_params(param_file):
