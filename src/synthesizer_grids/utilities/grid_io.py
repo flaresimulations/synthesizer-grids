@@ -461,7 +461,9 @@ class GridFile:
                 "spectra/" + key,
                 val.value if isinstance(val, unyt_array) else val,
                 "Three-dimensional spectra grid, [age, metallicity, wavelength]",
-                val.units if isinstance(val, unyt_array) else "dimensionless",
+                units=str(val.units)
+                if isinstance(val, unyt_array)
+                else "dimensionless",
             )
 
     def add_specific_ionising_lum(self, ions=("HI", "HeII"), limit=100):
@@ -515,6 +517,8 @@ class GridFile:
                 # Get incident spectrum
                 lnu = self.read_dataset("spectra/incident", indices=indices)
 
+                print(lam.shape, lnu.shape)
+                print(lam, lnu)
                 # Calculate Q
                 sed = Sed(lam, lnu)
                 ionising_lum = sed.calculate_ionising_photon_production_rate(
