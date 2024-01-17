@@ -6,40 +6,29 @@ import os
 import wget
 from pathlib import Path
 import tarfile
-from synthesizer.utils import flam_to_fnu
-from datetime import date
+from unyt import angstrom, erg, s, cm
 
 from synthesizer_grids.utilities.parser import Parser
 from synthesizer_grids.utilities import GridFile
+from synthesizer.conversions import flam_to_fnu
 from utils import get_model_filename
 
 
-def download_data(input_dir):
+def download_data(input_dir, url):
     """
     TODO: These could be replaced by our own mirror
     """
 
-    filename = wget.download(
-        original_data_url[imf]
-    )  # download the original data to the working directory
+    # Download the original data to the working directory
+    filename = wget.download(url)
 
     Path(input_dir).mkdir(parents=True, exist_ok=True)
 
-    # --- untar main directory
+    # Untar the main directory
     tar = tarfile.open(filename)
     tar.extractall(path=input_dir)
     tar.close()
     os.remove(filename)
-
-    # # --- unzip the individual files that need reading
-    # model_dir = f'{sythesizer_data_dir}/input_files/bc03/models/Padova2000/chabrier'
-    # files = glob.glob(f'{model_dir}/bc2003_hr_m*_chab_ssp.ised_ASCII.gz')
-    #
-    # for file in files:
-    #     with gzip.open(file, 'rb') as f_in:
-    #         with open('.'.join(file.split('.')[:-1]), 'wb') as f_out:
-    #             shutil.copyfileobj(f_in, f_out)
-    #
 
 
 def make_grid(model, imf, hr_morphology):
@@ -53,7 +42,7 @@ def make_grid(model, imf, hr_morphology):
 
     # Define output
     out_filename = (
-        f"{synthesizer_data_dir}/grids/dev/{synthesizer_model_name}.hdf5"
+        f"{synthesizer_data_dir}/grids/{synthesizer_model_name}.hdf5"
     )
 
     # NOTE THE LOWEST METALLICITY MODEL DOES NOT HAVE YOUNG AGES so don't use
@@ -61,7 +50,7 @@ def make_grid(model, imf, hr_morphology):
         [0.001, 0.01, 0.02, 0.04]
     )  # array of avialable metallicities
 
-    # codes for converting metallicty
+    # Codes for converting metallicty
     metallicity_code = {
         0.0001: "10m4",
         0.001: "0001",
@@ -71,7 +60,7 @@ def make_grid(model, imf, hr_morphology):
         0.07: "007",
     }
 
-    # --- open first file to get age
+    # Open first file to get age
     fn = f"{input_dir}/sed.{imf}z{metallicity_code[metallicities[0]]}.{hr_morphology}"
     ages_, _, lam_, flam_ = np.loadtxt(fn).T
 
@@ -79,7 +68,7 @@ def make_grid(model, imf, hr_morphology):
     ages = ages_Gyr * 1e9  # yr
     log10ages = np.log10(ages)
 
-    lam = lam_[ages_ == ages_[0]]
+    lam = lam_[ages_ == ages_[0]] * angstrom
 
     spec = np.zeros((len(ages), len(metallicities), len(lam)))
 
@@ -90,7 +79,7 @@ def make_grid(model, imf, hr_morphology):
             ages_, _, lam_, flam_ = np.loadtxt(fn).T
 
             flam = flam_[ages_ == age_Gyr]
-            fnu = flam_to_fnu(lam, flam)
+            fnu = flam_to_fnu(lam, flam * erg / s / angstrom / cm**2)
             spec[ia, imetal] = fnu
 
     # Create the GridFile ready to take outputs
@@ -138,6 +127,10 @@ if __name__ == "__main__":
     input_dir = f"{synthesizer_data_dir}/input_files/{model_name}"
 
     for imf in imfs:
+        # Download the data if necessary
+        if args.download:
+            download_data(input_dir, original_data_url[imf])
+
         if imf == "ss":
             model["imf_type"] = "bpl"
             model["imf_masses"] = [0.1, 100]
