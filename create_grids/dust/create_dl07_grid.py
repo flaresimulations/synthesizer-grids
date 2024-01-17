@@ -11,7 +11,7 @@ import argparse
 from unyt import c, um, erg, s, Hz, mp, Msun
 
 
-def process_dl07_to_hdf5(grid_name='DL07_MW3.1', grid_loc='./',
+def process_dl07_to_hdf5(grid_name='MW3.1', grid_loc='./',
                          data_name='MW3.1',
                          data_loc='./synthesizer_grid_data/DL07'):
     """
