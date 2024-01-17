@@ -8,7 +8,6 @@ import sys
 import re
 import requests
 import tarfile
-import glob
 import gzip
 import shutil
 from tqdm import tqdm
