@@ -25,9 +25,9 @@ run pure stellar spectra through CLOUDY. For full self consistency the
 nebular grids here should not be used, but we provide anyway for reference.
 """
 import numpy as np
-import pathlib
 import re
-import subprocess
+import requests
+from tqdm import tqdm
 from unyt import erg, s, angstrom, c, Hz
 
 from synthesizer_grids.utilities.parser import Parser
@@ -38,27 +38,37 @@ def download_data(synthesizer_data_dir, ver, fcov):
     """
     Function access Yggdrasil spectra from website
     """
-
+    # Define base path
+    input_dir = f"{synthesizer_data_dir}/input_files/"
     filename = f"PopIII{ver}_fcov_{fcov}_SFR_inst_Spectra"
+    save_path = f"{input_dir}/popIII/Yggdrasil/{filename}"
+
+    # Define the url
     url = f"https://www.astro.uu.se/~ez/yggdrasil/YggdrasilSpectra/{filename}"
 
-    subprocess.call("wget --no-check-certificate " + url, shell=True)
+    # Call the server and get the response
+    response = requests.get(url, stream=True, verify=False)
 
-    mv_folder = f"{synthesizer_data_dir}/input_files/popIII/Yggdrasil/"
-    pathlib.Path(mv_folder).mkdir(parents=True, exist_ok=True)
-    subprocess.call(f"mv {filename} {mv_folder}", shell=True)
+    # Sizes in bytes.
+    total_size = int(response.headers.get("content-length", 0))
+    block_size = 1024
 
-    return mv_folder + filename
+    # Stream the file to disk with a nice progress bar.
+    with tqdm(total=total_size, unit="B", unit_scale=True) as progress_bar:
+        with open(save_path, "wb") as f:
+            for chunk in response.iter_content(block_size):
+                progress_bar.update(len(chunk))
+                f.write(chunk)
+
+    return save_path
 
 
-def convertPOPIII(synthesizer_data_dir, ver, fcov):
+def convertPOPIII(synthesizer_data_dir, ver, fcov, fileloc):
     """
     Convert POPIII outputs for Yggdrasil
     Wavelength in Angstrom
     Flux is in erg/s/AA
     """
-
-    fileloc = download_data(synthesizer_data_dir, ver, fcov)
 
     # Initialise ---------------------------------------------------------
     ageBins = None
@@ -147,8 +157,13 @@ def make_grid(synthesizer_data_dir, ver, fcov):
     model_name = f"yggdrasil_POPIII{ver}"
     out_filename = f"{synthesizer_data_dir}/grids/{model_name}.hdf5"
 
+    # Define input path
+    input_dir = f"{synthesizer_data_dir}/input_files/"
+    filename = f"PopIII{ver}_fcov_{fcov}_SFR_inst_Spectra"
+    input_path = f"{input_dir}/popIII/Yggdrasil/{filename}"
+
     # Get spectra and attributes
-    out = convertPOPIII(synthesizer_data_dir, ver, fcov)
+    out = convertPOPIII(synthesizer_data_dir, ver, fcov, input_path)
 
     metallicities = out[1]
 
@@ -215,4 +230,8 @@ if __name__ == "__main__":
 
     for ver in vers:
         for fcov in fcovs:
+            # Download the data if necessary
+            if args.download:
+                download_data(synthesizer_data_dir, ver, fcov)
+
             make_grid(synthesizer_data_dir, ver, fcov)
