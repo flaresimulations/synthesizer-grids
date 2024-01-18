@@ -517,8 +517,8 @@ class GridFile:
                 # Get incident spectrum
                 lnu = self.read_dataset("spectra/incident", indices=indices)
 
-                print(lam.shape, lnu.shape)
-                print(lam, lnu)
+                # print(lam.shape, lnu.shape)
+                # print(lam, lnu)
                 # Calculate Q
                 sed = Sed(lam, lnu)
                 ionising_lum = sed.calculate_ionising_photon_production_rate(
@@ -552,7 +552,7 @@ class GridFile:
         self._open_file()
 
         # Create a group for the model metadata
-        print(self.hdf)
+        # print(self.hdf)
         grp = self.hdf.create_group("Model")
 
         # Write out model parameters as attributes

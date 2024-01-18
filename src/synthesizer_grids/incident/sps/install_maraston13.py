@@ -6,8 +6,8 @@ from unyt import erg, s, Angstrom, yr
 from synthesizer.conversions import llam_to_lnu
 from datetime import date
 
-from synthesizer_grids.utilities import Parser
-from synthesizer_grids.utilities import GridFile
+from synthesizer_grids.parser import Parser
+from synthesizer_grids.grid_io import GridFile
 
 
 def make_grid(model, imf, output_dir):

@@ -9,8 +9,8 @@ import tarfile
 from hoki import load
 from unyt import angstrom, erg, s, Hz
 
-from synthesizer_grids.utilities.grid_io import GridFile
-from synthesizer_grids.utilities.parser import Parser
+from synthesizer_grids.grid_io import GridFile
+from synthesizer_grids.parser import Parser
 from utils import get_model_filename
 
 

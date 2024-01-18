@@ -1,21 +1,20 @@
 """
 Download BC03 and convert to HDF5 synthesizer grid.
-
 """
+
+import numpy as np
 import os
 import sys
-import numpy as np
 import re
 import requests
 import tarfile
-from tqdm import tqdm
-import glob
 import gzip
 import shutil
+from tqdm import tqdm
 from unyt import angstrom, erg, s, Hz
 
-from synthesizer_grids.utilities import GridFile
-from synthesizer_grids.utilities import Parser
+from synthesizer_grids.grid_io import GridFile
+from synthesizer_grids.parser import Parser
 from utils import get_model_filename
 
 
@@ -37,15 +36,14 @@ def extract_and_decompress_tgz(file_path, extract_path):
     decompress_gz_recursively(extract_path)
 
 
-def download_data(variant, synthesizer_data_dir):
+def download_data(synthesizer_data_dir):
     # Define base path
     input_dir = f"{synthesizer_data_dir}/input_files/"
-    save_path = f"{input_dir}BC03_{variant.lower()}_chabrier.tgz"
+    save_path = "bc03.models.padova_2000_chabrier_imf.tar.gz"
 
-    # Define the url
     url = (
-        "http://www.bruzual.org/bc03/Updated_version_2016/"
-        f"BC03_{variant.lower()}_chabrier.tgz"
+        "http://www.bruzual.org/bc03/Original_version_2003/"
+        "bc03.models.padova_2000_chabrier_imf.tar.gz"
     )
 
     # Call the server and get the response
@@ -107,6 +105,7 @@ def readBC03Array(file, lastLineFloat=None):
 
 def convertBC03(files=None):
     """Convert BC03 outputs
+
     Parameters (user will be prompted for those if not present):
     ----------------------------------------------------------------------
     files: list of each BC03 SED ascii file, typically named
@@ -139,62 +138,60 @@ def convertBC03(files=None):
     # Loop SED tables for different metallicities
     for iFile, fileName in enumerate(files):
         print("Converting file ", fileName)
-        file = open(fileName, "r")
-        # file = gzip.open(f'{fileName}.gz', 'rb')
-
-        ages, lastLine = readBC03Array(file)  # Read age bins
-        nAge = len(ages)
-        print("Number of ages: %s" % nAge)
-        if ageBins is None:
-            ageBins = ages
-            seds.resize(
-                (seds.shape[0], len(ageBins), seds.shape[2]), refcheck=False
-            )
-        if not np.array_equal(ages, ageBins):  # check for consistency
-            print("Age bins are not identical everywhere!!!")
-            print("CANCELLING CONVERSION!!!")
-            return
-        # Read four (five ?) useless lines
-        line = file.readline()
-        line = file.readline()
-        line = file.readline()
-        line = file.readline()
-        line = file.readline()
-        # These last three lines are identical and contain the metallicity
-        (jmetal,) = re.search("metal=([0-9]+\.?[0-9]*)", line).groups()
-        metalBins[iFile] = eval(jmetal)
-        seds.resize(
-            (len(metalBins), seds.shape[1], seds.shape[2]), refcheck=False
-        )
-        # Read wavelength bins
-        lambdas, lastLine = readBC03Array(file, lastLineFloat=lastLine)
-        if lambdaBins is None:  # Write wavelengths to sed file
-            lambdaBins = lambdas
-            seds.resize(
-                (seds.shape[0], seds.shape[1], len(lambdaBins)), refcheck=False
-            )
-        if not np.array_equal(lambdas, lambdaBins):  # check for consistency
-            print("Wavelength bins are not identical everywhere!!!")
-            print("CANCELLING CONVERSION!!!")
-            return
-        # Read luminosities
-        for iAge in range(0, nAge):
-            lums, lastLine = readBC03Array(file, lastLineFloat=lastLine)
-            if len(lums) != len(lambdaBins):
-                print("Inconsistent number of wavelength bins in BC03")
-                print("STOPPING!!")
-                return
-            # Read useless array
-            tmp, lastLine = readBC03Array(file, lastLineFloat=lastLine)
-            seds[iFile, iAge] = lums
-            progress = (iAge + 1) / nAge
-            sys.stdout.write(
-                "\rProgress: [{0:50s}] {1:.1f}%".format(
-                    "#" * int(progress * 50), progress * 100
+        with open(fileName, "r") as file:
+            ages, lastLine = readBC03Array(file)  # Read age bins
+            nAge = len(ages)
+            print("Number of ages: %s" % nAge)
+            if ageBins is None:
+                ageBins = ages
+                seds.resize(
+                    (seds.shape[0], len(ageBins), seds.shape[2]), refcheck=False
                 )
+            if not np.array_equal(ages, ageBins):  # check for consistency
+                print("Age bins are not identical everywhere!!!")
+                print("CANCELLING CONVERSION!!!")
+                return
+            # Read four (five ?) useless lines
+            line = file.readline()
+            line = file.readline()
+            line = file.readline()
+            line = file.readline()
+            line = file.readline()
+            # These last three lines are identical and contain the metallicity
+            (jmetal,) = re.search("Z=([0-9]+\.?[0-9]*)", line).groups()
+            metalBins[iFile] = eval(jmetal)
+            seds.resize(
+                (len(metalBins), seds.shape[1], seds.shape[2]), refcheck=False
             )
-        print(" ")
-        lastLine = None
+            # Read wavelength bins
+            lambdas, lastLine = readBC03Array(file, lastLineFloat=lastLine)
+            if lambdaBins is None:  # Write wavelengths to sed file
+                lambdaBins = lambdas
+                seds.resize(
+                    (seds.shape[0], seds.shape[1], len(lambdaBins)), refcheck=False
+                )
+            if not np.array_equal(lambdas, lambdaBins):  # check for consistency
+                print("Wavelength bins are not identical everywhere!!!")
+                print("CANCELLING CONVERSION!!!")
+                return
+            # Read luminosities
+            for iAge in range(0, nAge):
+                lums, lastLine = readBC03Array(file, lastLineFloat=lastLine)
+                if len(lums) != len(lambdaBins):
+                    print("Inconsistent number of wavelength bins in BC03")
+                    print("STOPPING!!")
+                    return
+                # Read useless array
+                tmp, lastLine = readBC03Array(file, lastLineFloat=lastLine)
+                seds[iFile, iAge] = lums
+                progress = (iAge + 1) / nAge
+                sys.stdout.write(
+                    "\rProgress: [{0:50s}] {1:.1f}%".format(
+                        "#" * int(progress * 50), progress * 100
+                    )
+                )
+            print(" ")
+            lastLine = None
 
     return (
         np.array(seds, dtype=np.float64),
@@ -204,35 +201,29 @@ def convertBC03(files=None):
     )
 
 
-def make_grid(variant, synthesizer_data_dir, out_filename):
+def make_grid(synthesizer_data_dir, synthesizer_model_name):
     """Main function to convert BC03 grids and
     produce grids used by synthesizer"""
 
-    # Define base path
-    if variant == "BaSeL":
-        variant_dir = "BaSeL3.1_Atlas"
-        variant_code = "lr_BaSeL"
-    if variant == "Miles":
-        variant_dir = "Miles_Atlas"
-        variant_code = "hr_xmiless"
-    if variant == "Stelib":
-        variant_dir = "Stelib_Atlas"
-        variant_code = "hr_stelib"
+    # output filename
+    out_filename = (
+        f"{synthesizer_data_dir}/grids/{synthesizer_model_name}.hdf5"
+    )
 
+    # Define base path
     basepath = (
-        f"{synthesizer_data_dir}/input_files/"
-        f"bc03-2016/{variant_dir}/Chabrier_IMF/"
+        f"{synthesizer_data_dir}/input_files/bc03/"
+        "models/Padova2000/chabrier/"
     )
 
     # Define files
     files = [
-        f"bc2003_{variant_code}_m22_chab_ssp.ised_ASCII",
-        f"bc2003_{variant_code}_m32_chab_ssp.ised_ASCII",
-        f"bc2003_{variant_code}_m42_chab_ssp.ised_ASCII",
-        f"bc2003_{variant_code}_m52_chab_ssp.ised_ASCII",
-        f"bc2003_{variant_code}_m62_chab_ssp.ised_ASCII",
-        f"bc2003_{variant_code}_m72_chab_ssp.ised_ASCII",
-        f"bc2003_{variant_code}_m82_chab_ssp.ised_ASCII",
+        "bc2003_hr_m122_chab_ssp.ised_ASCII",
+        "bc2003_hr_m132_chab_ssp.ised_ASCII",
+        "bc2003_hr_m142_chab_ssp.ised_ASCII",
+        "bc2003_hr_m152_chab_ssp.ised_ASCII",
+        "bc2003_hr_m162_chab_ssp.ised_ASCII",
+        "bc2003_hr_m172_chab_ssp.ised_ASCII",
     ]
 
     out = convertBC03([basepath + s for s in files])
@@ -271,15 +262,19 @@ def make_grid(variant, synthesizer_data_dir, out_filename):
 
 if __name__ == "__main__":
     # Set up the command line arguments
-    parser = Parser(description="BC03-2016 download and grid creation")
+    parser = Parser(description="BC03 download and grid creation")
     args = parser.parse_args()
 
     # Unpack the arguments
     synthesizer_data_dir = args.synthesizer_data_dir
     grid_dir = f"{synthesizer_data_dir}/grids"
 
-    default_model = {
-        "sps_name": "bc03-2016",
+    # Download data if asked
+    if args.download:
+        download_data(synthesizer_data_dir)
+
+    model = {
+        "sps_name": "bc03",
         "sps_version": False,
         "sps_variant": False,
         "imf_type": "chabrier03",  # named IMF or bpl (broken power law)
@@ -288,19 +283,12 @@ if __name__ == "__main__":
         "alpha": False,
     }
 
-    for variant in ["BaSeL", "Miles", "Stelib"]:  # 'BaSeL',
-        model = default_model | {"sps_variant": variant}
+    # create synthesizer style model name
+    synthesizer_model_name = get_model_filename(model)
+    print(synthesizer_model_name)
 
-        # Download data if asked
-        if args.download:
-            download_data(variant, synthesizer_data_dir)
-
-        synthesizer_model_name = get_model_filename(model)
-        print(synthesizer_model_name)
-
-        # this is the full path to the ultimate HDF5 grid file
-        out_filename = (
-            f"{synthesizer_data_dir}/grids/dev/{synthesizer_model_name}.hdf5"
-        )
-
-        make_grid(variant, synthesizer_data_dir, out_filename)
+    # Get and write the grid
+    out_filename = make_grid(
+        synthesizer_data_dir=synthesizer_data_dir,
+        synthesizer_model_name=synthesizer_model_name
+    )

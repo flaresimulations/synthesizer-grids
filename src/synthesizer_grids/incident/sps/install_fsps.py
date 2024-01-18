@@ -2,8 +2,8 @@ import numpy as np
 import fsps
 from unyt import angstrom, erg, s, Hz
 
-from synthesizer_grids.utilities.parser import Parser
-from synthesizer_grids.utilities import GridFile
+from synthesizer_grids.parser import Parser
+from synthesizer_grids.grid_io import GridFile
 from utils import get_model_filename
 
 

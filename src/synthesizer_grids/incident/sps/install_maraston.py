@@ -8,8 +8,8 @@ from pathlib import Path
 import tarfile
 from unyt import angstrom, erg, s, cm
 
-from synthesizer_grids.utilities.parser import Parser
-from synthesizer_grids.utilities import GridFile
+from synthesizer_grids.parser import Parser
+from synthesizer_grids.grid_io import GridFile
 from synthesizer.conversions import flam_to_fnu
 from utils import get_model_filename
 
