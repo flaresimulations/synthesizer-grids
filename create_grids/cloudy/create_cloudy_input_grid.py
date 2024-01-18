@@ -11,7 +11,11 @@ import yaml
 import h5py
 
 # synthesiser modules
-from synthesizer.abundances import Abundances
+from synthesizer.abundances import (
+    Abundances,
+    depletion_models,
+    solar_abundance_patterns,
+)
 from synthesizer.grid import Grid
 from synthesizer.photoionisation import cloudy17 as cloudy
 
@@ -264,10 +268,12 @@ if __name__ == "__main__":
         # create abundances object
         abundances = Abundances(
             metallicity=float(params_["metallicity"]),
-            dust_to_metal_ratio=params_["dust_to_metal_ratio"],
             alpha=params_["alpha"],
-            nitrogen_abundance=params_["nitrogen_abundance"],
-            carbon_abundance=params_["carbon_abundance"],
+            abundances={
+                "N": params_["nitrogen_abundance"],
+                "C": params_["carbon_abundance"],
+            },
+            depletion_model=depletion_models.Gutkin2016,
         )
         # if reference U model is used
         if params_["ionisation_parameter_model"] == "ref":
