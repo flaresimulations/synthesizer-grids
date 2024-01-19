@@ -26,8 +26,10 @@ nebular grids here should not be used, but we provide anyway for reference.
 """
 import numpy as np
 import re
+import os
 import requests
 from tqdm import tqdm
+from spectres import spectres
 from unyt import erg, s, angstrom, c, Hz
 
 from synthesizer_grids.parser import Parser
@@ -41,7 +43,16 @@ def download_data(synthesizer_data_dir, ver, fcov):
     # Define base path
     input_dir = f"{synthesizer_data_dir}/input_files/"
     filename = f"PopIII{ver}_fcov_{fcov}_SFR_inst_Spectra"
-    save_path = f"{input_dir}/popIII/Yggdrasil/{filename}"
+    save_path = f"{input_dir}/popIII/Yggdrasil/"
+
+    if not os.path.exists(save_path):
+        # Create the directory
+        print(
+            "Directory for downloading does not exist\n"
+            F"directory={save_path}"
+            )
+        os.makedirs(save_path)
+        print("Directory created successfully!")
 
     # Define the url
     url = f"https://www.astro.uu.se/~ez/yggdrasil/YggdrasilSpectra/{filename}"
@@ -55,7 +66,7 @@ def download_data(synthesizer_data_dir, ver, fcov):
 
     # Stream the file to disk with a nice progress bar.
     with tqdm(total=total_size, unit="B", unit_scale=True) as progress_bar:
-        with open(save_path, "wb") as f:
+        with open(save_path+filename, "wb") as f:
             for chunk in response.iter_content(block_size):
                 progress_bar.update(len(chunk))
                 f.write(chunk)
@@ -150,7 +161,7 @@ def convertPOPIII(synthesizer_data_dir, ver, fcov, fileloc):
     )
 
 
-def make_grid(synthesizer_data_dir, ver, fcov):
+def make_grid(synthesizer_data_dir, ver, fcov, model):
     """Main function to convert POPIII grids and
     produce grids used by synthesizer"""
 
@@ -185,23 +196,14 @@ def make_grid(synthesizer_data_dir, ver, fcov):
     # Create the grid file
     out_grid = GridFile(out_filename, mode="a", overwrite=True)
 
-    if fcov == "0":
+    if fcov != "0":
         # Write everything out thats common to all models
-        out_grid.write_grid_common(
-            axes={"log10age": log10ages, "metallicity": metallicities},
-            wavelength=lam * angstrom,
-            spectra={"incident": spec * erg / s / Hz},
-            alt_axes=("log10ages", "metallicities"),
-        )
-
-    else:
-        # Do we needa  suffix?
         if fcov == "1":
             add = ""
         else:
+            # Adding a suffix to non common nebular model
             add = f"_fcov_{fcov}"
 
-        # Write everything out thats common to all models
         out_grid.write_grid_common(
             axes={"log10age": log10ages, "metallicity": metallicities},
             wavelength=lam * angstrom,
@@ -209,14 +211,31 @@ def make_grid(synthesizer_data_dir, ver, fcov):
             alt_axes=("log10ages", "metallicities"),
         )
 
-    # Include the specific ionising photon luminosity
-    out_grid.add_specific_ionising_lum()
+    else:
+        # incident spectra
+        grid_lam = out_grid.read_dataset("spectra/wavelength")
+        interp_spec = np.zeros((len(ages), len(metallicities), len(grid_lam)))
+        for ii, _spec in enumerate(spec):
+            interp_spec[ii] = spectres(grid_lam, lam, _spec)
+        interp_spec[np.isnan(interp_spec)] = 0.
+
+        out_grid.write_grid_common(
+            model=model,
+            axes={"log10age": log10ages, "metallicity": metallicities},
+            wavelength=grid_lam,
+            spectra={"incident": interp_spec * erg / s / Hz},
+            alt_axes=("log10ages", "metallicities"),
+        )
+
+        # Include the specific ionising photon luminosity
+        out_grid.add_specific_ionising_lum()
 
 
 if __name__ == "__main__":
     # Set up the command line arguments
     parser = Parser(description="Yggdrasil download and grid creation")
     args = parser.parse_args()
+    print(args.download)
 
     # Unpack the arguments
     synthesizer_data_dir = args.synthesizer_data_dir
@@ -224,14 +243,29 @@ if __name__ == "__main__":
 
     # Different forms of the IMFs
     vers = np.array([".1", ".2", "_kroupa_IMF"])
-
+    imf_masses = {
+        vers[0]: [50, 500],
+        vers[1]: [10, 1, 500],
+        vers[2]: [0.1, 100]
+        }
+    
     # Different gas covering fractions for nebular emission model
-    fcovs = np.array(["0", "0.5", "1"])
+    # We run the nebular emission first since that has the highest
+    # resolution in wavelengths.
+    # The pure stellar (incident) is resampled and can be done with
+    # minimal errors, as it is featureless
+    fcovs = np.array(["1", "0.5", "0"])
 
-    for ver in vers:
+    for ii, ver in enumerate(vers):
+        model = {
+            "sps_name": "Yggdrasil",
+            "sps_variant": 'PopIII',
+            "imf_masses": imf_masses[ver],
+            "alpha": False,
+        }
         for fcov in fcovs:
             # Download the data if necessary
             if args.download:
                 download_data(synthesizer_data_dir, ver, fcov)
 
-            make_grid(synthesizer_data_dir, ver, fcov)
+            make_grid(synthesizer_data_dir, ver, fcov, model)
