@@ -145,7 +145,8 @@ def convertBC03(files=None):
             if ageBins is None:
                 ageBins = ages
                 seds.resize(
-                    (seds.shape[0], len(ageBins), seds.shape[2]), refcheck=False
+                    (seds.shape[0], len(ageBins), seds.shape[2]),
+                    refcheck=False,
                 )
             if not np.array_equal(ages, ageBins):  # check for consistency
                 print("Age bins are not identical everywhere!!!")
@@ -168,9 +169,12 @@ def convertBC03(files=None):
             if lambdaBins is None:  # Write wavelengths to sed file
                 lambdaBins = lambdas
                 seds.resize(
-                    (seds.shape[0], seds.shape[1], len(lambdaBins)), refcheck=False
+                    (seds.shape[0], seds.shape[1], len(lambdaBins)),
+                    refcheck=False,
                 )
-            if not np.array_equal(lambdas, lambdaBins):  # check for consistency
+            if not np.array_equal(
+                lambdas, lambdaBins
+            ):  # check for consistency
                 print("Wavelength bins are not identical everywhere!!!")
                 print("CANCELLING CONVERSION!!!")
                 return
@@ -257,6 +261,7 @@ def make_grid(synthesizer_data_dir, synthesizer_model_name):
     )
 
     # Include the specific ionising photon luminosity
+    print("Calculating and saving specific ionising luminosity")
     out_grid.add_specific_ionising_lum()
 
 
@@ -290,5 +295,5 @@ if __name__ == "__main__":
     # Get and write the grid
     out_filename = make_grid(
         synthesizer_data_dir=synthesizer_data_dir,
-        synthesizer_model_name=synthesizer_model_name
+        synthesizer_model_name=synthesizer_model_name,
     )

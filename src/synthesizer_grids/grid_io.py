@@ -18,6 +18,7 @@ from datetime import date
 import h5py
 import numpy as np
 from unyt import unyt_array
+from tqdm import tqdm
 
 from synthesizer.sed import Sed
 from synthesizer.photoionisation import Ions
@@ -25,9 +26,9 @@ from synthesizer._version import __version__ as synthesizer_version
 
 from synthesizer_grids._version import __version__ as grids_version
 
-from synthesizer_grids.create_grids.grid_utils import (
-    get_grid_properties_from_hdf5,
-)
+# from synthesizer_grids.create_grids.grid_utils import (
+#     get_grid_properties_from_hdf5,
+# )
 
 
 class GridFile:
@@ -493,7 +494,7 @@ class GridFile:
             _,
             _,
             index_list,
-        ) = get_grid_properties_from_hdf5(self.hdf)
+        ) = self.get_grid_properties()
 
         self._close_file()
 
@@ -506,7 +507,7 @@ class GridFile:
         lam = self.read_dataset("spectra/wavelength")
 
         # Loop over grid points and calculate Q and store it
-        for indices in index_list:
+        for indices in tqdm(index_list):
             indices = tuple(indices)
 
             # Loop over ions
@@ -560,6 +561,60 @@ class GridFile:
             grp.attrs[key] = value
 
         self._close_file()
+
+    def get_grid_properties(self, verbose=False):
+        """
+        Get the properties of the grid including the dimensions etc.
+        """
+        self._open_file()
+
+        axes = self.hdf.attrs["axes"]  # list of axes
+
+        # dictionary of axis grid points
+        axes_values = {axis: self.hdf["axes"][axis][:] for axis in axes}
+
+        self._close_file()
+
+        # the grid axes
+        if verbose:
+            print(f"axes: {axes}")
+
+        # number of axes
+        n_axes = len(axes)
+        if verbose:
+            print(f"number of axes: {n_axes}")
+
+        # the shape of the grid (useful for creating outputs)
+        shape = list([len(axes_values[axis]) for axis in axes])
+        if verbose:
+            print(f"shape: {shape}")
+
+        # determine number of models
+        n_models = np.prod(shape)
+        if verbose:
+            print(f"number of models to run: {n_models}")
+
+        # create the mesh of the grid
+        mesh = np.array(
+            np.meshgrid(*[np.array(axes_values[axis]) for axis in axes])
+        )
+
+        # create the list of the models
+        model_list = mesh.T.reshape(n_models, n_axes)
+        if verbose:
+            print("model list:")
+            print(model_list)
+
+        # create a list of the indices
+
+        index_mesh = np.array(np.meshgrid(*[range(n) for n in shape]))
+
+        index_list = index_mesh.T.reshape(n_models, n_axes)
+        if verbose:
+            print("index list:")
+            print(index_list)
+
+        return n_axes, shape, n_models, mesh, model_list, index_list
 
 
 def read_params(param_file):
