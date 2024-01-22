@@ -28,7 +28,7 @@ def get_grid_properties_hf(hf, verbose=True):
         axis: hf[f"axes/{axis}"][:] for axis in axes
     }  # dictionary of axis grid points
     # Get the properties of the grid including the dimensions etc.
-    return (axes, *get_grid_properties(axes, axes_values, verbose=verbose))
+    return axes, *get_grid_properties(axes, axes_values, verbose=verbose)
 
 
 def check_cloudy_runs(
