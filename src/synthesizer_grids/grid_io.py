@@ -533,7 +533,7 @@ class GridFile:
         # Loop over the iopns and write out their arrays
         for ion in ions:
             self.write_dataset(
-                f"log10_specific_ionising_lum/{ion}",
+                f"log10_specific_ionising_luminosity/{ion}",
                 out_arrs[ion],
                 "Two-dimensional {ion} ionising photon "
                 "production rate grid, [age, Z]",
