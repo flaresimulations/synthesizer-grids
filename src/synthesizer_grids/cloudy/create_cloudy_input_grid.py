@@ -179,7 +179,7 @@ if __name__ == "__main__":
             # if there are no additional axes simply copy over the incident
             # log10_specific_ionising_lum
             if len(axes) == len(hf.attrs["incident_axes"]):
-                hf_incident.copy("log10_specific_ionising_lum", hf)
+                hf_incident.copy("log10_specific_ionising_luminosity", hf)
 
             # else we need to expand the axis
             else:
@@ -187,15 +187,15 @@ if __name__ == "__main__":
                 expansion = int(
                     np.product(shape)
                     / np.product(
-                        hf_incident["log10_specific_ionising_lum/HI"].shape
+                        hf_incident["log10_specific_ionising_luminosity/HI"].shape
                     )
                 )
 
                 # loop over ions
-                for ion in hf_incident["log10_specific_ionising_lum"].keys():
+                for ion in hf_incident["log10_specific_ionising_luminosity"].keys():
                     # get the incident log10_specific_ionising_lum array
                     log10_specific_ionising_lum_incident = hf_incident[
-                        f"log10_specific_ionising_lum/{ion}"
+                        f"log10_specific_ionising_luminosity/{ion}"
                     ][()]
 
                     # create new array with repeated elements
@@ -206,7 +206,7 @@ if __name__ == "__main__":
                     )
 
                     # reshape array to match new shape and save
-                    hf[f"log10_specific_ionising_lum/{ion}"] = np.reshape(
+                    hf[f"log10_specific_ionising_luminosity/{ion}"] = np.reshape(
                         log10_specific_ionising_lum, shape
                     )
 
