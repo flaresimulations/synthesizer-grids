@@ -27,7 +27,6 @@ def get_grid_properties_hf(hf, verbose=True):
     axes_values = {
         axis: hf[f"axes/{axis}"][:] for axis in axes
     }  # dictionary of axis grid points
-
     # Get the properties of the grid including the dimensions etc.
     return axes, *get_grid_properties(axes, axes_values, verbose=verbose)
 
@@ -52,7 +51,7 @@ def check_cloudy_runs(
     """
 
     # open the new grid
-    with h5py.File(f"{synthesizer_data_dir}/{grid_name}.hdf5", "r") as hf:
+    with h5py.File(f"{synthesizer_data_dir}/grids/{grid_name}.hdf5", "r") as hf:
         # Get the properties of the grid including the dimensions etc.
         (
             axes,
@@ -63,7 +62,6 @@ def check_cloudy_runs(
             model_list,
             index_list,
         ) = get_grid_properties_hf(hf)
-
         # list of failed models
         failed_list = []
 
@@ -100,7 +98,6 @@ def check_cloudy_runs(
         # if the files have been replace set the failed list to empty so the rest of the code can run
         if replace:
             failed_list = []
-
         return failed_list
 
 
@@ -121,7 +118,7 @@ def add_spectra(grid_name, synthesizer_data_dir):
     spec_names = ["incident", "transmitted", "nebular", "linecont"]
 
     # open the new grid
-    with h5py.File(f"{synthesizer_data_dir}/{grid_name}.hdf5", "a") as hf:
+    with h5py.File(f"{synthesizer_data_dir}/grids/{grid_name}.hdf5", "a") as hf:
         # Get the properties of the grid including the dimensions etc.
         (
             axes,
@@ -131,8 +128,10 @@ def add_spectra(grid_name, synthesizer_data_dir):
             mesh,
             model_list,
             index_list,
-        ) = get_grid_properties_hf(hf, verbose=False)
+        ) = get_grid_properties_hf(hf)
 
+        # but axes isn't
+        
         # read first spectra from the first grid point to get length and wavelength grid
         lam = cloudy.read_wavelength(
             f"{synthesizer_data_dir}/cloudy/{grid_name}/1"
@@ -226,7 +225,7 @@ def add_lines(
     """
 
     # open the new grid
-    with h5py.File(f"{synthesizer_data_dir}/{grid_name}.hdf5", "a") as hf:
+    with h5py.File(f"{synthesizer_data_dir}/grids/{grid_name}.hdf5", "a") as hf:
         # Get the properties of the grid including the dimensions etc.
         (
             axes,
