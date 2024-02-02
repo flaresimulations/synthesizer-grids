@@ -281,10 +281,10 @@ if __name__ == "__main__":
             # Calculate the difference between the reference log10Q (LyC
             # continuum luminosity) and the current grid point
             delta_log10_specific_ionising_luminosity = (
-                incident_grid.log10_specific_ionising_luminosity["HI"][
+                incident_grid.log10_specific_ionising_lum["HI"][
                     incident_grid_point
                 ]
-                - incident_grid.log10_specific_ionising_luminosity["HI"][
+                - incident_grid.log10_specific_ionising_lum["HI"][
                     incident_ref_grid_point
                 ]
             )
