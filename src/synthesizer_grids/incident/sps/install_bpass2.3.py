@@ -7,7 +7,6 @@ from synthesizer.sed import calc_log10_specific_ionising_lum
 from synthesizer.cloudy import Ions
 from datetime import date
 from unyt import angstrom, erg, s, Hz
-
 from synthesizer_grids.parser import Parser
 from synthesizer_grids.grid_io import GridFile
 from utils import get_model_filename
@@ -46,27 +45,27 @@ def resolve_name(original_model_name, bin, alpha=False):
     return model, bpass_imf
 
 
-# # not currently used
-# def download_data(model):
+# not currently working
+def download_data(model):
 
-#     if model in model_url.keys():
-#         filename = gdown.download(model_url[model], quiet=False, fuzzy=True)
-#         return filename
-#     else:
-#         print('ERROR: no url for that model')
+    if model in model_url.keys():
+        filename = gdown.download(model_url[model], quiet=False, fuzzy=True)
+        return filename
+    else:
+        print('ERROR: no url for that model')
 
-# # not currently used
-# def untar_data(model, remove_archive = False):
+# not currently working
+# the definition of input_dir may be different from expected
+def untar_data(model, input_dir, remove_archive = False):
+
+    input_dir = f'{input_dir}/{model}'
+    tar = tarfile.open(f'{input_dir}/{model}.tar')
+    tar.extractall(path = input_dir)
+    tar.close()
+    if remove_archive: os.remove(f'{input_dir}/{model}.tar')
 
 
-#     input_dir = f'{parent_model_dir}/{model}'
-#     tar = tarfile.open(f'{parent_model_dir}/{model}.tar')
-#     tar.extractall(path = input_dir)
-#     tar.close()
-#     if remove_archive: os.remove(f'{parent_model_dir}/{model}.tar')
-
-
-def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
+def make_single_alpha_grid(original_model_name, input_dir, grid_dir, ae="+00", bs="bin"):
     """make a grid for a single alpha enhancement"""
 
     # convert bpass alpha code (e.g. '+02' into a numerical alpha e.g. 0.2)
@@ -82,11 +81,11 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
 
     # this is the full path to the ultimate HDF5 grid file
     out_filename = (
-        f"{synthesizer_data_dir}/grids/{synthesizer_model_name}.hdf5"
+        f"{grid_dir}/{synthesizer_model_name}.hdf5"
     )
 
-    # input directory
-    input_dir = f'{synthesizer_data_dir}/input_files/bpass/{model["original_model_name"]}/'
+    # input directory of this specific bpass model (hence the trailing "_")
+    input_dir_ = f'{input_dir}/bpass/{model["original_model_name"]}/'
 
     # create metallicity grid and dictionary
     map_key_to_met = {
@@ -108,13 +107,13 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
     metallicities = np.sort(np.array(list(map_met_to_key.keys())))
 
     # get ages
-    fn_ = f"{input_dir}/starmass-{bs}-imf_{bpass_imf}.a{ae}.{map_met_to_key[metallicities[0]]}.dat"
+    fn_ = f"{input_dir_}/starmass-{bs}-imf_{bpass_imf}.a{ae}.{map_met_to_key[metallicities[0]]}.dat"
     starmass = load.model_output(fn_)
     log10ages = starmass["log_age"].values
 
     # get wavelength grid
     fn_ = f"spectra-{bs}-imf_{bpass_imf}.a{ae}.{map_met_to_key[metallicities[0]]}.dat"
-    spec = load.model_output(f"{input_dir}/{fn_}")
+    spec = load.model_output(f"{input_dir_}/{fn_}")
     wavelengths = spec["WL"].values  # \AA
     nu = 3e8 / (wavelengths * 1e-10)
 
@@ -219,7 +218,7 @@ def make_single_alpha_grid(original_model_name, ae="+00", bs="bin"):
     out_grid.add_specific_ionising_lum()
 
 
-def make_full_grid(original_model_name, bs="bin"):
+def make_full_grid(original_model_name, input_dir, grid_dir, bs="bin"):
     """make a full grid for different alpha-ehancements"""
 
     # returns a dictionary containing the sps model parameters
@@ -228,15 +227,13 @@ def make_full_grid(original_model_name, bs="bin"):
     # generate the synthesizer_model_name
     synthesizer_model_name = get_model_filename(model)
 
-    print(synthesizer_model_name)
-
     # this is the full path to the ultimate HDF5 grid file
     out_filename = (
-        f"{synthesizer_data_dir}/grids/dev/{synthesizer_model_name}.hdf5"
+        f"{grid_dir}/{synthesizer_model_name}.hdf5"
     )
 
-    # input directory
-    input_dir = f'{synthesizer_data_dir}/input_files/bpass/{model["original_model_name"]}/'
+    # input directory of this specific bpass model (hence the trailing "_")
+    input_dir_ = f'{input_dir}/bpass/{model["original_model_name"]}/'
 
     # --- ccreate metallicity grid and dictionary
     map_key_to_met = {
@@ -258,26 +255,30 @@ def make_full_grid(original_model_name, bs="bin"):
     metallicities = np.sort(np.array(list(map_met_to_key.keys())))
     log10metallicities = np.log10(metallicities)
 
-    # --- create alpha-enhancement grid
+    # create alpha-enhancement grid
+
+    # list of available alpha enhancements
     alpha_enhancements = np.array(
         [-0.2, 0.0, 0.2, 0.4, 0.6]
-    )  # list of alpha enhancements
+    )  
+
+    # look up dictionary for filename
     ae_to_aek = {
         -0.2: "-02",
         0.0: "+00",
         0.2: "+02",
         0.4: "+04",
         0.6: "+06",
-    }  # look up dictionary for filename
+    }  
 
-    # --- get ages
-    fn_ = f"{input_dir}/starmass-bin-imf_{bpass_imf}.a+00.{map_met_to_key[metallicities[0]]}.dat"
+    # get ages
+    fn_ = f"{input_dir_}/starmass-bin-imf_{bpass_imf}.a+00.{map_met_to_key[metallicities[0]]}.dat"
     starmass = load.model_output(fn_)
     log10ages = starmass["log_age"].values
 
-    # --- get wavelength grid
+    # get wavelength grid
     fn_ = f"spectra-bin-imf_{bpass_imf}.a+00.{map_met_to_key[metallicities[0]]}.dat"
-    spec = load.model_output(f"{input_dir}/{fn_}")
+    spec = load.model_output(f"{input_dir_}/{fn_}")
     wavelengths = spec["WL"].values  # \AA
     nu = 3e8 / (wavelengths * 1e-10)
 
@@ -408,11 +409,17 @@ if __name__ == "__main__":
         default="bpass_v2.3_chab300",
         type=lambda arg: arg.split(","),
     )
+    
+    # Unpack the arguments
     args = parser.parse_args()
 
-    # Unpack the arguments
-    synthesizer_data_dir = args.synthesizer_data_dir
-    grid_dir = f"{synthesizer_data_dir}/grids"
+    # the directory to store downloaded input files
+    input_dir = args.input_dir
+
+    # the directory to store the grid
+    grid_dir = args.grid_dir
+
+    # list of models
     models = args.models
 
     print(models)
@@ -421,7 +428,7 @@ if __name__ == "__main__":
         # The download currently doesn't work since these is no mirror
         # if args.download:
         #     download_data(model)
-        #     untar_data(model)
+        #     untar_data(model, input_dir)
 
         for bs in ["bin"]:  # no single star models , 'sin'
             # make a grid with a single alpha enahancement value
@@ -432,4 +439,4 @@ if __name__ == "__main__":
 
             # make a full 3D grid
             if args.full:
-                out_filename = make_full_grid(model, bs=bs)
+                out_filename = make_full_grid(model, input_dir, grid_dir, bs=bs)

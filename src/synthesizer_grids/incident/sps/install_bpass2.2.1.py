@@ -66,15 +66,15 @@ def download_data(model):
         raise ValueError("ERROR: no url for that model")
 
 
-def untar_data(model, filename, synthesizer_data_dir):
-    model_dir = f"{synthesizer_data_dir}/input_files/bpass/{model}"
+def untar_data(model, filename, input_dir):
+    model_dir = f"{input_dir}/bpass/{model}"
     with tarfile.open(filename) as tar:
         tar.extractall(path=model_dir)
 
     os.remove(filename)
 
 
-def make_grid(original_model_name, bin):
+def make_grid(original_model_name, bin, input_dir, grid_dir):
     # returns a dictionary containing the sps model parameters
     model, bpass_imf = resolve_name(original_model_name, bin)
 
@@ -82,14 +82,14 @@ def make_grid(original_model_name, bin):
     synthesizer_model_name = get_model_filename(model)
 
     # this is the full path to the ultimate HDF5 grid file
-    out_filename = f"{synthesizer_data_dir}/grids/{synthesizer_model_name}.hdf5"
+    out_filename = f"{grid_dir}/{synthesizer_model_name}.hdf5"
 
-    # input directory
-    input_dir = (
-        f'{synthesizer_data_dir}/input_files/bpass/{model["original_model_name"]}/'
+    # input directory of this specific bpass model (hence the trailing "_")
+    input_dir_ = (
+        f'{input_dir}/bpass/{model["original_model_name"]}/'
     )
 
-    # --- ccreate metallicity grid and dictionary
+    # dictionary mapping filename metallicity to float
     map_key_to_met = {
         "zem5": 0.00001,
         "zem4": 0.0001,
@@ -112,13 +112,13 @@ def make_grid(original_model_name, bin):
 
     # get ages
     fn_ = f"starmass-{bin}-imf{bpass_imf}.{map_met_to_key[metallicities[0]]}.dat.gz"
-    starmass = load.model_output(f"{input_dir}/{fn_}")
+    starmass = load.model_output(f"{input_dir_}/{fn_}")
     log10ages = starmass["log_age"].values
     print(f"log10ages: {log10ages}")
 
     # get wavelength grid
     fn_ = f"spectra-{bin}-imf{bpass_imf}.{map_met_to_key[metallicities[0]]}.dat.gz"
-    spec = load.model_output(f"{input_dir}/{fn_}")
+    spec = load.model_output(f"{input_dir_}/{fn_}")
     wavelengths = spec["WL"].values  # \AA
     nu = 3e8 / (wavelengths * 1e-10)
 
@@ -133,13 +133,13 @@ def make_grid(original_model_name, bin):
     for imetal, metal in enumerate(metallicities):
         # --- get remaining and remnant fraction
         fn_ = f"starmass-{bin}-imf{bpass_imf}.{map_met_to_key[metal]}.dat.gz"
-        starmass = load.model_output(f"{input_dir}/{fn_}")
+        starmass = load.model_output(f"{input_dir_}/{fn_}")
         stellar_mass[:, imetal] = starmass["stellar_mass"].values / 1e6
         remnant_mass[:, imetal] = starmass["remnant_mass"].values / 1e6
 
         # --- get spectra
         fn_ = f"spectra-{bin}-imf{bpass_imf}.{map_met_to_key[metal]}.dat.gz"
-        spec = load.model_output(f"{input_dir}/{fn_}")
+        spec = load.model_output(f"{input_dir_}/{fn_}")
 
         for ia, log10age in enumerate(log10ages):
             spectra[ia, imetal, :] = spec[
@@ -184,17 +184,23 @@ def make_grid(original_model_name, bin):
 if __name__ == "__main__":
     # Set up the command line arguments
     parser = Parser(description="BPASS_2.2.1 download and grid creation")
-    args = parser.parse_args()
 
     # Unpack the arguments
-    synthesizer_data_dir = args.synthesizer_data_dir
-    grid_dir = f"{synthesizer_data_dir}/grids"
+    args = parser.parse_args()
+
+    # the directory to store downloaded input files
+    input_dir = args.input_dir
+
+    # the directory to store the grid
+    grid_dir = args.grid_dir
 
     # Download data if asked
     if args.download:
         download_data()
-        untar_data()
+        untar_data(input_dir)
 
+    # All the available BPASS models.
+    # Perhaps leave as an argument that defaults to this list?
     original_model_names = [
         "bpass_v2.2.1_imf_chab100",
         "bpass_v2.2.1_imf_chab300",
@@ -210,4 +216,4 @@ if __name__ == "__main__":
         print("-" * 50)
         print(original_model_name)
         for bin in ["bin", "sin"]:
-            make_grid(original_model_name, bin)
+            make_grid(original_model_name, bin, input_dir, grid_dir)
