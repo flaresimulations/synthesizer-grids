@@ -21,7 +21,7 @@ def download_data(
     """
     Download Maraston+11 data
     Args:
-        output_dir (string):
+        input_dir (string):
             directory to download and unpack data into
         data_url (string):
             URL from which to fetch the data
@@ -41,7 +41,7 @@ def download_data(
     os.remove(filename)
 
 
-def make_grid(model, imf, extension, output_dir):
+def make_grid(model, imf, extension, output_dir, grid_dir):
     """Main function to convert Maraston 2011 and
     produce grids used by synthesizer
     Args:
@@ -55,6 +55,8 @@ def make_grid(model, imf, extension, output_dir):
             filename
         output_dir (string):
             directory where the raw Maraston+11 files are read from
+        grid_dir (string):
+            directory where the the grid is created
     Returns:
         fname (string):
             output filename
@@ -62,7 +64,7 @@ def make_grid(model, imf, extension, output_dir):
 
     # define output
     out_filename = (
-        f"{synthesizer_data_dir}/grids/{model_name}{extension}_{imf}.hdf5"
+        f"{grid_dir}/{model_name}{extension}_{imf}.hdf5"
     )
 
     metallicities = np.array([0.02])  # array of available metallicities
@@ -113,11 +115,15 @@ def make_grid(model, imf, extension, output_dir):
 if __name__ == "__main__":
     # Set up the command line arguments
     parser = Parser(description="Maraston+11 download and grid creation")
+    
+    # Unpack the arguments
     args = parser.parse_args()
 
-    # Unpack the arguments
-    synthesizer_data_dir = args.synthesizer_data_dir
-    grid_dir = f"{synthesizer_data_dir}/grids"
+    # the directory to store downloaded input files
+    input_dir = args.input_dir
+
+    # the directory to store the grid
+    grid_dir = args.grid_dir
 
     # Define the model metadata
     model_name = "maraston11_pickles"
@@ -129,7 +135,7 @@ if __name__ == "__main__":
     }
 
     # The location to untar the original data
-    output_dir = f"{synthesizer_data_dir}/original_data/{model_name}"
+    output_dir = f"{input_dir}/{model_name}"
 
     # Download the data if necessary
     if args.download:
@@ -153,4 +159,4 @@ if __name__ == "__main__":
             print(extension)
 
             # Get and write the grid
-            make_grid(model, imf, extension, output_dir)
+            make_grid(model, imf, extension, output_dir, grid_dir)

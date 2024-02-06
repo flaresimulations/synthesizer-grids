@@ -4,13 +4,11 @@ Download the Maraston2013 SPS model and convert to HDF5 synthesizer grid.
 import numpy as np
 from unyt import erg, s, Angstrom, yr
 from synthesizer.conversions import llam_to_lnu
-from datetime import date
-
 from synthesizer_grids.parser import Parser
 from synthesizer_grids.grid_io import GridFile
 
 
-def make_grid(model, imf, output_dir):
+def make_grid(model, imf, output_dir, grid_dir):
     """Main function to convert Maraston 2013 and
     produce grids used by synthesizer
     Args:
@@ -21,13 +19,15 @@ def make_grid(model, imf, output_dir):
             Kroupa
         output_dir (string):
             directory where the raw Maraston+13 files are read from
+        grid_dir (string):
+            directory where the grids are created.
     Returns:
         fname (string):
             output filename
     """
 
     # define output
-    out_filename = f"{synthesizer_data_dir}/grids/{model_name}_{imf}.hdf5"
+    out_filename = f"{grid_dir}/{model_name}_{imf}.hdf5"
 
     metallicities = np.array(
         [0.01, 0.001, 0.02, 0.04]
@@ -85,8 +85,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Unpack the arguments
-    synthesizer_data_dir = args.synthesizer_data_dir
-    grid_dir = f"{synthesizer_data_dir}/grids"
+    args = parser.parse_args()
+
+    # the directory to store downloaded input files
+    input_dir = args.input_dir
+
+    # the directory to store the grid
+    grid_dir = args.grid_dir
 
     # Define the model metadata
     model_name = "maraston13"
@@ -99,7 +104,7 @@ if __name__ == "__main__":
     }
 
     # The location to untar the original data
-    output_dir = f"{synthesizer_data_dir}/original_data/{model_name}"
+    output_dir = f"{input_dir}/{model_name}"
 
     for imf in imfs:
-        make_grid(model, imf, output_dir)
+        make_grid(model, imf, output_dir, grid_dir)

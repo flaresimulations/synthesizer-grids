@@ -31,7 +31,7 @@ def download_data(input_dir, url):
     os.remove(filename)
 
 
-def make_grid(model, imf, hr_morphology):
+def make_grid(model, imf, hr_morphology, input_dir, grid_dir):
     """Main function to convert BC03 grids and
     produce grids used by synthesizer"""
 
@@ -42,7 +42,7 @@ def make_grid(model, imf, hr_morphology):
 
     # Define output
     out_filename = (
-        f"{synthesizer_data_dir}/grids/{synthesizer_model_name}.hdf5"
+        f"{grid_dir}/{synthesizer_model_name}.hdf5"
     )
 
     # NOTE THE LOWEST METALLICITY MODEL DOES NOT HAVE YOUNG AGES so don't use
@@ -61,7 +61,7 @@ def make_grid(model, imf, hr_morphology):
     }
 
     # Open first file to get age
-    fn = f"{input_dir}/sed.{imf}z{metallicity_code[metallicities[0]]}.{hr_morphology}"
+    fn = f"{input_dir}/{model}/sed.{imf}z{metallicity_code[metallicities[0]]}.{hr_morphology}"
     ages_, _, lam_, flam_ = np.loadtxt(fn).T
 
     ages_Gyr = np.sort(np.array(list(set(ages_))))  # Gyr
@@ -102,11 +102,15 @@ def make_grid(model, imf, hr_morphology):
 if __name__ == "__main__":
     # Set up the command line arguments
     parser = Parser(description="Maraston download and grid creation")
+    
+    # Unpack the arguments
     args = parser.parse_args()
 
-    # Unpack the arguments
-    synthesizer_data_dir = args.synthesizer_data_dir
-    grid_dir = f"{synthesizer_data_dir}/grids"
+    # the directory to store downloaded input files
+    input_dir = args.input_dir
+
+    # the directory to store the grid
+    grid_dir = args.grid_dir
 
     # Define the model metadata
     model_name = "maraston"
@@ -123,13 +127,11 @@ if __name__ == "__main__":
         "ss"
     ] = "http://www.icg.port.ac.uk/~maraston/SSPn/SED/Sed_Mar05_SSP_Salpeter.tar.gz"
 
-    # The location to untar the original data
-    input_dir = f"{synthesizer_data_dir}/input_files/{model_name}"
-
     for imf in imfs:
+
         # Download the data if necessary
         if args.download:
-            download_data(input_dir, original_data_url[imf])
+            download_data(f"{input_dir}/{model_name}", original_data_url[imf])
 
         if imf == "ss":
             model["imf_type"] = "bpl"
