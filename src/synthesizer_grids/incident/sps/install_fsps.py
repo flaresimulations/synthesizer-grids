@@ -55,7 +55,7 @@ def generate_grid(model):
 
     # this is the full path to the ultimate HDF5 grid file
     out_filename = (
-        f"{synthesizer_data_dir}/grids/{synthesizer_model_name}.hdf5"
+        f"{grid_dir}/{synthesizer_model_name}.hdf5"
     )
 
     lam = sp.wavelengths  # units: Angstroms
@@ -96,8 +96,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Unpack the arguments
-    synthesizer_data_dir = args.synthesizer_data_dir
-    grid_dir = f"{synthesizer_data_dir}/grids"
+    grid_dir = args.grid_dir
 
     # No download for FSPS
     if args.download:
