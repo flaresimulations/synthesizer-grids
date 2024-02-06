@@ -36,9 +36,8 @@ def extract_and_decompress_tgz(file_path, extract_path):
     decompress_gz_recursively(extract_path)
 
 
-def download_data(synthesizer_data_dir):
+def download_data(input_dir):
     # Define base path
-    input_dir = f"{synthesizer_data_dir}/input_files/"
     save_path = "bc03.models.padova_2000_chabrier_imf.tar.gz"
 
     url = (
@@ -90,14 +89,14 @@ def readBC03Array(file, lastLineFloat=None):
     # Read array 'header' (i.e. number of elements)
     arrayCount = int(lastLineFloat[0])  # Length of returned array
     array = np.empty(arrayCount)  # Initialise the array
-    lastLineFloat = lastLineFloat[1 : len(lastLineFloat)]
+    lastLineFloat = lastLineFloat[1: len(lastLineFloat)]
     iA = 0  # Running array index
     while True:  # Read numbers until array is full
         for iL in range(0, len(lastLineFloat)):  # Loop numbers in line
             array[iA] = lastLineFloat[iL]
             iA = iA + 1
             if iA >= arrayCount:  # Array is full so return
-                return array, lastLineFloat[iL + 1 :]
+                return array, lastLineFloat[iL + 1:]
         line = file.readline()  # Went through the line so get the next one
         lineStr = line.split()
         lastLineFloat = [float(x) for x in lineStr]
@@ -205,18 +204,30 @@ def convertBC03(files=None):
     )
 
 
-def make_grid(synthesizer_data_dir, synthesizer_model_name):
+def make_grid(input_dir, 
+              grid_dir, 
+              synthesizer_model_name):
+    
     """Main function to convert BC03 grids and
-    produce grids used by synthesizer"""
+    produce grids used by synthesizer.
+    
+    Arguments:
+        input_dir (str)
+            The directory where input files are downloaded.
+        grid_dir (str)
+            The directory where the grid is created.
+        synthesizer_model_name (str)
+            The name of the model used as the filename.
+    """
 
     # output filename
     out_filename = (
-        f"{synthesizer_data_dir}/grids/{synthesizer_model_name}.hdf5"
+        f"{grid_dir}/{synthesizer_model_name}.hdf5"
     )
 
     # Define base path
     basepath = (
-        f"{synthesizer_data_dir}/input_files/bc03/"
+        f"{input_dir}/bc03/"
         "models/Padova2000/chabrier/"
     )
 
@@ -268,15 +279,19 @@ def make_grid(synthesizer_data_dir, synthesizer_model_name):
 if __name__ == "__main__":
     # Set up the command line arguments
     parser = Parser(description="BC03 download and grid creation")
-    args = parser.parse_args()
 
     # Unpack the arguments
-    synthesizer_data_dir = args.synthesizer_data_dir
-    grid_dir = f"{synthesizer_data_dir}/grids"
+    args = parser.parse_args()
+
+    # the directory to store downloaded input files
+    input_dir = args.input_dir
+
+    # the directory to store the grid
+    grid_dir = args.grid_dir
 
     # Download data if asked
     if args.download:
-        download_data(synthesizer_data_dir)
+        download_data(input_dir)
 
     model = {
         "sps_name": "bc03",
@@ -293,7 +308,4 @@ if __name__ == "__main__":
     print(synthesizer_model_name)
 
     # Get and write the grid
-    out_filename = make_grid(
-        synthesizer_data_dir=synthesizer_data_dir,
-        synthesizer_model_name=synthesizer_model_name,
-    )
+    out_filename = make_grid(input_dir, grid_dir, synthesizer_model_name)

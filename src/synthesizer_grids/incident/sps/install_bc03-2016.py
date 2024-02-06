@@ -9,7 +9,6 @@ import re
 import requests
 import tarfile
 from tqdm import tqdm
-import glob
 import gzip
 import shutil
 from unyt import angstrom, erg, s, Hz
@@ -37,9 +36,8 @@ def extract_and_decompress_tgz(file_path, extract_path):
     decompress_gz_recursively(extract_path)
 
 
-def download_data(variant, synthesizer_data_dir):
+def download_data(variant, input_dir):
     # Define base path
-    input_dir = f"{synthesizer_data_dir}/input_files/"
     save_path = f"{input_dir}BC03_{variant.lower()}_chabrier.tgz"
 
     # Define the url
@@ -92,14 +90,14 @@ def readBC03Array(file, lastLineFloat=None):
     # Read array 'header' (i.e. number of elements)
     arrayCount = int(lastLineFloat[0])  # Length of returned array
     array = np.empty(arrayCount)  # Initialise the array
-    lastLineFloat = lastLineFloat[1 : len(lastLineFloat)]
+    lastLineFloat = lastLineFloat[1: len(lastLineFloat)]
     iA = 0  # Running array index
     while True:  # Read numbers until array is full
         for iL in range(0, len(lastLineFloat)):  # Loop numbers in line
             array[iA] = lastLineFloat[iL]
             iA = iA + 1
             if iA >= arrayCount:  # Array is full so return
-                return array, lastLineFloat[iL + 1 :]
+                return array, lastLineFloat[iL + 1:]
         line = file.readline()  # Went through the line so get the next one
         lineStr = line.split()
         lastLineFloat = [float(x) for x in lineStr]
@@ -204,7 +202,7 @@ def convertBC03(files=None):
     )
 
 
-def make_grid(variant, synthesizer_data_dir, out_filename):
+def make_grid(variant, input_dir, out_filename):
     """Main function to convert BC03 grids and
     produce grids used by synthesizer"""
 
@@ -220,7 +218,7 @@ def make_grid(variant, synthesizer_data_dir, out_filename):
         variant_code = "hr_stelib"
 
     basepath = (
-        f"{synthesizer_data_dir}/input_files/"
+        f"{input_dir}/"
         f"bc03-2016/{variant_dir}/Chabrier_IMF/"
     )
 
@@ -272,11 +270,15 @@ def make_grid(variant, synthesizer_data_dir, out_filename):
 if __name__ == "__main__":
     # Set up the command line arguments
     parser = Parser(description="BC03-2016 download and grid creation")
+    
+    # Unpack the arguments
     args = parser.parse_args()
 
-    # Unpack the arguments
-    synthesizer_data_dir = args.synthesizer_data_dir
-    grid_dir = f"{synthesizer_data_dir}/grids"
+    # the directory to store downloaded input files
+    input_dir = args.input_dir
+
+    # the directory to store the grid
+    grid_dir = args.grid_dir
 
     default_model = {
         "sps_name": "bc03-2016",
@@ -293,14 +295,14 @@ if __name__ == "__main__":
 
         # Download data if asked
         if args.download:
-            download_data(variant, synthesizer_data_dir)
+            download_data(variant, input_dir)
 
         synthesizer_model_name = get_model_filename(model)
         print(synthesizer_model_name)
 
         # this is the full path to the ultimate HDF5 grid file
         out_filename = (
-            f"{synthesizer_data_dir}/grids/dev/{synthesizer_model_name}.hdf5"
+            f"{grid_dir}/{synthesizer_model_name}.hdf5"
         )
 
-        make_grid(variant, synthesizer_data_dir, out_filename)
+        make_grid(variant, input_dir, out_filename)
