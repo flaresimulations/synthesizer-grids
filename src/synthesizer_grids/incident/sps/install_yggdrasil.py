@@ -36,12 +36,11 @@ from synthesizer_grids.parser import Parser
 from synthesizer_grids.grid_io import GridFile
 
 
-def download_data(synthesizer_data_dir, ver, fcov):
+def download_data(input_dir, ver, fcov):
     """
     Function access Yggdrasil spectra from website
     """
     # Define base path
-    input_dir = f"{synthesizer_data_dir}/input_files/"
     filename = f"PopIII{ver}_fcov_{fcov}_SFR_inst_Spectra"
     save_path = f"{input_dir}/popIII/Yggdrasil/"
 
@@ -74,7 +73,7 @@ def download_data(synthesizer_data_dir, ver, fcov):
     return save_path
 
 
-def convertPOPIII(synthesizer_data_dir, ver, fcov, fileloc):
+def convertPOPIII(fileloc):
     """
     Convert POPIII outputs for Yggdrasil
     Wavelength in Angstrom
@@ -161,20 +160,19 @@ def convertPOPIII(synthesizer_data_dir, ver, fcov, fileloc):
     )
 
 
-def make_grid(synthesizer_data_dir, ver, fcov, model):
+def make_grid(input_dir, grid_dir, ver, fcov, model):
     """Main function to convert POPIII grids and
     produce grids used by synthesizer"""
 
     model_name = f"yggdrasil_POPIII{ver}"
-    out_filename = f"{synthesizer_data_dir}/grids/{model_name}.hdf5"
+    out_filename = f"{grid_dir}/{model_name}.hdf5"
 
     # Define input path
-    input_dir = f"{synthesizer_data_dir}/input_files/"
     filename = f"PopIII{ver}_fcov_{fcov}_SFR_inst_Spectra"
     input_path = f"{input_dir}/popIII/Yggdrasil/{filename}"
 
     # Get spectra and attributes
-    out = convertPOPIII(synthesizer_data_dir, ver, fcov, input_path)
+    out = convertPOPIII(input_path)
 
     metallicities = out[1]
 
@@ -234,12 +232,11 @@ def make_grid(synthesizer_data_dir, ver, fcov, model):
 if __name__ == "__main__":
     # Set up the command line arguments
     parser = Parser(description="Yggdrasil download and grid creation")
-    args = parser.parse_args()
-    print(args.download)
-
+    
     # Unpack the arguments
-    synthesizer_data_dir = args.synthesizer_data_dir
-    grid_dir = f"{synthesizer_data_dir}/grids"
+    args = parser.parse_args()
+    grid_dir = args.grid_dir
+    input_dir = args.input_dir
 
     # Different forms of the IMFs
     vers = np.array([".1", ".2", "_kroupa_IMF"])
@@ -266,6 +263,6 @@ if __name__ == "__main__":
         for fcov in fcovs:
             # Download the data if necessary
             if args.download:
-                download_data(synthesizer_data_dir, ver, fcov)
+                download_data(input_dir, ver, fcov)
 
-            make_grid(synthesizer_data_dir, ver, fcov, model)
+            make_grid(input_dir, grid_dir, ver, fcov, model)
