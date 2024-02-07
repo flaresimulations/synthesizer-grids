@@ -42,7 +42,7 @@ def download_data(input_dir, ver, fcov):
     """
     # Define base path
     filename = f"PopIII{ver}_fcov_{fcov}_SFR_inst_Spectra"
-    save_path = f"{input_dir}/popIII/Yggdrasil/"
+    save_path = input_dir
 
     if not os.path.exists(save_path):
         # Create the directory
@@ -238,6 +238,16 @@ if __name__ == "__main__":
     grid_dir = args.grid_dir
     input_dir = args.input_dir
 
+    sps_name = "Yggdrasil"
+
+    # append sps_name to input_dir to define where to store downloaded input
+    # files
+    input_dir += f'/{sps_name}'
+
+    # create directory to store downloaded output if it doesn't exist
+    if not os.path.exists(input_dir):
+        os.mkdir(input_dir)
+
     # Different forms of the IMFs
     vers = np.array([".1", ".2", "_kroupa_IMF"])
     imf_masses = {
@@ -255,7 +265,7 @@ if __name__ == "__main__":
 
     for ii, ver in enumerate(vers):
         model = {
-            "sps_name": "Yggdrasil",
+            "sps_name": sps_name,
             "sps_variant": 'PopIII',
             "imf_masses": imf_masses[ver],
             "alpha": False,
