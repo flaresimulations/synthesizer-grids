@@ -31,11 +31,10 @@ usage: install_bc03.py [-h] --grid_dir GRID_DIR [--input_dir INPUT_DIR] [--downl
 BC03 download and grid creation
 
 options:
-  -h, --help            show this help message and exit
-  --grid_dir GRID_DIR   The grid file path
-  --input_dir INPUT_DIR
-                        The input file path
-  --download, -d        Should the data be downloaded?
+  -h, --help              show this help message and exit
+  --grid_dir GRID_DIR     The grid file path
+  --input_dir INPUT_DIR   The input file path
+  --download, -d          Should the data be downloaded?
 ```
 
 Note that all scripts will only download the data needed for the model if the download flag is set. This means the data need only be downloaded once for each model.
