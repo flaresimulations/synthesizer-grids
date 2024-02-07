@@ -1,6 +1,7 @@
 """
 Download the Maraston2013 SPS model and convert to HDF5 synthesizer grid.
 """
+import os
 import numpy as np
 from unyt import erg, s, Angstrom, yr
 from synthesizer.conversions import llam_to_lnu
@@ -27,7 +28,7 @@ def make_grid(model, imf, output_dir, grid_dir):
     """
 
     # define output
-    out_filename = f"{grid_dir}/{model_name}_{imf}.hdf5"
+    out_filename = f"{grid_dir}/{sps_name}_{imf}.hdf5"
 
     metallicities = np.array(
         [0.01, 0.001, 0.02, 0.04]
@@ -94,17 +95,22 @@ if __name__ == "__main__":
     grid_dir = args.grid_dir
 
     # Define the model metadata
-    model_name = "maraston13"
+    sps_name = "maraston13"
     imfs = ["salpeter", "kroupa"]
     imf_code = {"salpeter": "ss", "kroupa": "kr"}
     model = {
-        "sps_name": "maraston",
+        "sps_name": sps_name,
         "sps_version": False,
         "alpha": False,
     }
 
-    # The location to untar the original data
-    output_dir = f"{input_dir}/{model_name}"
+    # append sps_name to input_dir to define where to store downloaded input
+    # files
+    input_dir += f'/{sps_name}'
+
+    # create directory to store downloaded output if it doesn't exist
+    if not os.path.exists(input_dir):
+        os.mkdir(input_dir)
 
     for imf in imfs:
-        make_grid(model, imf, output_dir, grid_dir)
+        make_grid(model, imf, input_dir, grid_dir)

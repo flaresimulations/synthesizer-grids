@@ -61,7 +61,7 @@ def make_grid(model, imf, hr_morphology, input_dir, grid_dir):
     }
 
     # Open first file to get age
-    fn = f"{input_dir}/{model}/sed.{imf}z{metallicity_code[metallicities[0]]}.{hr_morphology}"
+    fn = f"{input_dir}/sed.{imf}z{metallicity_code[metallicities[0]]}.{hr_morphology}"
     ages_, _, lam_, flam_ = np.loadtxt(fn).T
 
     ages_Gyr = np.sort(np.array(list(set(ages_))))  # Gyr
@@ -112,14 +112,24 @@ if __name__ == "__main__":
     # the directory to store the grid
     grid_dir = args.grid_dir
 
+    sps_name = "maraston05"
+
     # Define the model metadata
-    model_name = "maraston"
+    model_name = sps_name
     imfs = ["ss"]  # , 'kr'
     model = {
-        "sps_name": "maraston",
+        "sps_name":sps_name,
         "sps_version": False,
         "alpha": False,
     }
+
+    # append sps_name to input_dir to define where to store downloaded input
+    # files
+    input_dir += f'/{sps_name}'
+
+    # create directory to store downloaded output if it doesn't exist
+    if not os.path.exists(input_dir):
+        os.mkdir(input_dir)
 
     # Define the download URL
     original_data_url = {}
@@ -131,7 +141,7 @@ if __name__ == "__main__":
 
         # Download the data if necessary
         if args.download:
-            download_data(f"{input_dir}/{model_name}", original_data_url[imf])
+            download_data(input_dir, original_data_url[imf])
 
         if imf == "ss":
             model["imf_type"] = "bpl"
@@ -142,4 +152,4 @@ if __name__ == "__main__":
             model["sps_variant"] = hr_morphology
 
             # Get and write the grid
-            make_grid(model, imf, hr_morphology)
+            make_grid(model, imf, hr_morphology, input_dir, grid_dir)
