@@ -289,12 +289,22 @@ if __name__ == "__main__":
     # the directory to store the grid
     grid_dir = args.grid_dir
 
+    sps_name = "bc03"
+
+    # append sps_name to input_dir to define where to store downloaded input
+    # files
+    input_dir += f'/{sps_name}'
+
+    # create directory to store downloaded output if it doesn't exist
+    if not os.path.exists(input_dir):
+        os.mkdir(input_dir)
+
     # Download data if asked
     if args.download:
         download_data(input_dir)
 
     model = {
-        "sps_name": "bc03",
+        "sps_name": sps_name,
         "sps_version": False,
         "sps_variant": False,
         "imf_type": "chabrier03",  # named IMF or bpl (broken power law)

@@ -1,11 +1,10 @@
 """
 Download BPASS v2.3 and convert to HDF5 synthesizer grid.
 """
+import os
 from hoki import load
 import numpy as np
 from synthesizer.sed import calc_log10_specific_ionising_lum
-from synthesizer.cloudy import Ions
-from datetime import date
 from unyt import angstrom, erg, s, Hz
 from synthesizer_grids.parser import Parser
 from synthesizer_grids.grid_io import GridFile
@@ -85,7 +84,7 @@ def make_single_alpha_grid(original_model_name, input_dir, grid_dir, ae="+00", b
     )
 
     # input directory of this specific bpass model (hence the trailing "_")
-    input_dir_ = f'{input_dir}/bpass/{model["original_model_name"]}/'
+    input_dir_ = f'{input_dir}/{model["original_model_name"]}/'
 
     # create metallicity grid and dictionary
     map_key_to_met = {
@@ -233,7 +232,7 @@ def make_full_grid(original_model_name, input_dir, grid_dir, bs="bin"):
     )
 
     # input directory of this specific bpass model (hence the trailing "_")
-    input_dir_ = f'{input_dir}/bpass/{model["original_model_name"]}/'
+    input_dir_ = f'{input_dir}/{model["original_model_name"]}/'
 
     # --- ccreate metallicity grid and dictionary
     map_key_to_met = {
@@ -418,6 +417,18 @@ if __name__ == "__main__":
 
     # the directory to store the grid
     grid_dir = args.grid_dir
+
+    # define sps name used to store the input files
+    sps_name = "bpass"
+
+    # append sps_name to input_dir to define where to store downloaded input
+    # files
+    input_dir += f'/{sps_name}'
+
+    # create directory to store downloaded output if it doesn't exist
+    if not os.path.exists(input_dir):
+        os.mkdir(input_dir)
+
 
     # list of models
     models = args.models

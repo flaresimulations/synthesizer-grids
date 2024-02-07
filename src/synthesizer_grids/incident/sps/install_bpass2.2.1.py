@@ -67,7 +67,7 @@ def download_data(model):
 
 
 def untar_data(model, filename, input_dir):
-    model_dir = f"{input_dir}/bpass/{model}"
+    model_dir = f"{input_dir}/{model}"
     with tarfile.open(filename) as tar:
         tar.extractall(path=model_dir)
 
@@ -86,7 +86,7 @@ def make_grid(original_model_name, bin, input_dir, grid_dir):
 
     # input directory of this specific bpass model (hence the trailing "_")
     input_dir_ = (
-        f'{input_dir}/bpass/{model["original_model_name"]}/'
+        f'{input_dir}/{model["original_model_name"]}/'
     )
 
     # dictionary mapping filename metallicity to float
@@ -193,6 +193,17 @@ if __name__ == "__main__":
 
     # the directory to store the grid
     grid_dir = args.grid_dir
+
+    # define base sps model
+    sps_name = 'bpass'
+
+    # append sps_name to input_dir to define where to store downloaded input
+    # files
+    input_dir += f'/{sps_name}'
+
+    # create directory to store downloaded output if it doesn't exist
+    if not os.path.exists(input_dir):
+        os.mkdir(input_dir)
 
     # Download data if asked
     if args.download:

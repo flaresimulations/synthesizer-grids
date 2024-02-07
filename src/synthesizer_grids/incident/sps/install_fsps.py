@@ -1,7 +1,6 @@
 import numpy as np
 import fsps
 from unyt import angstrom, erg, s, Hz
-
 from synthesizer_grids.parser import Parser
 from synthesizer_grids.grid_io import GridFile
 from utils import get_model_filename
@@ -115,16 +114,16 @@ if __name__ == "__main__":
 
     models = []
 
-    # models += [{}]  # default model
+    models += [{}]  # default model
 
     # # # chabrier
     # models += [{'imf_type': 'chabrier03', 'imf_masses': [0.08, 120], 'imf_slopes': []},  # chabrier03
     #            ]
 
-    # different high-mass slopes
-    models += [
-        {"imf_slopes": [1.3, 2.3, a3]} for a3 in np.arange(1.5, 3.01, 0.1)
-    ]
+    # # different high-mass slopes
+    # models += [
+    #     {"imf_slopes": [1.3, 2.3, a3]} for a3 in np.arange(1.5, 3.01, 0.1)
+    # ]
 
     # # different high-mass cut-offs
     # models += [{'imf_type': 'chabrier03', 'imf_masses': [0.08, hmc]}
@@ -135,6 +134,7 @@ if __name__ == "__main__":
     #            for lmc in [0.5, 1, 2, 5, 10, 20, 50]]
 
     for model_ in models:
+
         model = default_model | model_
 
         # make grid
