@@ -42,7 +42,8 @@ def make_grid(model, imf, output_dir, grid_dir):
     }  # codes for converting metallicty
 
     # open first raw data file to get age
-    fn = f"{output_dir}/sed_M13.{imf_code[imf]}z{metallicity_code[metallicities[0]]}"
+    fn = f"""{output_dir}/sed_M13.{imf_code[imf]}z
+    {metallicity_code[metallicities[0]]}"""
 
     ages_, _, lam_, llam_ = np.loadtxt(fn).T  # llam is in (ergs /s /AA /Msun)
 

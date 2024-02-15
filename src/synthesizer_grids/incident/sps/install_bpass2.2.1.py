@@ -54,10 +54,12 @@ def download_data(model):
     model_url = {}
     model_url[
         "bpass_v2.2.1_chab100"
-    ] = "https://drive.google.com/file/d/1az7_hP3RDovr-BN9sXgDuaYqOmetalHHUeXD/view?usp=sharing"
+    ] = """https://drive.google.com/file/d/
+    1az7_hP3RDovr-BN9sXgDuaYqOmetalHHUeXD/view?usp=sharing"""
     model_url[
         "bpass_v2.2.1_chab300"
-    ] = "https://drive.google.com/file/d/1JcUM-qyOQD16RdfWjhGKSTwdNfRUW4Xu/view?usp=sharing"
+    ] = """https://drive.google.com/file/d/
+    1JcUM-qyOQD16RdfWjhGKSTwdNfRUW4Xu/view?usp=sharing"""
     print(model_url)
     if model in model_url.keys():
         filename = gdown.download(model_url[model], quiet=False, fuzzy=True)
@@ -111,13 +113,15 @@ def make_grid(original_model_name, bin, input_dir, grid_dir):
     print(f"metallicities: {metallicities}")
 
     # get ages
-    fn_ = f"starmass-{bin}-imf{bpass_imf}.{map_met_to_key[metallicities[0]]}.dat.gz"
+    fn_ = f"""starmass-{bin}-imf{bpass_imf}.{map_met_to_key[metallicities[0]]}
+    .dat.gz"""
     starmass = load.model_output(f"{input_dir_}/{fn_}")
     log10ages = starmass["log_age"].values
     print(f"log10ages: {log10ages}")
 
     # get wavelength grid
-    fn_ = f"spectra-{bin}-imf{bpass_imf}.{map_met_to_key[metallicities[0]]}.dat.gz"
+    fn_ = f"""spectra-{bin}-imf{bpass_imf}.{map_met_to_key[metallicities[0]]}
+    .dat.gz"""
     spec = load.model_output(f"{input_dir_}/{fn_}")
     wavelengths = spec["WL"].values  # \AA
     nu = 3e8 / (wavelengths * 1e-10)

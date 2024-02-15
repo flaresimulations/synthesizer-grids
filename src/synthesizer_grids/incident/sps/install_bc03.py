@@ -204,13 +204,13 @@ def convertBC03(files=None):
     )
 
 
-def make_grid(input_dir, 
-              grid_dir, 
+def make_grid(input_dir,
+              grid_dir,
               synthesizer_model_name):
-    
+
     """Main function to convert BC03 grids and
     produce grids used by synthesizer.
-    
+
     Arguments:
         input_dir (str)
             The directory where input files are downloaded.

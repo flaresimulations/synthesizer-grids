@@ -21,7 +21,7 @@ from utils import get_model_filename
 
 def extract_and_decompress_ised_files(directory):
 
-    """ Walk through the extracted directory and extract the ised files to the 
+    """ Walk through the extracted directory and extract the ised files to the
     top directory and delete anything else.
     """
 
@@ -33,7 +33,7 @@ def extract_and_decompress_ised_files(directory):
                 with gzip.open(gz_file_path, "rb") as gz_file:
                     with open(new_file_path[:-3], "wb") as decompressed_file:
                         shutil.copyfileobj(gz_file, decompressed_file)
-        
+
     # delete all files but these
     for root, dirs, files in os.walk(directory):
         if root.split('/')[-1] not in ['bc03-2016', 'bc03', 'src']:
@@ -200,7 +200,7 @@ def convertBC03(files=None):
             print("No BC03 files given, nothing do to")
             return
 
-    # Initialise 
+    # Initialise
     ageBins = None
     lambdaBins = None
     metalBins = [None] * len(files)
@@ -231,7 +231,6 @@ def convertBC03(files=None):
         line = file.readline()
         line = file.readline()
         line = file.readline()
-
 
         print(line)
         # These last three lines are identical and contain the metallicity
@@ -346,7 +345,7 @@ def make_grid(variant, imf_type, input_dir, out_filename):
 if __name__ == "__main__":
     # Set up the command line arguments
     parser = Parser(description="BC03-2016 download and grid creation")
-    
+
     # Unpack the arguments
     args = parser.parse_args()
 
@@ -393,14 +392,16 @@ if __name__ == "__main__":
         for variant in variants:
             for imf_type in imf_types:
                 download_data(variant, imf_type, input_dir)
- 
+
         # Convert the binary ised files to ascii
         convert_to_ascii(input_dir)
 
     for variant in variants:
         for imf_type in imf_types:
 
-            model = default_model | {"sps_variant": variant, "imf_type": imf_type}
+            model_variations = {"sps_variant": variant, "imf_type": imf_type}
+
+            model = default_model | model_variations
 
             synthesizer_model_name = get_model_filename(model)
             print(synthesizer_model_name)

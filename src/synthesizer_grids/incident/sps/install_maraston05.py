@@ -61,7 +61,8 @@ def make_grid(model, imf, hr_morphology, input_dir, grid_dir):
     }
 
     # Open first file to get age
-    fn = f"{input_dir}/sed.{imf}z{metallicity_code[metallicities[0]]}.{hr_morphology}"
+    fn = f"""{input_dir}/sed.{imf}z{metallicity_code[metallicities[0]]}
+    .{hr_morphology}"""
     ages_, _, lam_, flam_ = np.loadtxt(fn).T
 
     ages_Gyr = np.sort(np.array(list(set(ages_))))  # Gyr
@@ -74,7 +75,8 @@ def make_grid(model, imf, hr_morphology, input_dir, grid_dir):
 
     for imetal, metallicity in enumerate(metallicities):
         for ia, age_Gyr in enumerate(ages_Gyr):
-            fn = f"{input_dir}/sed.{imf}z{metallicity_code[metallicity]}.{hr_morphology}"
+            fn = f"""{input_dir}/sed.{imf}z{metallicity_code[metallicity]}
+            .{hr_morphology}"""
             print(imetal, ia, fn)
             ages_, _, lam_, flam_ = np.loadtxt(fn).T
 
@@ -102,7 +104,7 @@ def make_grid(model, imf, hr_morphology, input_dir, grid_dir):
 if __name__ == "__main__":
     # Set up the command line arguments
     parser = Parser(description="Maraston download and grid creation")
-    
+
     # Unpack the arguments
     args = parser.parse_args()
 
@@ -118,7 +120,7 @@ if __name__ == "__main__":
     model_name = sps_name
     imfs = ["ss"]  # , 'kr'
     model = {
-        "sps_name":sps_name,
+        "sps_name": sps_name,
         "sps_version": False,
         "alpha": False,
     }
@@ -133,9 +135,8 @@ if __name__ == "__main__":
 
     # Define the download URL
     original_data_url = {}
-    original_data_url[
-        "ss"
-    ] = "http://www.icg.port.ac.uk/~maraston/SSPn/SED/Sed_Mar05_SSP_Salpeter.tar.gz"
+    original_data_url["ss"] = """http://www.icg.port.ac.uk/~maraston/SSPn/SED/
+    Sed_Mar05_SSP_Salpeter.tar.gz"""
 
     for imf in imfs:
 

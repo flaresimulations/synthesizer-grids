@@ -26,7 +26,8 @@ def generate_grid(model):
         if (imf_masses[1] != 0.5) or (imf_masses[2] != 1.0):
             # raise exception
             print(
-                "WARNING: this IMF definition requires that the boundaries are [m_low, 0.5, 1.0, m_high]"
+                """WARNING: this IMF definition requires that the boundaries
+                are [m_low, 0.5, 1.0, m_high]"""
             )
 
         sp = fsps.StellarPopulation(
@@ -103,7 +104,8 @@ if __name__ == "__main__":
 
     default_model = {
         "sps_name": "fsps",
-        "sps_variant": False,  # this is set later depending on the isochrones/spectra used
+        # this is set later depending on the isochrones/spectra used
+        "sps_variant": False,
         "imf_type": "bpl",  # named IMF or bpl (broken power law)
         "imf_masses": [0.08, 0.5, 1, 120],
         "imf_slopes": [1.3, 2.3, 2.3],
@@ -116,9 +118,11 @@ if __name__ == "__main__":
 
     models += [{}]  # default model
 
-    # # # chabrier
-    # models += [{'imf_type': 'chabrier03', 'imf_masses': [0.08, 120], 'imf_slopes': []},  # chabrier03
-    #            ]
+    # # chabrier
+    models += [{'imf_type': 'chabrier03',
+                'imf_masses': [0.08, 120],
+                'imf_slopes': []},
+               ]
 
     # # different high-mass slopes
     # models += [

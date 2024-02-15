@@ -408,7 +408,7 @@ if __name__ == "__main__":
         default="bpass_v2.3_chab300",
         type=lambda arg: arg.split(","),
     )
-    
+
     # Unpack the arguments
     args = parser.parse_args()
 
@@ -428,7 +428,6 @@ if __name__ == "__main__":
     # create directory to store downloaded output if it doesn't exist
     if not os.path.exists(input_dir):
         os.mkdir(input_dir)
-
 
     # list of models
     models = args.models
@@ -450,4 +449,7 @@ if __name__ == "__main__":
 
             # make a full 3D grid
             if args.full:
-                out_filename = make_full_grid(model, input_dir, grid_dir, bs=bs)
+                out_filename = make_full_grid(model,
+                                              input_dir,
+                                              grid_dir,
+                                              bs=bs)

@@ -116,10 +116,10 @@ def convertPOPIII(fileloc):
 
     seds = np.zeros((len(ageBins), len(metalBins), lam_num[0]))
 
-    """ 
+    """
         Format of the file is 10 header lines at begining followed by
         lam_num lines of wavelength and flux, then one empty line and
-        7 string lines giving the ages 
+        7 string lines giving the ages
     """
     data = open(fileloc, "r")
     tmp = data.readlines()
@@ -232,7 +232,7 @@ def make_grid(input_dir, grid_dir, ver, fcov, model):
 if __name__ == "__main__":
     # Set up the command line arguments
     parser = Parser(description="Yggdrasil download and grid creation")
-    
+
     # Unpack the arguments
     args = parser.parse_args()
     grid_dir = args.grid_dir
@@ -251,7 +251,7 @@ if __name__ == "__main__":
         vers[1]: [10, 1, 500],
         vers[2]: [0.1, 100]
         }
-    
+
     # Different gas covering fractions for nebular emission model
     # We run the nebular emission first since that has the highest
     # resolution in wavelengths.

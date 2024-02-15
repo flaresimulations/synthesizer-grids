@@ -7,12 +7,12 @@ from pathlib import Path
 import tarfile
 from unyt import erg, s, Angstrom, yr
 from synthesizer.conversions import llam_to_lnu
-from datetime import date
 import wget
 
 from synthesizer_grids.grid_io import GridFile
 from synthesizer_grids.parser import Parser
 from utils import get_model_filename
+
 
 def download_data(
     output_dir,
@@ -79,7 +79,8 @@ def make_grid(model, imf, variant, output_dir, grid_dir):
     else:
         extension = ''
 
-    fn = f"{output_dir}/ssp_M11_Pickles{extension}.{imf_code[imf]}z{metallicity_code[metallicities[0]]}"
+    fn = f"""{output_dir}/ssp_M11_Pickles{extension}.{imf_code[imf]}
+    z{metallicity_code[metallicities[0]]}"""
 
     ages_, _, lam_, llam_ = np.loadtxt(fn).T  # llam is in (ergs /s /AA /Msun)
 
@@ -121,7 +122,7 @@ def make_grid(model, imf, variant, output_dir, grid_dir):
 if __name__ == "__main__":
     # Set up the command line arguments
     parser = Parser(description="Maraston+11 download and grid creation")
-    
+
     # Unpack the arguments
     args = parser.parse_args()
 
@@ -155,7 +156,7 @@ if __name__ == "__main__":
         "UVtheoretical",
         "UVtheoretical_nearIRextended",
     ]:
-        if (variant == False) or (variant == "nearIRextended"):
+        if (variant is False) or (variant == "nearIRextended"):
             imfs = ["salpeter", "kroupa", "chabrier"]
 
         if (variant == "UVtheoretical") or (
