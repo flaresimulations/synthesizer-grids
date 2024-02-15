@@ -35,13 +35,21 @@ class Parser(argparse.ArgumentParser):
         # Create the parser
         super(Parser, self).__init__(description=description)
 
-        # Add filepath argument
+        # Add filepath argument for the grids.
         self.add_argument(
-            "--synthesizer-data-dir",
-            "-s",
+            "--grid_dir",
+            type=str,
+            help="The grid file path",
+            required=True,
+        )
+
+        # Add filepath argument for the input files used to create SPS incident
+        # grids.
+        self.add_argument(
+            "--input_dir",
             type=str,
             help="The input file path",
-            required=True,
+            required=False,
         )
 
         # Add download flag

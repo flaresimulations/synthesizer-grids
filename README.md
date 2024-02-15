@@ -26,15 +26,15 @@ python <script>.py --help
 Most models only take the standard arguments, but others can include other options. Here is an example `--help` output from the BC03 SPS model containing the default arguments.
 
 ``` sh
-usage: install_bc03.py [-h] --synthesizer-data-dir SYNTHESIZER_DATA_DIR [--download]
+usage: install_bc03.py [-h] --grid_dir GRID_DIR [--input_dir INPUT_DIR] [--download]
 
 BC03 download and grid creation
 
 options:
-  -h, --help            show this help message and exit
-  --synthesizer-data-dir SYNTHESIZER_DATA_DIR, -s SYNTHESIZER_DATA_DIR
-                        The input file path
-  --download, -d        Should the data be downloaded?
+  -h, --help              show this help message and exit
+  --grid_dir GRID_DIR     The grid file path
+  --input_dir INPUT_DIR   The input file path
+  --download, -d          Should the data be downloaded?
 ```
 
 Note that all scripts will only download the data needed for the model if the download flag is set. This means the data need only be downloaded once for each model.
