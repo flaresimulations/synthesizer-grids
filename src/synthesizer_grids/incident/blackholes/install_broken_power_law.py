@@ -1,9 +1,9 @@
 """
-Create a synthesizer incident grid for a broken power-law SED model using
-the Feltre+2016 approach.
+Create a synthesizer incident grid for a broken power-law SED.
 """
+import yaml
 import numpy as np
-from unyt import c, Angstrom
+from unyt import c, Angstrom, erg, s, Hz
 from synthesizer_grids.parser import Parser
 from synthesizer_grids.grid_io import GridFile
 
@@ -63,30 +63,65 @@ def broken_power_law(x, edges, indices, normalisations=False, normalise=True):
 
 
 if __name__ == "__main__":
+
+    """
+    Create incident AGN spectra assuming a broken power-law model.
+
+    $L_{\nu} = \nu^{\alpha_i}
+
+    """
+
+    # define indices. Where this is a single value implies this is fixed.
+    # TODO: this could be set by a separate parameter file, but this model
+    # is unlikely to be used much since it should be deprecated by UnifiedAGN.
+
     # Set up the command line arguments
-    parser = Parser(description="Feltre et al. (2016) AGN model creation.")
-    
-    # path to grid directory (i.e. where incident and new grids are stored)
-    # ** this can be replaced once Parser is updated. **
-    parser.add_argument("-grid_dir", type=str, required=True)
+    parser = Parser(description="Broken power-law AGN model creation.")
+
+    # parameter file to use
+    parser.add_argument("-config_file", type=str, required=True)
 
     # get the arguments
     args = parser.parse_args()
 
-    # Define the model name
-    model = "feltre16"
+    # open the config file and extract parameters
+    with open(args.config_file, 'r') as file:
+        parameters = yaml.safe_load(file)
+
+    model_name = parameters['model']
+    indices = parameters['indices']
+    edges_lam = np.array(parameters['edges']) * Angstrom
+
+    # Model defintion dictionary
+    model = {
+        'name': model_name,
+        'type': 'agn',
+        'family': 'broken_power_law',
+    }
 
     # Define the grid filename and path
-    out_filename = f"{args.grid_dir}/{model}"
+    out_filename = f"{args.grid_dir}/{model_name}.hdf5"
 
-    alphas = np.arange(-2.0, -1.0, 0.2)
-    axes = [alphas]
+    # Define axes names
+    axes_names = [f'alpha{i+1}' for i, _ in enumerate(indices)]
+
+    # Define axes descriptions
+    axes_descriptions = {}
+    for i, axis_name in enumerate(axes_names):
+        axes_descriptions[axis_name] = f'The power-law slope between {edges_lam[i]} \le \lambda/\AA < {edges_lam[i+1]}'
+
+
+    # In this case the incident axes values are just the indices
+    # but we also convert lists to arrays
+    axes_values = [np.array(index) for index in indices]
+
+    # axes dictionary, save as part of output
+    axes = dict(zip(axes_names, axes_values))
 
     # the shape of the grid (useful for creating outputs)
-    axes_shape = list([len(axis) for axis in axes])
+    axes_shape = list([len(axis) for axis in axes_values])
 
-    # define edges
-    edges_lam = [10.0, 2500.0, 100000.0, 1000000.0] * Angstrom  # Angstrom
+    # convert the value of edges for use
     edges_nu = c / edges_lam
     edges = edges_nu.to("THz").value
 
@@ -95,21 +130,20 @@ if __name__ == "__main__":
     nu = c / lam
     x = nu.to("THz").value
 
-    # define indices. The first entry is None because this is set by the axis.
-    indices = [None, -0.5, 2.0]
-
     # create empty spectra grid
     spec = np.zeros((*axes_shape, len(lam)))
 
-    # loop over alphas
-    for i, alpha in enumerate(alphas):
+    # loop over grid points
+    # TODO: this needs generalising, but not a priority
+    for i, alpha1 in enumerate(indices[0]):
+        for j, alpha2 in enumerate(indices[1]):
+            for k, alpha3 in enumerate(indices[2]):
 
-        # use the value of alpha to fill in the missing power-law index
-        indices[0] = alpha
+                # define the indices of the current model
+                indices_ = [alpha1, alpha2, alpha3]
 
-        # generate the broken power-law spectra
-        spec[i] = broken_power_law(x, edges[::-1], indices[::-1]) 
-
+                # generate the broken power-law spectra
+                spec[i] = broken_power_law(x, edges[::-1], indices_[::-1])
 
     # Create the GridFile ready to take outputs
     out_grid = GridFile(out_filename, mode="w", overwrite=True)
@@ -117,10 +151,10 @@ if __name__ == "__main__":
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"alpha": alphas},
+        axes=axes,
+        descriptions=axes_descriptions,
         wavelength=lam,
         spectra={"incident": spec * erg / s / Hz},
-        alt_axes=("alphas"),
     )
 
     # Include the specific ionising photon luminosity
