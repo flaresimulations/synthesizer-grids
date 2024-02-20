@@ -288,7 +288,7 @@ if __name__ == "__main__":
             metallicity=float(params_["metallicity"]),
             solar=params_["solar_abundance"],
             alpha=params_["alpha"],
-            abundances=params_["abundances"],
+            abundances=params_["abundance_scalings"],
             depletion_model=params_["depletion_model"],
             depletion_scale=params_["depletion_scale"],
         )
