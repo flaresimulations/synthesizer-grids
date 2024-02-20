@@ -82,7 +82,7 @@ if __name__ == "__main__":
     )
 
     # path to cloudy directory (not executable; this is assumed to {cloudy}/{cloudy_version}/source/cloudy.ext)
-    parser.add_argument("-cloudy_path", type=str, required=True)
+    parser.add_argument("-cloudy_path", type=str, required=False)
 
     # verbosity flag
     parser.add_argument("-verbose", type=bool, required=False, default=True)
