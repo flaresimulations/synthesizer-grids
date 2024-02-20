@@ -1,10 +1,12 @@
+# Default config file for SPS models. 
+
 # CLOUDY VERSION
 cloudy_version: c17.03
 
 # ABUNDANCE PATTERN AND DEPLETION
 solar_abundance: Asplund2009 # the Solar abundance pattern to assume
 alpha: 0.0  # alpha element enhancement
-abundances:
+abundance_scalings:
   N: Dopita2006 # scaling for Nitrogen, either float relative to Solar or string defining the in-built function to use
   C: Dopita2006 # scaling for Carbon, either float relative to Solar or string defining the in-built function to use
 depletion_model: CloudyClassic # the depletion model.

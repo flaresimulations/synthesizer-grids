@@ -1,4 +1,4 @@
-# Default config file for SPS models. 
+# Cloudy 23.01 config file for SPS models but assuming the c17.03 parameters. 
 
 # CLOUDY VERSION
 cloudy_version: c23.01
