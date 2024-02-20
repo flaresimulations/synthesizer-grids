@@ -239,13 +239,18 @@ if __name__ == "__main__":
 
         # add other parameters as attributes
         for k, v in params.items():
-            print(k,v, type(v))
-            hf.attrs[k] = v
+
+            # if the parameter is a dictionary (e.g. as used for abundances)
+            if isinstance(v, dict):
+                for k2, v2 in v.items():
+                     hf.attrs[k+'_'+k2] = v2
+            else:
+                hf.attrs[k] = v
 
         if verbose:
             print("-" * 50)
             print("---- attributes")
-            for k, v in hf.attrs.items():
+            for k, v in hf.attrs.items():                
                 print(k, v)
             print("---- groups and datasets")
             hf.visit(print)
