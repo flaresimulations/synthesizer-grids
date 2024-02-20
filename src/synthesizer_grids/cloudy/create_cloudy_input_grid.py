@@ -181,7 +181,7 @@ if __name__ == "__main__":
 
             # copy top-level attributes
             for k, v in hf_incident.attrs.items():
-                print(k,v)
+                print(k,v, type(v))
                 hf.attrs[k] = v
 
             # add attribute with the original incident grid axes
