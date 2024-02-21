@@ -33,25 +33,27 @@ def get_grid_properties_hf(hf, verbose=True):
 
 def check_cloudy_runs(
     grid_name,
-    synthesizer_data_dir,
+    grid_dir,
+    cloudy_dir,
     replace=False,
     files_to_check=["cont", "elin"],
 ):
     """
     Check that all the cloudy runs have run properly
 
-    Parameters
-    ----------
-    grid_name : str
-        Name of the grid
-    synthesizer_data_dir : str
-        Directory where synthesizer data is kept.
-    replace : boolean
-        If a run has failed simply replace the model with the previous one
+    Arguments:
+        grid_name : str
+            Name of the grid
+        grid_dir : str
+            Parent directory for the grids.
+        cloudy_dir : str
+            Parent directory for the cloudy runs.
+        replace : boolean
+            If a run has failed simply replace the model with the previous one.
     """
 
     # open the new grid
-    with h5py.File(f"{synthesizer_data_dir}/grids/{grid_name}.hdf5", "r") as hf:
+    with h5py.File(f"{grid_dir}/{grid_name}.hdf5", "r") as hf:
         # Get the properties of the grid including the dimensions etc.
         (
             axes,
@@ -66,7 +68,7 @@ def check_cloudy_runs(
         failed_list = []
 
         for i, grid_params_ in enumerate(model_list):
-            infile = f"{synthesizer_data_dir}/cloudy/{grid_name}/{i+1}"
+            infile = f"{cloudy_dir}/{grid_name}/{i+1}"
             failed = False
 
             # check if files exist
@@ -91,7 +93,7 @@ def check_cloudy_runs(
                 if replace:
                     for ext in files_to_check:
                         shutil.copyfile(
-                            f"{synthesizer_data_dir}/cloudy/{grid_name}/{i}.{ext}",
+                            f"{cloudy_dir}/{grid_name}/{i}.{ext}",
                             infile + ".lines",
                         )
 
@@ -101,16 +103,17 @@ def check_cloudy_runs(
         return failed_list
 
 
-def add_spectra(grid_name, synthesizer_data_dir):
+def add_spectra(grid_name, grid_dir, cloudy_dir):
     """
-    Open cloudy spectra and add them to the grid
+    Open cloudy spectra and add them to the grid.
 
-    Parameters
-    ----------
-    grid_name : str
-        Name of the grid
-    synthesizer_data_dir : str
-        Directory where synthesizer data is kept.
+    Arguments:
+        grid_name (str)
+            Name of the grid.
+        grid_dir (str)
+            Parent directory for the grids.
+        cloudy_dir (str)
+            Parent directory for the cloudy runs.
     """
 
     # spec_names = ['incident','transmitted','nebular','nebular_continuum','total','linecont']
@@ -118,7 +121,7 @@ def add_spectra(grid_name, synthesizer_data_dir):
     spec_names = ["incident", "transmitted", "nebular", "linecont"]
 
     # open the new grid
-    with h5py.File(f"{synthesizer_data_dir}/grids/{grid_name}.hdf5", "a") as hf:
+    with h5py.File(f"{grid_dir}/{grid_name}.hdf5", "a") as hf:
         # Get the properties of the grid including the dimensions etc.
         (
             axes,
@@ -134,7 +137,7 @@ def add_spectra(grid_name, synthesizer_data_dir):
         
         # read first spectra from the first grid point to get length and wavelength grid
         lam = cloudy.read_wavelength(
-            f"{synthesizer_data_dir}/cloudy/{grid_name}/1"
+            f"{cloudy_dir}/{grid_name}/1"
         )
 
         if "spectra" in hf:
@@ -163,7 +166,7 @@ def add_spectra(grid_name, synthesizer_data_dir):
             indices = tuple(indices)
 
             # define the infile
-            infile = f"{synthesizer_data_dir}/cloudy/{grid_name}/{i+1}"
+            infile = f"{cloudy_dir}/{grid_name}/{i+1}"
 
             # read the continuum file containing the spectra
             spec_dict = cloudy.read_continuum(infile, return_dict=True)
@@ -203,7 +206,8 @@ def add_spectra(grid_name, synthesizer_data_dir):
 
 def add_lines(
     grid_name,
-    synthesizer_data_dir,
+    grid_dir,
+    cloudy_dir, 
     line_type="linelist",
     lines_to_include=False,
     include_spectra=True,
@@ -211,21 +215,22 @@ def add_lines(
     """
     Open cloudy lines and add them to the HDF5 grid
 
-    Parameters
-    ----------
-    grid_name: str
-        Name of the grid.
-    synthesizer_data_dir: str
-        Directory where synthesizer data is kept.
-    line_type : str
-        The type of line file to use (linelist, lines)
-    dlog10_specific_ionising_lum
-        The difference between the original and cloudy
-        log10_specific_ionising_lum used for rescaling the cloudy spectra
+    Arguments:
+        grid_name : str
+            Name of the grid
+        grid_dir : str
+            Parent directory for the grids.
+        cloudy_dir : str
+            Parent directory for the cloudy runs.
+        line_type : str
+            The type of line file to use (linelist, lines)
+        dlog10_specific_ionising_lum
+            The difference between the original and cloudy
+            log10_specific_ionising_lum used for rescaling the cloudy spectra
     """
 
     # open the new grid
-    with h5py.File(f"{synthesizer_data_dir}/grids/{grid_name}.hdf5", "a") as hf:
+    with h5py.File(f"{grid_dir}/{grid_name}.hdf5", "a") as hf:
         # Get the properties of the grid including the dimensions etc.
         (
             axes,
@@ -252,7 +257,7 @@ def add_lines(
         # lines.attrs['lines'] = list(lines_to_include)  # save list of spectra as attribute
 
         if line_type == "linelist":
-            infile = f"{synthesizer_data_dir}/cloudy/{grid_name}/1"
+            infile = f"{cloudy_dir}/{grid_name}/1"
             lines_to_include, _, _ = cloudy.read_linelist(infile)
             # print(lines_to_include)
 
@@ -268,7 +273,7 @@ def add_lines(
             indices = tuple(indices)
 
             # define the infile
-            infile = f"{synthesizer_data_dir}/cloudy/{grid_name}/{i+1}"
+            infile = f"{cloudy_dir}/{grid_name}/{i+1}"
 
             # get TOTAL continuum spectra
             if include_spectra:
@@ -332,14 +337,23 @@ def add_lines(
                     )  # erg s^-1 Hz^-1
 
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=("Create synthesizer HDF5 grid " "for a given grid.")
     )
 
+    # path to grid directory
     parser.add_argument(
-        "-synthesizer_data_dir", type=str, required=True
-    )  # path to synthesizer_data_dir
+        "-grid_dir", type=str, required=True
+    )  
+
+    # path to cloudy directory
+    parser.add_argument(
+        "-cloudy_dir", type=str, required=True
+    ) 
+
+    # grid name
     parser.add_argument("-grid_name", "--grid_name", type=str, required=True)
     parser.add_argument(
         "-include_spectra",
@@ -348,9 +362,13 @@ if __name__ == "__main__":
         default=True,
         required=False,
     )
+
+    # boolean flag as to whether to attempt to replace missing files
     parser.add_argument(
         "-replace", "--replace", type=bool, default=False, required=False
     )
+
+    # line calculation method
     parser.add_argument(
         "-line_calc_method",
         "--line_calc_method",
@@ -362,13 +380,17 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # get arguments
-    synthesizer_data_dir = args.synthesizer_data_dir
+    grid_dir = args.grid_dir
+    cloudy_dir = args.cloudy_dir
     grid_name = args.grid_name
     include_spectra = args.include_spectra
 
     # check cloudy runs and potentially replace them by the nearest grid point if they fail.
     failed_list = check_cloudy_runs(
-        grid_name, synthesizer_data_dir, replace=args.replace
+        grid_name, 
+        grid_dir,
+        cloudy_dir, 
+        replace=args.replace
     )
 
     print(failed_list)
@@ -382,7 +404,7 @@ if __name__ == "__main__":
 
         # replace input_names with list of failed runs
         with open(
-            f"{synthesizer_data_dir}/cloudy/{grid_name}/input_names.txt", "w"
+            f"{cloudy_dir}/{grid_name}/input_names.txt", "w"
         ) as myfile:
             myfile.write("\n".join(map(str, failed_list)))
 
@@ -392,13 +414,16 @@ if __name__ == "__main__":
 
         # add spectra
         if include_spectra:
-            add_spectra(grid_name, synthesizer_data_dir)
+            add_spectra(grid_name, 
+                        grid_dir, 
+                        cloudy_dir)
             print("- spectra added")
 
         # add lines
         add_lines(
             grid_name,
-            synthesizer_data_dir,
+            grid_dir,
+            cloudy_dir, 
             line_type="linelist",
             include_spectra=include_spectra,
         )
