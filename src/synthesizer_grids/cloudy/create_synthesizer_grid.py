@@ -11,7 +11,7 @@ import numpy as np
 import h5py
 
 # synthesizer modules
-from synthesizer.photoionisation import cloudy17 as cloudy
+from synthesizer.photoionisation import cloudy17, cloudy23
 from synthesizer.sed import Sed
 
 # local modules
