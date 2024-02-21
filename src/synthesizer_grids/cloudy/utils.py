@@ -72,7 +72,7 @@ def apollo_submission_script(n, grid_data_dir, cloudy_path, cloudy_version):
     print(cloudy)
 
     # cloudy data dir
-    cloudy_data_path = f"{cloudy_path}/{cloudy_version}/data/:./"
+    cloudy_data_path = f'"{cloudy_path}/{cloudy_version}/data/:./"'
 
     apollo_job_script = f"""
 ######################################################################
