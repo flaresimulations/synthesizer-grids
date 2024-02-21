@@ -108,6 +108,8 @@ if __name__ == "__main__":
         cloudy = cloudy17
     if fixed_params['cloudy_version'] == 'c23.01':
         cloudy = cloudy23
+    print(cloudy)
+
 
     # open the parent incident grid
     incident_grid = Grid(
