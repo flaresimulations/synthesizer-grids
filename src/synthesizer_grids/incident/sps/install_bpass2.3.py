@@ -1,7 +1,6 @@
 """
 Download BPASS v2.3 and convert to HDF5 synthesizer grid.
 """
-import os
 import numpy as np
 from unyt import angstrom, erg, s, Hz
 from synthesizer_grids.parser import Parser
@@ -67,29 +66,9 @@ def parse_spectra_file(filename):
     return wavelength, spectra
 
 
-# # not currently working
-# def download_data(model):
-
-#     if model in model_url.keys():
-#         filename = gdown.download(model_url[model], quiet=False, fuzzy=True)
-#         return filename
-#     else:
-#         print('ERROR: no url for that model')
-
-# # not currently working
-# # the definition of input_dir may be different from expected
-# def untar_data(model, input_dir, remove_archive = False):
-
-#     input_dir = f'{input_dir}/{model}'
-#     tar = tarfile.open(f'{input_dir}/{model}.tar')
-#     tar.extractall(path = input_dir)
-#     tar.close()
-#     if remove_archive: os.remove(f'{input_dir}/{model}.tar')
-
-
 def make_single_alpha_grid(
         original_model_name,
-        input_dir, 
+        input_dir,
         grid_dir,
         ae="+00",
         bs="bin"):
@@ -134,12 +113,12 @@ def make_single_alpha_grid(
     metallicities = np.sort(np.array(list(map_met_to_key.keys())))
 
     # get ages and remaining fraction
-    fn_ = f"""starmass-{bs}-imf_{bpass_imf}.a{ae}.{map_met_to_key[metallicities[0]]}.dat"""
+    fn_ = f"starmass-{bs}-imf_{bpass_imf}.a{ae}.zem5.dat"
     log10ages, stellar_fraction_ = (
         parse_starmass_file(f"{input_dir_}/{fn_}"))
 
     # open spectra file
-    fn_ = f"""spectra-{bs}-imf_{bpass_imf}.a{ae}.{map_met_to_key[metallicities[0]]}.dat"""
+    fn_ = f"spectra-{bs}-imf_{bpass_imf}.a{ae}.zem5.dat"
     wavelengths, spectra_ = parse_spectra_file(f"{input_dir_}/{fn_}")
     nu = 3e8 / (wavelengths * 1e-10)
 
@@ -160,8 +139,10 @@ def make_single_alpha_grid(
 
     for imetal, metal in enumerate(metallicities):
 
+        metallicity_key = map_met_to_key[metallicities[imetal]]
+
         # get ages and remaining fraction
-        fn_ = f"""starmass-{bs}-imf_{bpass_imf}.a{ae}.{map_met_to_key[metallicities[imetal]]}.dat"""
+        fn_ = f"starmass-{bs}-imf_{bpass_imf}.a{ae}.{metallicity_key}.dat"
         log10ages, stellar_fraction_ = (
             parse_starmass_file(f"{input_dir_}/{fn_}"))
 
@@ -169,7 +150,7 @@ def make_single_alpha_grid(
         # remnant_fraction[:, imetal] = remnant_fraction_
 
         # open spectra file
-        fn_ = f"""spectra-{bs}-imf_{bpass_imf}.a{ae}.{map_met_to_key[metallicities[imetal]]}.dat"""
+        fn_ = f"spectra-{bs}-imf_{bpass_imf}.a{ae}.{metallicity_key}.dat"
         wavelengths, spectra_ = parse_spectra_file(f"{input_dir_}/{fn_}")
 
         for ia, _ in enumerate(log10ages):
@@ -181,7 +162,7 @@ def make_single_alpha_grid(
             spec_ *= 3.826e33  # erg s^-1 AA^-1 Msol^-1
             spec_ *= wavelengths / nu  # erg s^-1 Hz^-1 Msol^-1
             spectra[ia, imetal, :] = spec_
-   
+
     # Create the GridFile ready to take outputs
     out_grid = GridFile(out_filename, mode="a", overwrite=True)
 
@@ -201,12 +182,6 @@ def make_single_alpha_grid(
         "Two-dimensional remaining stellar fraction grid, [age, Z]",
         units="Msun",
     )
-    # out_grid.write_dataset(
-    #     "remnant_fraction",
-    #     remnant_fraction,
-    #     "Two-dimensional remaining remnant fraction grid, [age, Z]",
-    #     units="Msun",
-    # )
 
     # Include the specific ionising photon luminosity
     out_grid.add_specific_ionising_lum()
@@ -217,7 +192,7 @@ def make_full_grid(
         input_dir,
         grid_dir,
         bs="bin"):
-    
+
     """make a full grid for different alpha-ehancements"""
 
     # returns a dictionary containing the sps model parameters
@@ -234,7 +209,7 @@ def make_full_grid(
     # input directory of this specific bpass model (hence the trailing "_")
     input_dir_ = f'{input_dir}/{model["original_model_name"]}/'
 
-    # --- ccreate metallicity grid and dictionary
+    # create metallicity grid and dictionary
     map_key_to_met = {
         "zem5": 0.00001,
         "zem4": 0.0001,
@@ -300,7 +275,7 @@ def make_full_grid(
 
     for imetal, metal in enumerate(metallicities):
         for iae, alpha_enhancement in enumerate(alpha_enhancements):
-            
+
             aek = ae_to_aek[alpha_enhancement]
             metalk = map_met_to_key[metal]
 
@@ -354,12 +329,6 @@ def make_full_grid(
         "Two-dimensional remaining stellar fraction grid, [age, Z]",
         units="Msun",
     )
-    # out_grid.write_dataset(
-    #     "remnant_fraction",
-    #     remnant_fraction,
-    #     "Two-dimensional remaining remnant fraction grid, [age, Z]",
-    #     units="Msun",
-    # )
 
     # Include the specific ionising photon luminosity
     out_grid.add_specific_ionising_lum()
@@ -371,6 +340,7 @@ if __name__ == "__main__":
         description="BPASS_2.3 download and grid creation",
         with_alpha=True,
     )
+
     parser.add_argument(
         "-models",
         "--models",
@@ -397,18 +367,9 @@ if __name__ == "__main__":
     # files
     input_dir += f'/{sps_name}'
 
-    # create directory to store downloaded output if it doesn't exist
-    if not os.path.exists(input_dir):
-        os.mkdir(input_dir)
-
     models = args.models
 
     for model in models:
-        # The download currently doesn't work since these is no mirror
-        # if args.download:
-        #     download_data(model)
-        #     untar_data(model, input_dir)
-
         for bs in ["bin"]:  # no single star models , 'sin'
             # make a grid with a single alpha enahancement value
             if individual:

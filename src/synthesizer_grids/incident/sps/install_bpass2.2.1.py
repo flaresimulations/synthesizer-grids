@@ -70,31 +70,6 @@ def parse_spectra_file(filename):
     return wavelength, spectra
 
 
-# def download_data(model):
-#     """
-#     Download the grids.
-
-#     At the moment this is downloading data from a mirror I set up since
-#     I can't automate downloading the grids
-#     """
-
-#     model_url = {}
-#     model_url[
-#         "bpass_v2.2.1_chab100"
-#     ] = """https://drive.google.com/file/d/
-#     1az7_hP3RDovr-BN9sXgDuaYqOmetalHHUeXD/view?usp=sharing"""
-#     model_url[
-#         "bpass_v2.2.1_chab300"
-#     ] = """https://drive.google.com/file/d/
-#     1JcUM-qyOQD16RdfWjhGKSTwdNfRUW4Xu/view?usp=sharing"""
-#     print(model_url)
-#     if model in model_url.keys():
-#         filename = gdown.download(model_url[model], quiet=False, fuzzy=True)
-#         return filename
-#     else:
-#         raise ValueError("ERROR: no url for that model")
-
-
 def untar_data(model, filename, input_dir):
     model_dir = f"{input_dir}/{model}"
     with tarfile.open(filename) as tar:
@@ -137,17 +112,14 @@ def make_grid(original_model_name, bin, input_dir, grid_dir):
 
     map_met_to_key = {k: v for v, k in map_key_to_met.items()}
     metallicities = np.sort(np.array(list(map_met_to_key.keys())))
-    print(f"metallicities: {metallicities}")
 
-    # get ages and remaining fraction
-    fn_ = f"""starmass-{bin}-imf{bpass_imf}
-    .{map_met_to_key[metallicities[0]]}.dat"""
+    # get ages and remaining fraction of first metallicity
+    fn_ = f"starmass-{bin}-imf{bpass_imf}.zem5.dat"
     log10ages, stellar_fraction_, remnant_fraction_ = (
         parse_starmass_file(f"{input_dir_}/{fn_}"))
 
     # open spectra file
-    fn_ = f"""spectra-{bin}-imf{bpass_imf}
-    .{map_met_to_key[metallicities[0]]}.dat"""
+    fn_ = f"spectra-{bin}-imf{bpass_imf}.zem5.dat"
     wavelengths, spectra_ = parse_spectra_file(f"{input_dir_}/{fn_}")
     nu = 3e8 / (wavelengths * 1e-10)
 
@@ -161,15 +133,15 @@ def make_grid(original_model_name, bin, input_dir, grid_dir):
     # loop over metallicity
     for imetal, metal in enumerate(metallicities):
 
+        metallicity_key = map_met_to_key[metallicities[imetal]]
+
         # get ages and remaining fraction
-        fn_ = f"""starmass-{bin}-imf{bpass_imf}
-        .{map_met_to_key[metallicities[imetal]]}.dat"""
+        fn_ = f"starmass-{bin}-imf{bpass_imf}.{metallicity_key}.dat"
         log10ages, stellar_fraction_, remnant_fraction_ = (
             parse_starmass_file(f"{input_dir_}/{fn_}"))
 
         # open spectra file
-        fn_ = f"""spectra-{bin}-imf{bpass_imf}
-        .{map_met_to_key[metallicities[imetal]]}.dat"""
+        fn_ = f"spectra-{bin}-imf{bpass_imf}.{metallicity_key}.dat"
         wavelengths, spectra_ = parse_spectra_file(f"{input_dir_}/{fn_}")
 
         stellar_fraction[:, imetal] = stellar_fraction_
@@ -217,6 +189,16 @@ if __name__ == "__main__":
     # Set up the command line arguments
     parser = Parser(description="BPASS_2.2.1 download and grid creation")
 
+    # add argument to specify the specific bpass model/IMF
+    parser.add_argument(
+        "-models",
+        "--models",
+        description="""list of models to process, separated by ','.
+By default uses 'bpass_v2.2.1_imf_chab100'.
+Use 'all' to process all models.""",
+        default="bpass_v2.2.1_imf_chab100",
+    )
+
     # Unpack the arguments
     args = parser.parse_args()
 
@@ -233,30 +215,27 @@ if __name__ == "__main__":
     # files
     input_dir += f'/{sps_name}'
 
-    # create directory to store downloaded output if it doesn't exist
-    if not os.path.exists(input_dir):
-        os.mkdir(input_dir)
+    # get list of models
+    models = args.models
 
-    # Download data if asked
-    if args.download:
-        download_data()
-        untar_data(input_dir)
+    # If all models are specified
+    if models == 'all':
+        models = [
+            "bpass_v2.2.1_imf_chab100",
+            "bpass_v2.2.1_imf_chab300",
+            "bpass_v2.2.1_imf100_300",
+            "bpass_v2.2.1_imf135_300",
+            "bpass_v2.2.1_imf170_300",
+            "bpass_v2.2.1_imf100_100",
+            "bpass_v2.2.1_imf135_100",
+            "bpass_v2.2.1_imf170_100"
+            ]
+    else:
+        models = models.split(',')
 
-    # All the available BPASS models.
-    # Perhaps leave as an argument that defaults to this list?
-    original_model_names = [
-        "bpass_v2.2.1_imf_chab100",
-        # "bpass_v2.2.1_imf_chab300",
-        # "bpass_v2.2.1_imf100_300",
-        # "bpass_v2.2.1_imf135_300",
-        # "bpass_v2.2.1_imf170_300",
-        # "bpass_v2.2.1_imf100_100",
-        # "bpass_v2.2.1_imf135_100",
-        # "bpass_v2.2.1_imf170_100",
-    ]
-
-    for original_model_name in original_model_names:
+    # loop over all models
+    for model in models:
         print("-" * 50)
-        print(original_model_name)
+        print(model)
         for bin in ["bin", "sin"]:
-            make_grid(original_model_name, bin, input_dir, grid_dir)
+            make_grid(model, bin, input_dir, grid_dir)
