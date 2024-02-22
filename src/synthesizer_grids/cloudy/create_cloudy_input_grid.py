@@ -18,30 +18,32 @@ from synthesizer.abundances import (
 )
 
 from synthesizer.grid import Grid
-from synthesizer.photoionisation import cloudy17 as cloudy
+from synthesizer.photoionisation import cloudy17, cloudy23
 
 
 # local modules
 from utils import get_grid_properties, apollo_submission_script
 
 
-def load_grid_params(param_file="c17.03-sps", dir="params"):
+def load_grid_params(param_file="c17.03-sps", param_dir="params"):
     """
-    parameters from a single param_file
+    Read parameters from a yaml parameter file
 
-    Parameters
-    ----------
-    param_file : str
-        Location of YAML file.
+    Arguments:
+        param_file (str)
+            filename of the parameter file
+        param_dir (str)
+            directory containing the parameter file
 
-    Returns
-    -------
-    dict
-        Dictionary of cloudy parameters
+    Returns:
+        fixed_params (dict)
+            dictionary of parameters that are fixed
+        grid_params (dict)
+            dictionary of parameters that vary on the grid
     """
 
     # open paramter file
-    with open(f"{dir}/{param_file}.yaml", "r") as stream:
+    with open(f"{param_dir}/{param_file}.yaml", "r") as stream:
         try:
             params = yaml.safe_load(stream)
         except yaml.YAMLError as exc:
@@ -50,9 +52,15 @@ def load_grid_params(param_file="c17.03-sps", dir="params"):
     grid_params = {}
     fixed_params = {}
 
+    # loop over parameters
     for k, v in params.items():
+
+        # if parameter is a list store it in the grid_parameters dictionary
+        # and convert to a numpy array
         if isinstance(v, list):
             grid_params[k] = np.array(list(map(float, v)))
+
+        # otherwise store it in fixed_params dictionary
         else:
             fixed_params[k] = v
 
@@ -87,12 +95,21 @@ if __name__ == "__main__":
     # verbosity flag
     parser.add_argument("-verbose", type=bool, required=False, default=True)
 
+    # parse arguments
     args = parser.parse_args()
 
     verbose = args.verbose
 
     # load the cloudy parameters you are going to run
     fixed_params, grid_params = load_grid_params(args.cloudy_params)
+
+    # set cloudy version
+    if fixed_params['cloudy_version'] == 'c17.03':
+        cloudy = cloudy17
+    if fixed_params['cloudy_version'] == 'c23.01':
+        cloudy = cloudy23
+    print(cloudy)
+
 
     # open the parent incident grid
     incident_grid = Grid(
@@ -159,18 +176,20 @@ if __name__ == "__main__":
     ) = get_grid_properties(axes, grid_params, verbose=True)
 
     # create new synthesizer grid to contain the new grid
-
     # open the new grid
     with h5py.File(f"{args.grid_dir}/{new_grid_name}.hdf5", "w") as hf:
         # open the original incident model grid
         with h5py.File(
             f"{args.grid_dir}/{args.incident_grid}.hdf5", "r"
         ) as hf_incident:
+
+            # print out datasets
             if verbose:
                 hf_incident.visit(print)
 
             # copy top-level attributes
             for k, v in hf_incident.attrs.items():
+                print(k,v, type(v))
                 hf.attrs[k] = v
 
             # add attribute with the original incident grid axes
@@ -228,12 +247,18 @@ if __name__ == "__main__":
 
         # add other parameters as attributes
         for k, v in params.items():
-            hf.attrs[k] = v
+
+            # if the parameter is a dictionary (e.g. as used for abundances)
+            if isinstance(v, dict):
+                for k2, v2 in v.items():
+                     hf.attrs[k+'_'+k2] = v2
+            else:
+                hf.attrs[k] = v
 
         if verbose:
             print("-" * 50)
             print("---- attributes")
-            for k, v in hf.attrs.items():
+            for k, v in hf.attrs.items():                
                 print(k, v)
             print("---- groups and datasets")
             hf.visit(print)
@@ -266,20 +291,21 @@ if __name__ == "__main__":
         elif "log10metallicity" in grid_params_.keys():
             params_["metallicity"] = 10 ** grid_params_["log10metallicity"]
 
-        # create abundances object
+        # create abundance object
         abundances = Abundances(
             metallicity=float(params_["metallicity"]),
+            solar=params_["solar_abundance"],
             alpha=params_["alpha"],
-            abundances={
-                "N": params_["nitrogen_abundance"],
-                "C": params_["carbon_abundance"],
-            },
-            depletion_model=depletion_models.Gutkin2016,
+            abundances=params_["abundance_scalings"],
+            depletion_model=params_["depletion_model"],
+            depletion_scale=params_["depletion_scale"],
         )
+
         # if reference U model is used
         if params_["ionisation_parameter_model"] == "ref":
-            # Calculate the difference between the reference log10Q (LyC
-            # continuum luminosity) and the current grid point
+            # Calculate the difference between the reference 
+            # log10_specific_ionising_luminosity for HI and the current grid
+            # point
             delta_log10_specific_ionising_luminosity = (
                 incident_grid.log10_specific_ionising_lum["HI"][
                     incident_grid_point
