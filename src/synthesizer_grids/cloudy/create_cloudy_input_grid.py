@@ -18,7 +18,7 @@ from synthesizer.abundances import (
 )
 
 from synthesizer.grid import Grid
-from synthesizer.photoionisation import cloudy17 as cloudy
+from synthesizer.photoionisation import cloudy17, cloudy23
 
 
 # local modules
@@ -102,6 +102,14 @@ if __name__ == "__main__":
 
     # load the cloudy parameters you are going to run
     fixed_params, grid_params = load_grid_params(args.cloudy_params)
+
+    # set cloudy version
+    if fixed_params['cloudy_version'] == 'c17.03':
+        cloudy = cloudy17
+    if fixed_params['cloudy_version'] == 'c23.01':
+        cloudy = cloudy23
+    print(cloudy)
+
 
     # open the parent incident grid
     incident_grid = Grid(
