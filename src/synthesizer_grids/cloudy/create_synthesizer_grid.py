@@ -201,7 +201,7 @@ def add_spectra(grid_name, grid_dir, cloudy_dir):
 
                 # calculate normalisation
                 normalisation = (
-                    hf["log10_specific_ionising_lum/HI"][indices]
+                    hf["log10_specific_ionising_luminosity/HI"][indices]
                     - np.log10(ionising_photon_production_rate))
 
                 # save normalisation for later use (rescaling lines)
