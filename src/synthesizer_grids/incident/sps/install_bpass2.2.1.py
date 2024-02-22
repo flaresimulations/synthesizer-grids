@@ -4,9 +4,9 @@ Download BPASS v2.2.1 and convert to HDF5 synthesizer grid.
 
 import os
 import numpy as np
-import gdown
+# import gdown
 import tarfile
-from hoki import load
+# from hoki import load
 from unyt import angstrom, erg, s, Hz
 
 from synthesizer_grids.grid_io import GridFile
@@ -43,29 +43,56 @@ def resolve_name(original_model_name, bin):
     return model, bpass_imf
 
 
-def download_data(model):
-    """
-    Download the grids.
+def parse_starmass_file(filename):
 
-    At the moment this is downloading data from a mirror I set up since
-    I can't automate downloading the grids
     """
+    Parse a BPASS starmass file.
+    """
+    data = np.loadtxt(filename).T
+    log10ages = data[0]
+    stellar_fraction = data[1] / 1E6
+    remnant_fraction = data[2] / 1E6
+    # the final element is broken so replace with the previous one
+    stellar_fraction[-1] = stellar_fraction[-2]
 
-    model_url = {}
-    model_url[
-        "bpass_v2.2.1_chab100"
-    ] = """https://drive.google.com/file/d/
-    1az7_hP3RDovr-BN9sXgDuaYqOmetalHHUeXD/view?usp=sharing"""
-    model_url[
-        "bpass_v2.2.1_chab300"
-    ] = """https://drive.google.com/file/d/
-    1JcUM-qyOQD16RdfWjhGKSTwdNfRUW4Xu/view?usp=sharing"""
-    print(model_url)
-    if model in model_url.keys():
-        filename = gdown.download(model_url[model], quiet=False, fuzzy=True)
-        return filename
-    else:
-        raise ValueError("ERROR: no url for that model")
+    return log10ages, stellar_fraction, remnant_fraction
+
+
+def parse_spectra_file(filename):
+
+    """
+    Parse a BPASS spectra file.
+    """
+    data = np.loadtxt(filename).T
+    wavelength = data[0]
+    spectra = data[1:]
+
+    return wavelength, spectra
+
+
+# def download_data(model):
+#     """
+#     Download the grids.
+
+#     At the moment this is downloading data from a mirror I set up since
+#     I can't automate downloading the grids
+#     """
+
+#     model_url = {}
+#     model_url[
+#         "bpass_v2.2.1_chab100"
+#     ] = """https://drive.google.com/file/d/
+#     1az7_hP3RDovr-BN9sXgDuaYqOmetalHHUeXD/view?usp=sharing"""
+#     model_url[
+#         "bpass_v2.2.1_chab300"
+#     ] = """https://drive.google.com/file/d/
+#     1JcUM-qyOQD16RdfWjhGKSTwdNfRUW4Xu/view?usp=sharing"""
+#     print(model_url)
+#     if model in model_url.keys():
+#         filename = gdown.download(model_url[model], quiet=False, fuzzy=True)
+#         return filename
+#     else:
+#         raise ValueError("ERROR: no url for that model")
 
 
 def untar_data(model, filename, input_dir):
@@ -112,43 +139,44 @@ def make_grid(original_model_name, bin, input_dir, grid_dir):
     metallicities = np.sort(np.array(list(map_met_to_key.keys())))
     print(f"metallicities: {metallicities}")
 
-    # get ages
-    fn_ = f"""starmass-{bin}-imf{bpass_imf}.{map_met_to_key[metallicities[0]]}
-    .dat.gz"""
-    starmass = load.model_output(f"{input_dir_}/{fn_}")
-    log10ages = starmass["log_age"].values
-    print(f"log10ages: {log10ages}")
+    # get ages and remaining fraction
+    fn_ = f"""starmass-{bin}-imf{bpass_imf}
+    .{map_met_to_key[metallicities[0]]}.dat"""
+    log10ages, stellar_fraction_, remnant_fraction_ = (
+        parse_starmass_file(f"{input_dir_}/{fn_}"))
 
-    # get wavelength grid
-    fn_ = f"""spectra-{bin}-imf{bpass_imf}.{map_met_to_key[metallicities[0]]}
-    .dat.gz"""
-    spec = load.model_output(f"{input_dir_}/{fn_}")
-    wavelengths = spec["WL"].values  # \AA
+    # open spectra file
+    fn_ = f"""spectra-{bin}-imf{bpass_imf}
+    .{map_met_to_key[metallicities[0]]}.dat"""
+    wavelengths, spectra_ = parse_spectra_file(f"{input_dir_}/{fn_}")
     nu = 3e8 / (wavelengths * 1e-10)
 
     # set up output arrays
     nmetal = len(metallicities)
     na = len(log10ages)
-    stellar_mass = np.zeros((na, nmetal))
-    remnant_mass = np.zeros((na, nmetal))
+    stellar_fraction = np.zeros((na, nmetal))
+    remnant_fraction = np.zeros((na, nmetal))
     spectra = np.zeros((na, nmetal, len(wavelengths)))
 
     # loop over metallicity
     for imetal, metal in enumerate(metallicities):
-        # --- get remaining and remnant fraction
-        fn_ = f"starmass-{bin}-imf{bpass_imf}.{map_met_to_key[metal]}.dat.gz"
-        starmass = load.model_output(f"{input_dir_}/{fn_}")
-        stellar_mass[:, imetal] = starmass["stellar_mass"].values / 1e6
-        remnant_mass[:, imetal] = starmass["remnant_mass"].values / 1e6
 
-        # --- get spectra
-        fn_ = f"spectra-{bin}-imf{bpass_imf}.{map_met_to_key[metal]}.dat.gz"
-        spec = load.model_output(f"{input_dir_}/{fn_}")
+        # get ages and remaining fraction
+        fn_ = f"""starmass-{bin}-imf{bpass_imf}
+        .{map_met_to_key[metallicities[imetal]]}.dat"""
+        log10ages, stellar_fraction_, remnant_fraction_ = (
+            parse_starmass_file(f"{input_dir_}/{fn_}"))
+
+        # open spectra file
+        fn_ = f"""spectra-{bin}-imf{bpass_imf}
+        .{map_met_to_key[metallicities[imetal]]}.dat"""
+        wavelengths, spectra_ = parse_spectra_file(f"{input_dir_}/{fn_}")
+
+        stellar_fraction[:, imetal] = stellar_fraction_
+        remnant_fraction[:, imetal] = remnant_fraction_
 
         for ia, log10age in enumerate(log10ages):
-            spectra[ia, imetal, :] = spec[
-                str(log10age)
-            ].values  # Lsol AA^-1 10^6 Msol^-1
+            spectra[ia, imetal, :] = spectra_[ia]  # Lsol AA^-1 10^6 Msol^-1
 
     # Convert spectra to synthesizer base units
     spectra /= 1e6  # Lsol AA^-1 Msol^-1
@@ -170,13 +198,13 @@ def make_grid(original_model_name, bin, input_dir, grid_dir):
     # Write datasets specific to BPASS 2.3
     out_grid.write_dataset(
         "star_fraction",
-        stellar_mass,
+        stellar_fraction,
         "Two-dimensional remaining stellar fraction grid, [age, Z]",
         units="Msun",
     )
     out_grid.write_dataset(
         "remnant_fraction",
-        remnant_mass,
+        remnant_fraction,
         "Two-dimensional remaining remnant fraction grid, [age, Z]",
         units="Msun",
     )
@@ -218,13 +246,13 @@ if __name__ == "__main__":
     # Perhaps leave as an argument that defaults to this list?
     original_model_names = [
         "bpass_v2.2.1_imf_chab100",
-        "bpass_v2.2.1_imf_chab300",
-        "bpass_v2.2.1_imf100_300",
-        "bpass_v2.2.1_imf135_300",
-        "bpass_v2.2.1_imf170_300",
-        "bpass_v2.2.1_imf100_100",
-        "bpass_v2.2.1_imf135_100",
-        "bpass_v2.2.1_imf170_100",
+        # "bpass_v2.2.1_imf_chab300",
+        # "bpass_v2.2.1_imf100_300",
+        # "bpass_v2.2.1_imf135_300",
+        # "bpass_v2.2.1_imf170_300",
+        # "bpass_v2.2.1_imf100_100",
+        # "bpass_v2.2.1_imf135_100",
+        # "bpass_v2.2.1_imf170_100",
     ]
 
     for original_model_name in original_model_names:
