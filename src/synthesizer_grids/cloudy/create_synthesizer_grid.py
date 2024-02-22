@@ -20,7 +20,8 @@ from utils import get_grid_properties
 
 def get_grid_properties_hf(hf, verbose=True):
     """
-    A wrapper over get_grid_properties to get the grid properties for a HDF5 grid.
+    A wrapper over get_grid_properties to get the grid properties for a HDF5 
+    grid.
     """
 
     axes = hf.attrs["axes"]  # list of axes in the correct order
@@ -133,9 +134,17 @@ def add_spectra(grid_name, grid_dir, cloudy_dir):
             index_list,
         ) = get_grid_properties_hf(hf)
 
-        # but axes isn't
-        
-        # read first spectra from the first grid point to get length and wavelength grid
+        # Determine the cloudy version...
+        cloudy_version = hf.attrs['cloudy_version']
+
+        # ... and use to select the correct module.
+        if cloudy_version.split('.')[0] == 'c23':
+            cloudy = cloudy23
+        elif cloudy_version.split('.')[0] == 'c17':
+            cloudy = cloudy17
+
+        # Read first spectra from the first grid point to get length and 
+        # wavelength grid.
         lam = cloudy.read_wavelength(
             f"{cloudy_dir}/{grid_name}/1"
         )
@@ -242,6 +251,15 @@ def add_lines(
             index_list,
         ) = get_grid_properties_hf(hf)
 
+        # Determine the cloudy version...
+        cloudy_version = hf.attrs['cloudy_version']
+
+        # ... and use to select the correct module.
+        if cloudy_version.split('.')[0] == 'c23':
+            cloudy = cloudy23
+        elif cloudy_version.split('.')[0] == 'c17':
+            cloudy = cloudy17
+
         # delete lines group if it already exists
         if "lines" in hf:
             del hf["lines"]
@@ -254,12 +272,10 @@ def add_lines(
 
         # create group for holding lines
         lines = hf.create_group("lines")
-        # lines.attrs['lines'] = list(lines_to_include)  # save list of spectra as attribute
-
+        
         if line_type == "linelist":
             infile = f"{cloudy_dir}/{grid_name}/1"
             lines_to_include, _, _ = cloudy.read_linelist(infile)
-            # print(lines_to_include)
 
         # set up output arrays
         for line_id in lines_to_include:
@@ -337,7 +353,6 @@ def add_lines(
                     )  # erg s^-1 Hz^-1
 
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=("Create synthesizer HDF5 grid " "for a given grid.")
@@ -364,11 +379,13 @@ if __name__ == "__main__":
     )
 
     # boolean flag as to whether to attempt to replace missing files
+    # NOTE: this is not currently used as we should re-run cloudy or figure
+    # out what went wrong when there is a failure.
     parser.add_argument(
         "-replace", "--replace", type=bool, default=False, required=False
     )
 
-    # line calculation method
+    # Define the line calculation method.
     parser.add_argument(
         "-line_calc_method",
         "--line_calc_method",
@@ -385,17 +402,23 @@ if __name__ == "__main__":
     grid_name = args.grid_name
     include_spectra = args.include_spectra
 
-    # check cloudy runs and potentially replace them by the nearest grid point if they fail.
+    # open the parameters file to get the cloudy version
+
+
+
+
+
+    # Check cloudy runs and potentially replace them by the nearest grid point 
+    # if they fail.
     failed_list = check_cloudy_runs(
-        grid_name, 
+        grid_name,
         grid_dir,
-        cloudy_dir, 
+        cloudy_dir,
         replace=args.replace
     )
+    print('list of failed cloudy runs:', failed_list)
 
-    print(failed_list)
-
-    # if failed prompt to re-run
+    # If any runs have failed prompt to re-run.
     if len(failed_list) > 0:
         print(
             f"ERROR: {len(failed_list)} cloudy runs have failed. You should re-run these with command:"
@@ -408,22 +431,20 @@ if __name__ == "__main__":
         ) as myfile:
             myfile.write("\n".join(map(str, failed_list)))
 
-    # if not failed, go ahead and add spectra and lines
+    # If no runs have failed, go ahead and add spectra and lines.
     else:
-        print("- passed checks")
-
+        
         # add spectra
         if include_spectra:
-            add_spectra(grid_name, 
-                        grid_dir, 
+            add_spectra(grid_name,
+                        grid_dir,
                         cloudy_dir)
-            print("- spectra added")
 
         # add lines
         add_lines(
             grid_name,
             grid_dir,
-            cloudy_dir, 
+            cloudy_dir,
             line_type="linelist",
             include_spectra=include_spectra,
         )
