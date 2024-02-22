@@ -7,11 +7,11 @@ from pathlib import Path
 import tarfile
 from unyt import erg, s, Angstrom, yr
 from synthesizer.conversions import llam_to_lnu
-from datetime import date
 import wget
 
 from synthesizer_grids.grid_io import GridFile
 from synthesizer_grids.parser import Parser
+from utils import get_model_filename
 
 
 def download_data(
@@ -21,7 +21,7 @@ def download_data(
     """
     Download Maraston+11 data
     Args:
-        output_dir (string):
+        input_dir (string):
             directory to download and unpack data into
         data_url (string):
             URL from which to fetch the data
@@ -41,7 +41,7 @@ def download_data(
     os.remove(filename)
 
 
-def make_grid(model, imf, extension, output_dir):
+def make_grid(model, imf, variant, output_dir, grid_dir):
     """Main function to convert Maraston 2011 and
     produce grids used by synthesizer
     Args:
@@ -50,28 +50,37 @@ def make_grid(model, imf, extension, output_dir):
         imf (string):
             Initial mass function, can be one of Salpeter,
             Kroupa or Chabrier
-        extension (string):
-            String extension to use at the end of the output
-            filename
+        variant (string):
+            Model variant to use
         output_dir (string):
             directory where the raw Maraston+11 files are read from
+        grid_dir (string):
+            directory where the the grid is created
     Returns:
         fname (string):
             output filename
     """
 
-    # define output
+    synthesizer_model_name = get_model_filename(model)
+    print(synthesizer_model_name)
+
+    # output filename
     out_filename = (
-        f"{synthesizer_data_dir}/grids/{model_name}{extension}_{imf}.hdf5"
+        f"{grid_dir}/{synthesizer_model_name}.hdf5"
     )
 
     metallicities = np.array([0.02])  # array of available metallicities
 
-    log10metallicities = np.log10(metallicities)
-
     metallicity_code = {0.02: "002"}  # codes for converting metallicty
 
-    fn = f"{output_dir}/ssp_M11_Pickles{extension}.{imf_code[imf]}z{metallicity_code[metallicities[0]]}"
+    # define the extension
+    if variant:
+        extension = '_' + variant
+    else:
+        extension = ''
+
+    fn = f"""{output_dir}/ssp_M11_Pickles{extension}.{imf_code[imf]}
+    z{metallicity_code[metallicities[0]]}"""
 
     ages_, _, lam_, llam_ = np.loadtxt(fn).T  # llam is in (ergs /s /AA /Msun)
 
@@ -113,44 +122,52 @@ def make_grid(model, imf, extension, output_dir):
 if __name__ == "__main__":
     # Set up the command line arguments
     parser = Parser(description="Maraston+11 download and grid creation")
-    args = parser.parse_args()
 
     # Unpack the arguments
-    synthesizer_data_dir = args.synthesizer_data_dir
-    grid_dir = f"{synthesizer_data_dir}/grids"
+    args = parser.parse_args()
+
+    # the directory to store downloaded input files
+    input_dir = args.input_dir
+
+    # the directory to store the grid
+    grid_dir = args.grid_dir
 
     # Define the model metadata
-    model_name = "maraston11_pickles"
+    sps_name = "maraston11"
     imf_code = {"salpeter": "ss", "kroupa": "kr", "chabrier": "cha"}
-    model = {
-        "sps_name": "maraston",
+    default_model = {
+        "sps_name": sps_name,
+        "sps_variant": False,
         "sps_version": False,
         "alpha": False,
+        "imf_masses": [0.1, 100],
     }
 
     # The location to untar the original data
-    output_dir = f"{synthesizer_data_dir}/original_data/{model_name}"
+    output_dir = f"{input_dir}/{sps_name}"
 
     # Download the data if necessary
     if args.download:
         download_data(output_dir)
 
-    for extension in [
-        "",
-        "_nearIRextended",
-        "_UVtheoretical",
-        "_UVtheoretical_nearIRextended",
+    for variant in [
+        False,
+        "nearIRextended",
+        "UVtheoretical",
+        "UVtheoretical_nearIRextended",
     ]:
-        if (extension == "") or (extension == "_nearIRextended"):
+        if (variant is False) or (variant == "nearIRextended"):
             imfs = ["salpeter", "kroupa", "chabrier"]
 
-        if (extension == "_UVtheoretical") or (
-            extension == "_UVtheoretical_nearIRextended"
+        if (variant == "UVtheoretical") or (
+            variant == "UVtheoretical_nearIRextended"
         ):
             imfs = ["salpeter"]
 
         for imf in imfs:
-            print(extension)
+            print(variant)
+
+            model = default_model | {"imf_type": imf, "sps_variant": variant}
 
             # Get and write the grid
-            make_grid(model, imf, extension, output_dir)
+            make_grid(model, imf, variant, output_dir, grid_dir)
