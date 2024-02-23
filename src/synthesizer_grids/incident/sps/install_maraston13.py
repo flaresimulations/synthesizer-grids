@@ -9,7 +9,7 @@ from synthesizer_grids.parser import Parser
 from synthesizer_grids.grid_io import GridFile
 
 
-def make_grid(model, imf, output_dir, grid_dir):
+def make_grid(model, imf, input_dir, grid_dir):
     """Main function to convert Maraston 2013 and
     produce grids used by synthesizer
     Args:
@@ -18,7 +18,7 @@ def make_grid(model, imf, output_dir, grid_dir):
         imf (string):
             Initial mass function, Salpeter or
             Kroupa
-        output_dir (string):
+        input_dir (string):
             directory where the raw Maraston+13 files are read from
         grid_dir (string):
             directory where the grids are created.
@@ -45,8 +45,7 @@ def make_grid(model, imf, output_dir, grid_dir):
     }  # codes for converting metallicty
 
     # open first raw data file to get age
-    fn = f"""{output_dir}/sed_M13.{imf_code[imf]}z
-    {metallicity_code[metallicities[0]]}"""
+    fn = f"{input_dir}/sed_M13.{imf_code[imf]}z{metallicity_code[metallicities[0]]}"
 
     ages_, _, lam_, llam_ = np.loadtxt(fn).T  # llam is in (ergs /s /AA /Msun)
 
@@ -64,7 +63,7 @@ def make_grid(model, imf, output_dir, grid_dir):
     # at each point in spec convert the units
     for imetal, metallicity in enumerate(metallicities):
         for ia, age_Gyr in enumerate(ages_Gyr):
-            fn = f"{output_dir}/sed_M13.{imf_code[imf]}z{metallicity_code[metallicity]}"
+            fn = f"{input_dir}/sed_M13.{imf_code[imf]}z{metallicity_code[metallicity]}"
             print(imetal, ia, fn)
             ages_, _, lam_, llam_ = np.loadtxt(fn).T
 
@@ -88,11 +87,6 @@ def make_grid(model, imf, output_dir, grid_dir):
 if __name__ == "__main__":
     # Set up the command line arguments
     parser = Parser(description="Maraston+13 download and grid creation")
-    args = parser.parse_args()
-
-    parser.add_argument("-output_dir", type=str, required=True)
-    parser.add_argument("-grid_dir", type=str, required=True)
-    parser.add_argument("-download_data", "--download_data", type=bool, default=False)
 
     args = parser.parse_args()
 
@@ -108,12 +102,12 @@ if __name__ == "__main__":
         "alpha": False,
     }
 
-    output_dir = args.output_dir
-    output_dir += f'/{sps_name}'
+    input_dir = args.input_dir
+    input_dir += f'/{sps_name}'
 
     # create directory to store downloaded output if it doesn't exist
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
+    if not os.path.exists(input_dir):
+        os.mkdir(input_dir)
 
     for imf in imfs:
-        make_grid(model, imf, output_dir, grid_dir)
+        make_grid(model, imf, input_dir, grid_dir)
