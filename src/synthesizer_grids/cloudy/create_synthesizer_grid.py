@@ -363,15 +363,23 @@ if __name__ == "__main__":
         description=("Create synthesizer HDF5 grid " "for a given grid.")
     )
 
-    # path to grid directory
+    # path to grid directory (i.e. where incident and new grids are stored)
+    parser.add_argument("-grid_dir", type=str, required=True)
+
+    # path to directory where cloudy runs are
+    parser.add_argument("-cloudy_dir", type=str, required=True)
+
+    # the name of the incident grid
+    parser.add_argument("-incident_grid", type=str, required=True)
+
+    # the cloudy parameters, including any grid axes
     parser.add_argument(
-        "-grid_dir", type=str, required=True
+        "-cloudy_params",
+        type=str,
+        required=False,
+        default="c17.03-sps"
     )
 
-    # path to cloudy directory
-    parser.add_argument(
-        "-cloudy_dir", type=str, required=True
-    )
 
     # grid name
     parser.add_argument("-grid_name", "--grid_name", type=str, required=True)
@@ -413,7 +421,10 @@ if __name__ == "__main__":
     # get arguments
     grid_dir = args.grid_dir
     cloudy_dir = args.cloudy_dir
-    grid_name = args.grid_name
+    
+    # construct grid_name from incident grid and 
+    grid_name = f"{args.incident_grid}_cloudy_{args.cloudy_params}"
+
     include_spectra = args.include_spectra
 
     # Check cloudy runs and potentially replace them by the nearest grid point
