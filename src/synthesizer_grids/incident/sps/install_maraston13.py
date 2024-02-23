@@ -9,7 +9,7 @@ from synthesizer_grids.parser import Parser
 from synthesizer_grids.grid_io import GridFile
 
 
-def make_grid(model, imf, output_dir, grid_dir, grid_dir):
+def make_grid(model, imf, output_dir, grid_dir):
     """Main function to convert Maraston 2013 and
     produce grids used by synthesizer
     Args:
