@@ -1,7 +1,6 @@
 """
-Create a grid of cloudy scripts based on combining an incident grid with a set of cloudy parameters.
-
-Also creates a machine specific script.
+Create a grid of cloudy scripts based on combining an incident grid with a set
+of cloudy parameters. Also creates a machine specific script.
 """
 
 import numpy as np
@@ -10,16 +9,11 @@ from pathlib import Path
 import yaml
 import h5py
 
-# synthesiser modules
 from synthesizer.abundances import (
     Abundances,
-    depletion_models,
-    solar_abundance_patterns,
 )
-
 from synthesizer.grid import Grid
 from synthesizer.photoionisation import cloudy17, cloudy23
-
 
 # local modules
 from utils import get_grid_properties, apollo_submission_script
@@ -86,10 +80,14 @@ if __name__ == "__main__":
 
     # the cloudy parameters, including any grid axes
     parser.add_argument(
-        "-cloudy_params", type=str, required=False, default="c17.03-sps"
+        "-cloudy_params",
+        type=str,
+        required=False,
+        default="c17.03-sps"
     )
 
-    # path to cloudy directory (not executable; this is assumed to {cloudy}/{cloudy_version}/source/cloudy.ext)
+    # path to cloudy directory (not executable; this is assumed to
+    # {cloudy}/{cloudy_version}/source/cloudy.exe)
     parser.add_argument("-cloudy_path", type=str, required=False)
 
     # verbosity flag
@@ -110,7 +108,6 @@ if __name__ == "__main__":
         cloudy = cloudy23
     print(cloudy)
 
-
     # open the parent incident grid
     incident_grid = Grid(
         args.incident_grid,
@@ -118,7 +115,8 @@ if __name__ == "__main__":
         read_lines=False,
     )
 
-    # get name of new grid (concatenation of incident_grid and cloudy parameter file)
+    # get name of new grid (concatenation of incident_grid and cloudy
+    # parameter file)
     new_grid_name = f"{args.incident_grid}_cloudy-{args.cloudy_params}"
 
     # define output directories
@@ -148,9 +146,11 @@ if __name__ == "__main__":
         for k, v in grid_params.items():
             print(k, v)
 
-    # if the U model is the reference model (i.e. not fixed) save the grid point for the reference values
+    # if the ionisation_parameter_model is the reference model (i.e. not fixed)
+    # save the grid point for the reference values
     if fixed_params["ionisation_parameter_model"] == "ref":
-        # get the indices of the reference grid point (this is used by the reference model)
+        # get the indices of the reference grid point (this is used by the
+        # reference model)
         incident_ref_grid_point = incident_grid.get_grid_point(
             [fixed_params["reference_" + k] for k in incident_grid.axes]
         )
@@ -161,6 +161,9 @@ if __name__ == "__main__":
 
     # combine all parameters
     params = fixed_params | grid_params
+
+    # add the parameter file as a parameter
+    params['parameter_file'] = args.cloudy_params
 
     # save all parameters
     yaml.dump(params, open(f"{output_dir}/params.yaml", "w"))
@@ -189,16 +192,18 @@ if __name__ == "__main__":
 
             # copy top-level attributes
             for k, v in hf_incident.attrs.items():
-                print(k,v, type(v))
                 hf.attrs[k] = v
+                if verbose:
+                    print(k, v)
 
             # add attribute with the original incident grid axes
             hf.attrs["incident_axes"] = hf_incident.attrs["axes"]
 
-            # we want to copy over log10_specific_ionising_luminosity from the incident grid to allow us to
-            # normalise the cloudy outputs. However, the axes of the incident
-            # grid may be different from the cloudy grid due to additional
-            # parameters, in which we need to extend the axes of log10_specific_ionising_luminosity
+            # we want to copy over log10_specific_ionising_luminosity from the
+            # incident grid to allow us to normalise the cloudy outputs.
+            # However, the axes of the incident grid may be different from the
+            # cloudy grid due to additional parameters, in which we need to
+            # extend the axes of log10_specific_ionising_luminosity.
 
             # if there are no additional axes simply copy over the incident
             # log10_specific_ionising_luminosity
@@ -251,14 +256,14 @@ if __name__ == "__main__":
             # if the parameter is a dictionary (e.g. as used for abundances)
             if isinstance(v, dict):
                 for k2, v2 in v.items():
-                     hf.attrs[k+'_'+k2] = v2
+                    hf.attrs[k+'_'+k2] = v2
             else:
                 hf.attrs[k] = v
 
         if verbose:
             print("-" * 50)
             print("---- attributes")
-            for k, v in hf.attrs.items():                
+            for k, v in hf.attrs.items():
                 print(k, v)
             print("---- groups and datasets")
             hf.visit(print)
@@ -303,7 +308,7 @@ if __name__ == "__main__":
 
         # if reference U model is used
         if params_["ionisation_parameter_model"] == "ref":
-            # Calculate the difference between the reference 
+            # Calculate the difference between the reference
             # log10_specific_ionising_luminosity for HI and the current grid
             # point
             delta_log10_specific_ionising_luminosity = (
@@ -332,7 +337,8 @@ if __name__ == "__main__":
 
             else:
                 print(
-                    f"ERROR: do not understand geometry choice: {params_['geometry']}"
+                    f"""ERROR: do not understand geometry choice:
+                    {params_['geometry']}"""
                 )
 
         # if fixed U model is used
@@ -341,7 +347,8 @@ if __name__ == "__main__":
 
         else:
             print(
-                f"ERROR: do not understand U model choice: {params_['ionisation_parameter_model']}"
+                f"""ERROR: do not understand U model choice:
+                {params_['ionisation_parameter_model']}"""
             )
 
         # set log10U to provide cloudy
@@ -353,7 +360,8 @@ if __name__ == "__main__":
         # get luminosity
         lnu = incident_grid.spectra["incident"][incident_grid_point]
 
-        # this returns the relevant shape commands, in this case for a tabulated SED
+        # this returns the relevant shape commands, in this case for a
+        # tabulated SED
         shape_commands = cloudy.ShapeCommands.table_sed(
             str(i + 1), lam, lnu, output_dir=output_dir
         )
