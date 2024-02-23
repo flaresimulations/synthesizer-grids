@@ -193,7 +193,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-models",
         "--models",
-        description="""list of models to process, separated by ','.
+        help="""list of models to process, separated by ','.
 By default uses 'bpass_v2.2.1_imf_chab100'.
 Use 'all' to process all models.""",
         default="bpass_v2.2.1_imf_chab100",
@@ -221,14 +221,14 @@ Use 'all' to process all models.""",
     # If all models are specified
     if models == 'all':
         models = [
-            "bpass_v2.2.1_imf_chab100",
-            "bpass_v2.2.1_imf_chab300",
-            "bpass_v2.2.1_imf100_300",
-            "bpass_v2.2.1_imf135_300",
+            # "bpass_v2.2.1_imf_chab100",
+            # "bpass_v2.2.1_imf_chab300",
+            # "bpass_v2.2.1_imf100_300",
+            # "bpass_v2.2.1_imf135_300",
             "bpass_v2.2.1_imf170_300",
-            "bpass_v2.2.1_imf100_100",
-            "bpass_v2.2.1_imf135_100",
-            "bpass_v2.2.1_imf170_100"
+            # "bpass_v2.2.1_imf100_100",
+            # "bpass_v2.2.1_imf135_100",
+            # "bpass_v2.2.1_imf170_100"
             ]
     else:
         models = models.split(',')
