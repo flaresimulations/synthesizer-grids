@@ -399,6 +399,15 @@ if __name__ == "__main__":
         required=False,
     )
 
+    # Define the line calculation method.
+    parser.add_argument(
+        "-machine",
+        "--machine",
+        type=str,
+        default=None,
+        required=False,
+    )
+
     args = parser.parse_args()
 
     # get arguments
@@ -419,17 +428,22 @@ if __name__ == "__main__":
 
     # If any runs have failed prompt to re-run.
     if len(failed_list) > 0:
-        print(
-            f"""ERROR: {len(failed_list)} cloudy runs have failed. You should
-            re-run these with command:"""
-        )
-        print(f"qsub -t 1:{len(failed_list)}  run_grid.job")
 
-        # replace input_names with list of failed runs
-        with open(
-            f"{cloudy_dir}/{grid_name}/input_names.txt", "w"
-        ) as myfile:
-            myfile.write("\n".join(map(str, failed_list)))
+        # get number of failed runs
+        n_fail = len(failed_list)
+
+        print(f"ERROR: {n_fail} cloudy runs have failed.")
+
+        if args.machine == 'apollo':
+            # apollo specific command
+            print("Re-run with this command:")
+            print(f"qsub -t 1:{n_fail} run_grid.job")
+
+            # replace input_names with list of failed runs
+            with open(
+                f"{cloudy_dir}/{grid_name}/input_names.txt", "w"
+            ) as myfile:
+                myfile.write("\n".join(map(str, failed_list)))
 
     # If no runs have failed, go ahead and add spectra and lines.
     else:
