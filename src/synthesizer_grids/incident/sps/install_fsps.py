@@ -1,7 +1,6 @@
 import numpy as np
 import fsps
 from unyt import angstrom, erg, s, Hz
-
 from synthesizer_grids.parser import Parser
 from synthesizer_grids.grid_io import GridFile
 from utils import get_model_filename
@@ -27,7 +26,8 @@ def generate_grid(model):
         if (imf_masses[1] != 0.5) or (imf_masses[2] != 1.0):
             # raise exception
             print(
-                "WARNING: this IMF definition requires that the boundaries are [m_low, 0.5, 1.0, m_high]"
+                """WARNING: this IMF definition requires that the boundaries
+                are [m_low, 0.5, 1.0, m_high]"""
             )
 
         sp = fsps.StellarPopulation(
@@ -55,7 +55,7 @@ def generate_grid(model):
 
     # this is the full path to the ultimate HDF5 grid file
     out_filename = (
-        f"{synthesizer_data_dir}/grids/{synthesizer_model_name}.hdf5"
+        f"{grid_dir}/{synthesizer_model_name}.hdf5"
     )
 
     lam = sp.wavelengths  # units: Angstroms
@@ -96,8 +96,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Unpack the arguments
-    synthesizer_data_dir = args.synthesizer_data_dir
-    grid_dir = f"{synthesizer_data_dir}/grids"
+    grid_dir = args.grid_dir
 
     # No download for FSPS
     if args.download:
@@ -105,7 +104,8 @@ if __name__ == "__main__":
 
     default_model = {
         "sps_name": "fsps",
-        "sps_variant": False,  # this is set later depending on the isochrones/spectra used
+        # this is set later depending on the isochrones/spectra used
+        "sps_variant": False,
         "imf_type": "bpl",  # named IMF or bpl (broken power law)
         "imf_masses": [0.08, 0.5, 1, 120],
         "imf_slopes": [1.3, 2.3, 2.3],
@@ -116,16 +116,18 @@ if __name__ == "__main__":
 
     models = []
 
-    # models += [{}]  # default model
+    models += [{}]  # default model
 
-    # # # chabrier
-    # models += [{'imf_type': 'chabrier03', 'imf_masses': [0.08, 120], 'imf_slopes': []},  # chabrier03
-    #            ]
+    # # chabrier
+    models += [{'imf_type': 'chabrier03',
+                'imf_masses': [0.08, 120],
+                'imf_slopes': []},
+               ]
 
-    # different high-mass slopes
-    models += [
-        {"imf_slopes": [1.3, 2.3, a3]} for a3 in np.arange(1.5, 3.01, 0.1)
-    ]
+    # # different high-mass slopes
+    # models += [
+    #     {"imf_slopes": [1.3, 2.3, a3]} for a3 in np.arange(1.5, 3.01, 0.1)
+    # ]
 
     # # different high-mass cut-offs
     # models += [{'imf_type': 'chabrier03', 'imf_masses': [0.08, hmc]}
@@ -136,6 +138,7 @@ if __name__ == "__main__":
     #            for lmc in [0.5, 1, 2, 5, 10, 20, 50]]
 
     for model_ in models:
+
         model = default_model | model_
 
         # make grid
