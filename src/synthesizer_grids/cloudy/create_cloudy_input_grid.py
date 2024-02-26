@@ -307,6 +307,10 @@ if __name__ == "__main__":
         elif "log10metallicity" in grid_params_.keys():
             params_["metallicity"] = 10 ** grid_params_["log10metallicity"]
 
+        print(float(params_["metallicity"]))
+        print(params_["depletion_model"])
+        print(params_["depletion_scale"])
+
         # create abundance object
         abundances = Abundances(
             metallicity=float(params_["metallicity"]),
@@ -316,6 +320,7 @@ if __name__ == "__main__":
             depletion_model=params_["depletion_model"],
             depletion_scale=params_["depletion_scale"],
         )
+
 
         # if reference U model is used
         if params_["ionisation_parameter_model"] == "ref":
