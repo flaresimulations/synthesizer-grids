@@ -422,7 +422,7 @@ if __name__ == "__main__":
     cloudy_dir = args.cloudy_dir
     
     # construct grid_name from incident grid and 
-    grid_name = f"{args.incident_grid}_cloudy_{args.cloudy_params}"
+    grid_name = f"{args.incident_grid}_cloudy-{args.cloudy_params}"
 
     include_spectra = args.include_spectra
 
