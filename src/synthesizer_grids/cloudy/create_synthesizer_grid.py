@@ -370,19 +370,18 @@ if __name__ == "__main__":
     parser.add_argument("-cloudy_dir", type=str, required=True)
 
     # the name of the incident grid
-    parser.add_argument("-incident_grid", type=str, required=True)
+    parser.add_argument("-incident_grid", 
+                        type=str, 
+                        required=True)
 
     # the cloudy parameters, including any grid axes
-    parser.add_argument(
-        "-cloudy_params",
-        type=str,
-        required=False,
-        default="c17.03-sps"
+    parser.add_argument("-cloudy_params",
+                        type=str,
+                        required=False,
+                        default="c17.03-sps"
     )
 
-
-    # grid name
-    parser.add_argument("-grid_name", "--grid_name", type=str, required=True)
+    # include spectra
     parser.add_argument(
         "-include_spectra",
         "--include_spectra",
