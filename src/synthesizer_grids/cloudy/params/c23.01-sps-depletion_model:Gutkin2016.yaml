@@ -13,7 +13,7 @@ depletion_model: Gutkin2016 # the depletion model.
 depletion_scale: 1.0 # the depletion scale factor. For linearly scaled depletion models (e.g. CloudyClassic, Gutkin2016) this is by default 1.0. For Jenkins2009 this should be 0.5 (fstar).
 
 # GRAINS
-grains: # include grains
+grains: Orion # include grains
 
 # GEOMETRY
 geometry: spherical
