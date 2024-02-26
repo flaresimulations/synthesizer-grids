@@ -192,6 +192,12 @@ if __name__ == "__main__":
 
             # copy top-level attributes
             for k, v in hf_incident.attrs.items():
+
+                # If v is None then convert to string None for saving in the 
+                # HDF5 file.
+                if not v:
+                    v == 'None'
+
                 hf.attrs[k] = v
                 if verbose:
                     print(k, v)
@@ -252,6 +258,11 @@ if __name__ == "__main__":
 
         # add other parameters as attributes
         for k, v in params.items():
+
+            # If v is None then convert to string None for saving in the 
+            # HDF5 file.
+            if not v:
+                v == 'None'
 
             # if the parameter is a dictionary (e.g. as used for abundances)
             if isinstance(v, dict):
