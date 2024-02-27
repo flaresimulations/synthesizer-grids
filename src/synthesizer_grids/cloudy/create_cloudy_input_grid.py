@@ -343,6 +343,15 @@ if __name__ == "__main__":
                     + (1 / 3) * delta_log10_specific_ionising_luminosity
                 )
 
+            # for spherical geometry the effective log10U is this.
+            # the spherical-U model uses U as a direct input to cloudy 
+            # instead of calculating Q.
+            if params_["geometry"] == "spherical-U":
+                log10U = (
+                    np.log10(params_["reference_ionisation_parameter"])
+                    + (1 / 3) * delta_log10_specific_ionising_luminosity
+                )
+
             # For plane-parallel geometry the effective just scales with
             # log10_specific_ionising_luminosity
             elif params_["geometry"] == "planeparallel":
