@@ -9,11 +9,11 @@ alpha: 0.0  # alpha element enhancement
 abundance_scalings:
   N: Dopita2006 # scaling for Nitrogen, either float relative to Solar or string defining the in-built function to use
   C: Dopita2006 # scaling for Carbon, either float relative to Solar or string defining the in-built function to use
-depletion_model: Jenkins2009 # the depletion model.
+depletion_model: Jenkins2009_Gunasekera2021 # the depletion model.
 depletion_scale: 0.5 # the depletion scale factor. For linearly scaled depletion models (e.g. CloudyClassic, Gutkin2016) this is by default 1.0. For Jenkins2009 this should be 0.5 (fstar).
 
 # GRAINS
-grains: ISM # include ISM grains
+grains: Orion # include ISM grains
 
 # GEOMETRY
 geometry: spherical
@@ -28,7 +28,7 @@ reference_metallicity: 0.01  # metallicity at which to set reference ionisation 
 hydrogen_density: 1.0e+2
 
 # STOPPING CRITERIA
-stop_T: 500  # stopping temperature
+stop_T:   # stopping temperature
 stop_efrac: -2  # limiting ratio of electron to H densities
 
 # MISC COMMANDS
