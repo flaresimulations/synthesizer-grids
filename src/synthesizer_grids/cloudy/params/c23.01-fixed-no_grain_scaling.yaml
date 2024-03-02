@@ -14,6 +14,7 @@ depletion_scale: 0.5 # the depletion scale factor. For linearly scaled depletion
 
 # GRAINS
 grains: Orion # include ISM grains
+no_grain_scaling: True
 
 # GEOMETRY
 geometry: spherical
