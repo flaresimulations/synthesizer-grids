@@ -363,18 +363,25 @@ if __name__ == "__main__":
         description=("Create synthesizer HDF5 grid " "for a given grid.")
     )
 
-    # path to grid directory
-    parser.add_argument(
-        "-grid_dir", type=str, required=True
+    # path to grid directory (i.e. where incident and new grids are stored)
+    parser.add_argument("-grid_dir", type=str, required=True)
+
+    # path to directory where cloudy runs are
+    parser.add_argument("-cloudy_dir", type=str, required=True)
+
+    # the name of the incident grid
+    parser.add_argument("-incident_grid", 
+                        type=str, 
+                        required=True)
+
+    # the cloudy parameters, including any grid axes
+    parser.add_argument("-cloudy_params",
+                        type=str,
+                        required=False,
+                        default="c17.03-sps"
     )
 
-    # path to cloudy directory
-    parser.add_argument(
-        "-cloudy_dir", type=str, required=True
-    )
-
-    # grid name
-    parser.add_argument("-grid_name", "--grid_name", type=str, required=True)
+    # include spectra
     parser.add_argument(
         "-include_spectra",
         "--include_spectra",
@@ -399,12 +406,24 @@ if __name__ == "__main__":
         required=False,
     )
 
+    # Define the line calculation method.
+    parser.add_argument(
+        "-machine",
+        "--machine",
+        type=str,
+        default=None,
+        required=False,
+    )
+
     args = parser.parse_args()
 
     # get arguments
     grid_dir = args.grid_dir
     cloudy_dir = args.cloudy_dir
-    grid_name = args.grid_name
+    
+    # construct grid_name from incident grid and 
+    grid_name = f"{args.incident_grid}_cloudy-{args.cloudy_params}"
+
     include_spectra = args.include_spectra
 
     # Check cloudy runs and potentially replace them by the nearest grid point
@@ -419,17 +438,22 @@ if __name__ == "__main__":
 
     # If any runs have failed prompt to re-run.
     if len(failed_list) > 0:
-        print(
-            f"""ERROR: {len(failed_list)} cloudy runs have failed. You should
-            re-run these with command:"""
-        )
-        print(f"qsub -t 1:{len(failed_list)}  run_grid.job")
 
-        # replace input_names with list of failed runs
-        with open(
-            f"{cloudy_dir}/{grid_name}/input_names.txt", "w"
-        ) as myfile:
-            myfile.write("\n".join(map(str, failed_list)))
+        # get number of failed runs
+        n_fail = len(failed_list)
+
+        print(f"ERROR: {n_fail} cloudy runs have failed.")
+
+        if args.machine == 'apollo':
+            # apollo specific command
+            print("Re-run with this command:")
+            print(f"qsub -t 1:{n_fail} run_grid.job")
+
+            # replace input_names with list of failed runs
+            with open(
+                f"{cloudy_dir}/{grid_name}/input_names.txt", "w"
+            ) as myfile:
+                myfile.write("\n".join(map(str, failed_list)))
 
     # If no runs have failed, go ahead and add spectra and lines.
     else:
