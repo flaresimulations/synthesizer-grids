@@ -1,21 +1,15 @@
 """
 Download the Maraston2013 SPS model and convert to HDF5 synthesizer grid.
 """
-import numpy as np
 import os
-import argparse
+import numpy as np
 from unyt import erg, s, Angstrom, yr
 from synthesizer.conversions import llam_to_lnu
-from datetime import date
-import sys
-
-# to allow access to the grid_io module:
-sys.path.insert(1, os.path.dirname(os.path.abspath(sys.argv[0])) + "/../../")
-
-from grid_io import GridFile
+from synthesizer_grids.parser import Parser
+from synthesizer_grids.grid_io import GridFile
 
 
-def make_grid(model, imf, output_dir):
+def make_grid(model, imf, input_dir, grid_dir):
     """Main function to convert Maraston 2013 and
     produce grids used by synthesizer
     Args:
@@ -24,29 +18,34 @@ def make_grid(model, imf, output_dir):
         imf (string):
             Initial mass function, Salpeter or
             Kroupa
-        output_dir (string):
+        input_dir (string):
             directory where the raw Maraston+13 files are read from
+        grid_dir (string):
+            directory where the grids are created.
+        grid_dir (string):
+            directory where the grids are created.
     Returns:
         fname (string):
             output filename
     """
 
     # define output
-    out_filename = f"{synthesizer_data_dir}/grids/{model_name}_{imf}.hdf5"
+    out_filename = f"{grid_dir}/{sps_name}_{imf}.hdf5"
+    out_filename = f"{grid_dir}/{sps_name}_{imf}.hdf5"
 
     metallicities = np.array(
-        [0.01, 0.001, 0.02, 0.04]
+        [0.001, 0.01, 0.02, 0.04]
     )  # array of available metallicities
 
     metallicity_code = {
-        0.01: "001",
         0.001: "0001",
+        0.01: "001",
         0.02: "002",
         0.04: "004",
     }  # codes for converting metallicty
 
     # open first raw data file to get age
-    fn = f"{output_dir}/sed_M13.{imf_code[imf]}z{metallicity_code[metallicities[0]]}"
+    fn = f"{input_dir}/sed_M13.{imf_code[imf]}z{metallicity_code[metallicities[0]]}"
 
     ages_, _, lam_, llam_ = np.loadtxt(fn).T  # llam is in (ergs /s /AA /Msun)
 
@@ -64,6 +63,7 @@ def make_grid(model, imf, output_dir):
     # at each point in spec convert the units
     for imetal, metallicity in enumerate(metallicities):
         for ia, age_Gyr in enumerate(ages_Gyr):
+            fn = f"{input_dir}/sed_M13.{imf_code[imf]}z{metallicity_code[metallicity]}"
             print(imetal, ia, fn)
             ages_, _, lam_, llam_ = np.loadtxt(fn).T
 
@@ -73,7 +73,7 @@ def make_grid(model, imf, output_dir):
 
     # Write everything out thats common to all models
     out_grid.write_grid_common(
-        model,
+        model=model,
         axes={"log10age": log10ages, "metallicity": metallicities},
         wavelength=lam,
         spectra={"incident": spec},  # check this unit
@@ -84,30 +84,30 @@ def make_grid(model, imf, output_dir):
     out_grid.add_specific_ionising_lum()
 
 
-# Lets include a way to call this script not via an entry point
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Maraston+13 download and grid creation"
-    )
-    parser.add_argument("-synthesizer_data_dir", type=str, required=True)
-    parser.add_argument("-download_data", "--download_data", type=bool, default=False)
+    # Set up the command line arguments
+    parser = Parser(description="Maraston+13 download and grid creation")
 
     args = parser.parse_args()
 
-    synthesizer_data_dir = args.synthesizer_data_dir
+    grid_dir = args.grid_dir
 
-    model_name = "maraston13"
-
-    output_dir = f"{synthesizer_data_dir}/input_files/{model_name}"  # the location to untar the original data
+    # Define the model metadata
+    sps_name = "maraston13"
     imfs = ["salpeter", "kroupa"]
     imf_code = {"salpeter": "ss", "kroupa": "kr"}
-
     model = {
-        "sps_name": "maraston",
+        "sps_name": sps_name,
         "sps_version": False,
         "alpha": False,
-        "date": str(date.today()),
-    }  #'synthesizer-grids_tag': __tag__,
+    }
+
+    input_dir = args.input_dir
+    input_dir += f'/{sps_name}'
+
+    # create directory to store downloaded output if it doesn't exist
+    if not os.path.exists(input_dir):
+        os.mkdir(input_dir)
 
     for imf in imfs:
-        make_grid(model, imf, output_dir)
+        make_grid(model, imf, input_dir, grid_dir)

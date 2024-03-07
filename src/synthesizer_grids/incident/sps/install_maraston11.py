@@ -3,19 +3,15 @@ Download Maraston2011 and convert to HDF5 synthesizer grid.
 """
 import numpy as np
 import os
-import argparse
 from pathlib import Path
 import tarfile
 from unyt import erg, s, Angstrom, yr
 from synthesizer.conversions import llam_to_lnu
-from datetime import date
 import wget
-import sys
 
-# to allow access to the grid_io module:
-sys.path.insert(1, os.path.dirname(os.path.abspath(sys.argv[0])) + "/../../")
-
-from grid_io import GridFile
+from synthesizer_grids.grid_io import GridFile
+from synthesizer_grids.parser import Parser
+from utils import get_model_filename
 
 
 def download_data(
@@ -25,7 +21,7 @@ def download_data(
     """
     Download Maraston+11 data
     Args:
-        output_dir (string):
+        input_dir (string):
             directory to download and unpack data into
         data_url (string):
             URL from which to fetch the data
@@ -45,7 +41,7 @@ def download_data(
     os.remove(filename)
 
 
-def make_grid(model, imf, extension, output_dir):
+def make_grid(model, imf, variant, output_dir, grid_dir):
     """Main function to convert Maraston 2011 and
     produce grids used by synthesizer
     Args:
@@ -54,26 +50,37 @@ def make_grid(model, imf, extension, output_dir):
         imf (string):
             Initial mass function, can be one of Salpeter,
             Kroupa or Chabrier
-        extension (string):
-            String extension to use at the end of the output
-            filename
+        variant (string):
+            Model variant to use
         output_dir (string):
             directory where the raw Maraston+11 files are read from
+        grid_dir (string):
+            directory where the the grid is created
     Returns:
         fname (string):
             output filename
     """
 
-    # define output
-    out_filename = f"{synthesizer_data_dir}/grids/{model_name}{extension}_{imf}.hdf5"
+    synthesizer_model_name = get_model_filename(model)
+    print(synthesizer_model_name)
+
+    # output filename
+    out_filename = (
+        f"{grid_dir}/{synthesizer_model_name}.hdf5"
+    )
 
     metallicities = np.array([0.02])  # array of available metallicities
 
-    log10metallicities = np.log10(metallicities)
-
     metallicity_code = {0.02: "002"}  # codes for converting metallicty
 
-    fn = f"{output_dir}/ssp_M11_Pickles{extension}.{imf_code[imf]}z{metallicity_code[metallicities[0]]}"
+    # define the extension
+    if variant:
+        extension = '_' + variant
+    else:
+        extension = ''
+
+    fn = f"""{output_dir}/ssp_M11_Pickles{extension}.{imf_code[imf]}
+    z{metallicity_code[metallicities[0]]}"""
 
     ages_, _, lam_, llam_ = np.loadtxt(fn).T  # llam is in (ergs /s /AA /Msun)
 
@@ -85,9 +92,6 @@ def make_grid(model, imf, extension, output_dir):
 
     spec = np.zeros((len(ages), len(metallicities), len(lam)))
 
-    # Create the GridFile ready to take outputs
-    out_grid = GridFile(out_filename, mode="w", overwrite=True)
-
     # at each point in spec convert the units
     for imetal, metallicity in enumerate(metallicities):
         for ia, age_Gyr in enumerate(ages_Gyr):
@@ -98,9 +102,12 @@ def make_grid(model, imf, extension, output_dir):
             lnu = llam_to_lnu(lam, llam)
             spec[ia, imetal] = lnu
 
-        # Write everything out thats common to all models
+    # Create the GridFile ready to take outputs
+    out_grid = GridFile(out_filename, mode="w", overwrite=True)
+
+    # Write everything out thats common to all models
     out_grid.write_grid_common(
-        model,
+        model=model,
         axes={"log10age": log10ages, "metallicity": metallicities},
         wavelength=lam,
         spectra={"incident": spec},
@@ -113,47 +120,54 @@ def make_grid(model, imf, extension, output_dir):
 
 # Lets include a way to call this script not via an entry point
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Maraston+11 download and grid creation"
-    )
-    parser.add_argument("-synthesizer_data_dir", type=str, required=True)
-    parser.add_argument("-download_data", "--download_data", type=bool, default=False)
+    # Set up the command line arguments
+    parser = Parser(description="Maraston+11 download and grid creation")
 
+    # Unpack the arguments
     args = parser.parse_args()
 
-    synthesizer_data_dir = args.synthesizer_data_dir
+    # the directory to store downloaded input files
+    input_dir = args.input_dir
 
-    model_name = "maraston11_pickles"
+    # the directory to store the grid
+    grid_dir = args.grid_dir
 
-    output_dir = f"{synthesizer_data_dir}/input_files/{model_name}"  # the location to untar the original data
+    # Define the model metadata
+    sps_name = "maraston11"
     imf_code = {"salpeter": "ss", "kroupa": "kr", "chabrier": "cha"}
-
-    model = {
-        "sps_name": "maraston",
+    default_model = {
+        "sps_name": sps_name,
+        "sps_variant": False,
         "sps_version": False,
         "alpha": False,
-        "date": str(date.today()),
-    }  #'synthesizer-grids_tag': __tag__,
+        "imf_masses": [0.1, 100],
+    }
 
-    for extension in [
-        "",
-        "_nearIRextended",
-        "_UVtheoretical",
-        "_UVtheoretical_nearIRextended",
+    # The location to untar the original data
+    output_dir = f"{input_dir}/{sps_name}"
+
+    # Download the data if necessary
+    if args.download:
+        download_data(output_dir)
+
+    for variant in [
+        False,
+        "nearIRextended",
+        "UVtheoretical",
+        "UVtheoretical_nearIRextended",
     ]:
-        if (extension == "") or (extension == "_nearIRextended"):
+        if (variant is False) or (variant == "nearIRextended"):
             imfs = ["salpeter", "kroupa", "chabrier"]
 
-        if (extension == "_UVtheoretical") or (
-            extension == "_UVtheoretical_nearIRextended"
+        if (variant == "UVtheoretical") or (
+            variant == "UVtheoretical_nearIRextended"
         ):
             imfs = ["salpeter"]
 
         for imf in imfs:
-            print(extension)
-            # if args.download_data:
-            download_data(output_dir)
+            print(variant)
 
-            make_grid(
-                model, imf, extension, output_dir
-            )  # makes the grid and returns the name
+            model = default_model | {"imf_type": imf, "sps_variant": variant}
+
+            # Get and write the grid
+            make_grid(model, imf, variant, output_dir, grid_dir)

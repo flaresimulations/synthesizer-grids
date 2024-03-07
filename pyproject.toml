@@ -1,0 +1,113 @@
+[project]
+name = "cosmos-synthesizer-grids"
+
+# Dynamic version numbers from git
+dynamic = ["version"]
+
+# Tagline for Synthesizer
+description = "A package for generating Synthesizer SPS grid files"
+
+# A longer description of Synthesizer
+readme = "README.md"
+
+# Minimum Python version
+requires-python = ">=3.8"
+
+# The licence
+license = {file = "LICENSE.md"}
+
+# Project keywords
+keywords = [
+  "galaxy",
+  "modelling",
+  "galaxy formation",
+  "galaxy evolution",
+  "stellar population",
+  "synthesis",
+]
+
+# Synthesizer authors
+authors = [
+  {name = "C. C. Lovell", email = "christopher.lovell@port.ac.uk" },
+  {name = "S. Newman", email = "sls2g19@soton.ac.uk" },
+  {name = "W. J. Roper", email = "w.roper@sussex.ac.uk" },
+  {name = "A. P. Vijayan", email = "apavi@space.dtu.dk" },
+  {name = "S. M. Wilkins", email = "s.wilkins@sussex.ac.uk" },
+]
+
+# Synthesizer maintainers
+maintainers = [
+  {name = "C. C. Lovell", email = "christopher.lovell@port.ac.uk" },
+  {name = "S. Newman", email = "sls2g19@soton.ac.uk" },
+  {name = "W. J. Roper", email = "w.roper@sussex.ac.uk" },
+  {name = "A. P. Vijayan", email = "apavi@space.dtu.dk" },
+  {name = "S. M. Wilkins", email = "s.wilkins@sussex.ac.uk" },
+]
+
+# Classifiers
+classifiers = [  # Optional
+  # How mature is this project? Common values are
+  #   3 - Alpha
+  #   4 - Beta
+  #   5 - Production/Stable
+  "Development Status :: 3 - Alpha",  # 3 Alpha/4 Beta/5 Production/Stable
+  "Intended Audience :: Astronomers",
+  "Topic :: Synthetic Observations",
+  "License :: GNU GENERAL PUBLIC LICENSE v3.0",
+
+  # Supported Python versions
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3 :: Only",
+]
+
+# Dependancies
+dependencies = [
+  "nbmake",
+  "astropy",
+  "h5py",
+  "mpmath",
+  "numpy >= 1.23",
+  "packaging",
+  "pyerfa",
+  "pyparsing",
+  "PyYAML",
+  "scipy",
+  "unyt",
+  "cmasher",
+  "dust_extinction",
+  "nbsphinx",
+  "matplotlib",
+  "spectres",
+  "wget",
+  "gdown",
+  "hoki",
+  "fsps",
+  "gitpython"
+]
+
+# Optional dependencies for specific use cases.
+[project.optional-dependencies]
+dev = ["black"]
+test = ["pytest"]
+
+# Project urls
+[project.urls]
+"Homepage" = "https://github.com/flaresimulations/synthesizer-grids"
+"Bug Reports" = "https://github.com/flaresimulations/synthesizer-grids/issues"
+"Source" = "https://github.com/flaresimulations/synthesizer-grids"
+
+# Set up the build system
+[build-system]
+
+# Use latest setuotools, setuptools_scm for git versioning and
+# numpy (numpy includes are needed for compilation of C extensions)
+requires = ["setuptools>=64", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+
+# Make a version file at build time
+version_file = "src/synthesizer_grids/_version.py"
