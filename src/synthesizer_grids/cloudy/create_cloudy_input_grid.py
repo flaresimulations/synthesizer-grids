@@ -307,14 +307,10 @@ if __name__ == "__main__":
         elif "log10metallicity" in grid_params_.keys():
             params_["metallicity"] = 10 ** grid_params_["log10metallicity"]
 
-        print(float(params_["metallicity"]))
-        print(params_["depletion_model"])
-        print(params_["depletion_scale"])
-
         # create abundance object
         abundances = Abundances(
             metallicity=float(params_["metallicity"]),
-            solar=params_["solar_abundance"],
+            reference=params_["reference_abundance"],
             alpha=params_["alpha"],
             abundances=params_["abundance_scalings"],
             depletion_model=params_["depletion_model"],
