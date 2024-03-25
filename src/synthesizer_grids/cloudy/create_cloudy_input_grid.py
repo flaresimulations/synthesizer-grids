@@ -139,7 +139,7 @@ if __name__ == "__main__":
         # ignore the directory part
         cloudy_params_addition_name = (
             args.cloudy_params_addition.split('/')[-1])
-        new_grid_name += '-' + args.cloudy_params_addition_name
+        new_grid_name += '-' + cloudy_params_addition_name
 
     # define output directories
     output_dir = f"{args.cloudy_dir}/{new_grid_name}"
