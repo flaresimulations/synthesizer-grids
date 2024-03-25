@@ -112,7 +112,7 @@ if __name__ == "__main__":
     # parameters with these.
     if args.cloudy_params_addition:
         additional_fixed_params, additional_grid_params = (
-            load_grid_params(args.cloudy_params))
+            load_grid_params(args.cloudy_params_addition))
         fixed_params = fixed_params | additional_fixed_params
         grid_params = grid_params | additional_grid_params
 
@@ -136,7 +136,10 @@ if __name__ == "__main__":
 
     # if an additional parameter set append this to the new grid name
     if args.cloudy_params_addition:
-        new_grid_name += '-' + args.cloudy_params_addition
+        # ignore the directory part
+        cloudy_params_addition_name = (
+            args.cloudy_params_addition.split('/')[-1])
+        new_grid_name += '-' + args.cloudy_params_addition_name
 
     # define output directories
     output_dir = f"{args.cloudy_dir}/{new_grid_name}"
