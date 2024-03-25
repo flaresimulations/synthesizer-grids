@@ -78,12 +78,19 @@ if __name__ == "__main__":
     # the name of the incident grid
     parser.add_argument("-incident_grid", type=str, required=True)
 
-    # the cloudy parameters, including any grid axes
+    # the cloudy reference parameter set
     parser.add_argument(
         "-cloudy_params",
         type=str,
+        required=True,
+        default="c17.03-sps-default"
+    )
+
+    # a second cloudy parameter set which supersedes the above
+    parser.add_argument(
+        "-cloudy_params_addition",
+        type=str,
         required=False,
-        default="c17.03-sps"
     )
 
     # path to cloudy directory (not executable; this is assumed to
@@ -100,6 +107,14 @@ if __name__ == "__main__":
 
     # load the cloudy parameters you are going to run
     fixed_params, grid_params = load_grid_params(args.cloudy_params)
+
+    # if an additional parameter set is provided supersede the default
+    # parameters with these.
+    if args.cloudy_params_addition:
+        additional_fixed_params, additional_grid_params = (
+            load_grid_params(args.cloudy_params))
+        fixed_params = fixed_params | additional_fixed_params
+        grid_params = grid_params | additional_grid_params
 
     # set cloudy version
     if fixed_params['cloudy_version'] == 'c17.03':
@@ -118,6 +133,10 @@ if __name__ == "__main__":
     # get name of new grid (concatenation of incident_grid and cloudy
     # parameter file)
     new_grid_name = f"{args.incident_grid}_cloudy-{args.cloudy_params}"
+
+    # if an additional parameter set append this to the new grid name
+    if args.cloudy_params_addition:
+        new_grid_name += '-' + args.cloudy_params_addition
 
     # define output directories
     output_dir = f"{args.cloudy_dir}/{new_grid_name}"
@@ -193,7 +212,7 @@ if __name__ == "__main__":
             # copy top-level attributes
             for k, v in hf_incident.attrs.items():
 
-                # If v is None then convert to string None for saving in the 
+                # If v is None then convert to string None for saving in the
                 # HDF5 file.
                 if v is None:
                     v = 'None'
@@ -259,7 +278,7 @@ if __name__ == "__main__":
         # add other parameters as attributes
         for k, v in params.items():
 
-            # If v is None then convert to string None for saving in the 
+            # If v is None then convert to string None for saving in the
             # HDF5 file.
             if v is None:
                 v = 'None'
@@ -317,7 +336,6 @@ if __name__ == "__main__":
             depletion_scale=params_["depletion_scale"],
         )
 
-
         # if reference U model is used
         if params_["ionisation_parameter_model"] == "ref":
             # Calculate the difference between the reference
@@ -340,7 +358,7 @@ if __name__ == "__main__":
                 )
 
             # for spherical geometry the effective log10U is this.
-            # the spherical-U model uses U as a direct input to cloudy 
+            # the spherical-U model uses U as a direct input to cloudy
             # instead of calculating Q.
             elif params_["geometry"] == "spherical-U":
                 log10U = (
