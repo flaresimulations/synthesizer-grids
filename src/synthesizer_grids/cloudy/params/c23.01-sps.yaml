@@ -26,6 +26,7 @@ reference_metallicity: 0.01  # metallicity at which to set reference ionisation 
 
 # DENSITY
 hydrogen_density: 1.0e+3
+constant_density: True
 
 # STOPPING CRITERIA
 stop_T: 500  # stopping temperature
