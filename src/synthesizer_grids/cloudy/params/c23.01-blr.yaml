@@ -17,7 +17,7 @@ depletion_scale: 0.5 # the depletion scale factor. For linearly scaled depletion
 grains: Orion # include ISM grains
 
 # GEOMETRY
-geometry: spherical
+geometry: plane_parallel
 
 # IONISATION PARAMETER 
 ionisation_parameter_model: fixed  # which ionisation parameter model to use. `ref` assumes a varying ionisation parameter at a fixed reference age and metallicity
