@@ -47,7 +47,7 @@ if __name__ == "__main__":
         }
 
     # Set up the command line arguments
-    parser = Parser(description="Broken power-law AGN model creation.")
+    parser = Parser(description="AGNSED AGN model creation.")
 
     # parameter file to use
     parser.add_argument("-config_file", type=str, required=True)
