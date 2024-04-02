@@ -11,6 +11,7 @@ abundance_scalings:
   nitrogen: GalacticConcordance
   carbon: GalacticConcordance
 depletion_model: 
+depletion_scale: 1.0
 
 # GRAINS
 grains: 
