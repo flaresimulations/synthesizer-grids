@@ -66,7 +66,6 @@ def check_cloudy_runs(
             model_list,
             index_list,
         ) = get_grid_properties_hf(hf)
-
         # list of failed models
         failed_list = []
         for i, grid_params_ in enumerate(model_list):
@@ -370,16 +369,15 @@ if __name__ == "__main__":
     parser.add_argument("-cloudy_dir", type=str, required=True)
 
     # the name of the incident grid
-    parser.add_argument("-incident_grid", 
-                        type=str, 
+    parser.add_argument("-incident_grid",
+                        type=str,
                         required=True)
 
     # the cloudy parameters, including any grid axes
     parser.add_argument("-cloudy_params",
                         type=str,
                         required=False,
-                        default="c17.03-sps"
-    )
+                        default="c17.03-sps")
 
     # include spectra
     parser.add_argument(
@@ -420,8 +418,8 @@ if __name__ == "__main__":
     # get arguments
     grid_dir = args.grid_dir
     cloudy_dir = args.cloudy_dir
-    
-    # construct grid_name from incident grid and 
+
+    # construct grid_name from incident grid and parameter file
     grid_name = f"{args.incident_grid}_cloudy-{args.cloudy_params}"
 
     include_spectra = args.include_spectra
