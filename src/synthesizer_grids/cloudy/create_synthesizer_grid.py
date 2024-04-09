@@ -55,7 +55,6 @@ def check_cloudy_runs(
 
     # open the new grid
     with h5py.File(f"{grid_dir}/{grid_name}.hdf5", "r") as hf:
-
         # Get the properties of the grid including the dimensions etc.
         (
             axes,
