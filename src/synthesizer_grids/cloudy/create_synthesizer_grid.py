@@ -274,7 +274,9 @@ def add_lines(
 
         if line_type == "linelist":
             infile = f"{cloudy_dir}/{grid_name}/1"
-            lines_to_include, _, _ = cloudy.read_linelist(infile)
+            lines_to_include, _, _ = cloudy.read_linelist(
+                infile,
+                extension='emergent_elin')
 
         # set up output arrays
         for line_id in lines_to_include:
