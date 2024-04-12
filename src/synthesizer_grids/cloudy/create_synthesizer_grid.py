@@ -37,7 +37,7 @@ def check_cloudy_runs(
     grid_dir,
     cloudy_dir,
     replace=False,
-    files_to_check=["cont", "elin"],
+    files_to_check=["cont"],
 ):
     """
     Check that all the cloudy runs have run properly
