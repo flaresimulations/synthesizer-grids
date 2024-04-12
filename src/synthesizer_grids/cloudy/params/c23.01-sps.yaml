@@ -29,8 +29,9 @@ hydrogen_density: 1.0e+3
 constant_density: True
 
 # STOPPING CRITERIA
-stop_T: 500  # stopping temperature
-stop_efrac: -2  # limiting ratio of electron to H densities
+# stop_T: 500  # stopping temperature
+# stop_efrac: -2  # limiting ratio of electron to H densities
+stop_column_density: 20.5
 
 # MISC COMMANDS
 CMB:  # include CMB heating
