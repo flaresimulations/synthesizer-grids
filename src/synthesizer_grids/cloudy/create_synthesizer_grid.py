@@ -316,7 +316,9 @@ def add_lines(
                 luminosity = luminosity[s]
 
             elif line_type == "linelist":
-                id, wavelength, luminosity = cloudy.read_linelist(infile)
+                id, wavelength, luminosity = cloudy.read_linelist(
+                    infile,
+                    extension='emergent_elin')
 
             for id_, wavelength_, luminosity_ in zip(
                 id, wavelength, luminosity
