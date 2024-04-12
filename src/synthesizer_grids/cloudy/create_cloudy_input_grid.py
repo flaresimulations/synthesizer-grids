@@ -125,7 +125,7 @@ if __name__ == "__main__":
 
     # open the parent incident grid
     incident_grid = Grid(
-        args.incident_grid,
+        args.incident_grid+'.hdf5',
         grid_dir=f"{args.grid_dir}",
         read_lines=False,
     )
