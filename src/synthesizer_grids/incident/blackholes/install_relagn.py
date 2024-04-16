@@ -30,14 +30,14 @@ if __name__ == "__main__":
     axes_names = [
         "mass",
         "accretion_rate_eddington",
+        "spin",
         "cosine_inclination",
-        "spin"
         ]
 
     axes_descriptions = {
         "mass": "blackhole mass",
         "accretion_rate_eddington":
-        "BH accretion rate / Edding accretion rate [LEdd=\eta MdotEdd c^2]",
+        "BH accretion rate / Edding accretion rate [LEdd=eta MdotEdd c^2]",
         "cosine_inclination": "cosine of the inclination",
         "spin": "dimensionless spin",
         }
@@ -66,8 +66,16 @@ if __name__ == "__main__":
     mass = 10**np.array(parameters['log10_mass'])
     accretion_rate_eddington = 10**np.array(
         parameters['log10_accretion_rate_eddington'])
-    cosine_inclination = np.array(parameters['cosine_inclination'])
     spin = np.array(parameters['spin'])
+
+    # check whether isotropic or not
+    if isinstance(parameters['cosine_inclination'], float):
+        cosine_inclination = parameters['cosine_inclination']
+        axes_names.remove('cosine_inclination')
+        isotropic = True
+    else:
+        cosine_inclination = np.array(parameters['cosine_inclination'])
+        isotropic = False
 
     # Model defintion dictionary
     model = {
@@ -82,9 +90,11 @@ if __name__ == "__main__":
     axes_values = {
         'mass': mass,
         'accretion_rate_eddington': accretion_rate_eddington,
-        'cosine_inclination': cosine_inclination,
         'spin': spin,
     }
+
+    if not isotropic:
+        axes_values['cosine_inclination'] = cosine_inclination
 
     # the shape of the grid (useful for creating outputs)
     axes_shape = list(
@@ -111,15 +121,13 @@ if __name__ == "__main__":
         for i2, accretion_rate_eddington_ in enumerate(
             axes_values["accretion_rate_eddington"]
         ):
-            for i3, cosine_inclination_ in enumerate(
-                    axes_values["cosine_inclination"]):
 
-                for i4, spin_ in enumerate(axes_values["spin"]):
+            for i3, spin_ in enumerate(axes_values["spin"]):
 
-                    # spin is assumed to be zero here
+                if isotropic:
                     dagn = relagn(
                         a=spin_,
-                        cos_inc=cosine_inclination_,
+                        cos_inc=cosine_inclination,
                         log_mdot=np.log10(accretion_rate_eddington_),
                         M=mass_,
                     )
@@ -129,7 +137,25 @@ if __name__ == "__main__":
 
                     # record spectra, making sure to reverse it so it is
                     # wavelength order.
-                    spec[i1, i2, i3, i4] = lnu[::-1]
+                    spec[i1, i2, i3] = lnu[::-1]
+
+                else:
+                    for i4, cosine_inclination_ in enumerate(
+                            axes_values["cosine_inclination"]):
+
+                        dagn = relagn(
+                            a=spin_,
+                            cos_inc=cosine_inclination_,
+                            log_mdot=np.log10(accretion_rate_eddington_),
+                            M=mass_,
+                        )
+
+                        # get relativistic sed
+                        lnu = dagn.get_totSED(rel=True)
+
+                        # record spectra, making sure to reverse it so it is
+                        # wavelength order.
+                        spec[i1, i2, i3, i4] = lnu[::-1]
 
     # Create the GridFile ready to take outputs
     out_grid = GridFile(out_filename, mode="w", overwrite=True)
