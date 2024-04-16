@@ -1,1 +1,3 @@
 depletion_model:
+depletion_scale: 1.0
+grains: 
