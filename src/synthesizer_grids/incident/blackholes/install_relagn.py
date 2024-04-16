@@ -94,7 +94,7 @@ if __name__ == "__main__":
     }
 
     if not isotropic:
-        axes_values['cosine_inclination'] = cosine_inclination
+        axes_values['cosine_inclination'] = np.array(cosine_inclination)
 
     # the shape of the grid (useful for creating outputs)
     axes_shape = list(
@@ -105,10 +105,13 @@ if __name__ == "__main__":
     for axis_name in axes_names:
         axis_values = axes_values[axis_name]
         if axes_units[axis_name] is not None:
-            axes[axis_name] = axis_values * axes_units[axis_name]
+            axes[axis_name] = axis_values  # * axes_units[axis_name]
         # assumed to be dimensionless
         else:
             axes[axis_name] = axis_values
+
+    print(axes_shape)
+    print(axes_values)
 
     # initialise default model, to get wavelength grid
     dagn = relagn()
