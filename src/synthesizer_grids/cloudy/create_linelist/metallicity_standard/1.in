@@ -15,6 +15,4 @@ stop efrac -2
 save overview  "1.ovr" last
 save last abundances "1.abundances"
 save last continuum intrinsic "1.cont" units Angstroms no clobber
-save line list emergent column absolute last units angstroms "1.emergent_elin_standard" "linelist-standard.dat"
-save line list emergent column absolute last units angstroms "1.emergent_elin_vacuum" "linelist-vacuum.dat"
 save last lines, array "1.lines" units Angstroms no clobber

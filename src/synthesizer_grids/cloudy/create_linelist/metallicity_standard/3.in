@@ -15,5 +15,4 @@ stop efrac -2
 save overview  "3.ovr" last
 save last abundances "3.abundances"
 save last continuum intrinsic "3.cont" units Angstroms no clobber
-# print line vacuum
 save last lines, array "3.lines" units Angstroms no clobber
