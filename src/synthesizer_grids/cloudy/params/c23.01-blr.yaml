@@ -40,5 +40,5 @@ z: 0.0  # redshift
 # OUTPUT COMMANDS
 resolution: 1.0 # energy resolution relative to the default
 output_cont: true
-output_linelist: linelist.dat
+output_linelist: linelist-vacuum.dat
 iterate_to_convergence: true
