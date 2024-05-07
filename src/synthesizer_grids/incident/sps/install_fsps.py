@@ -1,8 +1,8 @@
-import numpy as np
 import fsps
-from unyt import angstrom, erg, s, Hz
-from synthesizer_grids.parser import Parser
+import numpy as np
 from synthesizer_grids.grid_io import GridFile
+from synthesizer_grids.parser import Parser
+from unyt import Hz, angstrom, erg, s
 from utils import get_model_filename
 
 
@@ -54,9 +54,7 @@ def generate_grid(model):
     synthesizer_model_name = get_model_filename(model)
 
     # this is the full path to the ultimate HDF5 grid file
-    out_filename = (
-        f"{grid_dir}/{synthesizer_model_name}.hdf5"
-    )
+    out_filename = f"{grid_dir}/{synthesizer_model_name}.hdf5"
 
     lam = sp.wavelengths  # units: Angstroms
     log10ages = sp.log_age  # units: log10(years)
@@ -119,10 +117,13 @@ if __name__ == "__main__":
     models += [{}]  # default model
 
     # # chabrier
-    models += [{'imf_type': 'chabrier03',
-                'imf_masses': [0.08, 120],
-                'imf_slopes': []},
-               ]
+    models += [
+        {
+            "imf_type": "chabrier03",
+            "imf_masses": [0.08, 120],
+            "imf_slopes": [],
+        },
+    ]
 
     # # different high-mass slopes
     # models += [
@@ -138,7 +139,6 @@ if __name__ == "__main__":
     #            for lmc in [0.5, 1, 2, 5, 10, 20, 50]]
 
     for model_ in models:
-
         model = default_model | model_
 
         # make grid

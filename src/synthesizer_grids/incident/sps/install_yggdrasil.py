@@ -24,16 +24,17 @@ nebular processing implementation in synthesizer, where we self consistently
 run pure stellar spectra through CLOUDY. For full self consistency the
 nebular grids here should not be used, but we provide anyway for reference.
 """
-import numpy as np
-import re
-import os
-import requests
-from tqdm import tqdm
-from spectres import spectres
-from unyt import erg, s, angstrom, c, Hz
 
-from synthesizer_grids.parser import Parser
+import os
+import re
+
+import numpy as np
+import requests
+from spectres import spectres
 from synthesizer_grids.grid_io import GridFile
+from synthesizer_grids.parser import Parser
+from tqdm import tqdm
+from unyt import Hz, angstrom, c, erg, s
 
 
 def download_data(input_dir, ver, fcov):
@@ -42,14 +43,14 @@ def download_data(input_dir, ver, fcov):
     """
     # Define base path
     filename = f"PopIII{ver}_fcov_{fcov}_SFR_inst_Spectra"
-    save_path = input_dir+'/'
+    save_path = input_dir + "/"
 
     if not os.path.exists(save_path):
         # Create the directory
         print(
             "Directory for downloading does not exist\n"
-            F"directory={save_path}"
-            )
+            f"directory={save_path}"
+        )
         os.makedirs(save_path)
         print("Directory created successfully!")
 
@@ -65,7 +66,7 @@ def download_data(input_dir, ver, fcov):
 
     # Stream the file to disk with a nice progress bar.
     with tqdm(total=total_size, unit="B", unit_scale=True) as progress_bar:
-        with open(save_path+filename, "wb") as f:
+        with open(save_path + filename, "wb") as f:
             for chunk in response.iter_content(block_size):
                 progress_bar.update(len(chunk))
                 f.write(chunk)
@@ -215,7 +216,7 @@ def make_grid(input_dir, grid_dir, ver, fcov, model):
         interp_spec = np.zeros((len(ages), len(metallicities), len(grid_lam)))
         for ii, _spec in enumerate(spec):
             interp_spec[ii] = spectres(grid_lam, lam, _spec)
-        interp_spec[np.isnan(interp_spec)] = 0.
+        interp_spec[np.isnan(interp_spec)] = 0.0
 
         out_grid.write_grid_common(
             model=model,
@@ -242,15 +243,15 @@ if __name__ == "__main__":
 
     # append sps_name to input_dir to define where to store downloaded input
     # files
-    input_dir += f'/{sps_name}'
+    input_dir += f"/{sps_name}"
 
     # Different forms of the IMFs
     vers = np.array([".1", ".2", "_kroupa_IMF"])
     imf_masses = {
         vers[0]: [50, 500],
         vers[1]: [10, 1, 500],
-        vers[2]: [0.1, 100]
-        }
+        vers[2]: [0.1, 100],
+    }
 
     # Different gas covering fractions for nebular emission model
     # We run the nebular emission first since that has the highest
@@ -262,7 +263,7 @@ if __name__ == "__main__":
     for ii, ver in enumerate(vers):
         model = {
             "sps_name": sps_name,
-            "sps_variant": 'PopIII',
+            "sps_variant": "PopIII",
             "imf_masses": imf_masses[ver],
             "alpha": False,
         }

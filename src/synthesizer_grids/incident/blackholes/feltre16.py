@@ -2,15 +2,16 @@
 Create a synthesizer incident grid for a broken power-law SED model.
 """
 
+from datetime import date
+
 import h5py
 import numpy as np
-from unyt import c, Angstrom
+from unyt import Angstrom, c
 from utils import (
     __tag__,
-    broken_power_law,
     add_log10_specific_ionising_lum,
+    broken_power_law,
 )
-from datetime import date
 
 synthesizer_data_dir = "/Users/sw376/Dropbox/Research/data/synthesizer/"
 
@@ -82,9 +83,9 @@ with h5py.File(filename, "w") as hf:
 
     # save wavelength dataset
     hf["spectra/wavelength"] = lam
-    hf["spectra/wavelength"].attrs[
-        "Description"
-    ] = "Wavelength of the spectra grid"
+    hf["spectra/wavelength"].attrs["Description"] = (
+        "Wavelength of the spectra grid"
+    )
     hf["spectra/wavelength"].attrs["Units"] = "Angstrom"
 
     # save incident spectrum grid
