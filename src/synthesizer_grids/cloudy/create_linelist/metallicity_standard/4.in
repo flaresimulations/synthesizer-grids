@@ -1,0 +1,18 @@
+table SED "1.sed" 
+abundances "solar_GASS10.abn"
+metals 0.001
+grains Orion
+Q(H) = 49.22 # U=0.01, n_H = 100
+radius -2.0 log parsecs
+sphere
+cosmic rays, background
+hden 2.0 log 
+constant density
+iterate to convergence
+set temperature floor 100 linear
+stop temperature 500K
+stop efrac -2
+save overview  "4.ovr" last
+save last abundances "4.abundances"
+save last continuum intrinsic "4.cont" units Angstroms no clobber
+save last lines, array "4.lines" units Angstroms no clobber
