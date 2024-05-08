@@ -278,13 +278,14 @@ if __name__ == "__main__":
         #     # get a tuple of the incident grid point
         #     incident_grid_point = tuple(grid_index_[k] for k in incident_grid.axes)
 
-        # Create abundances object
+        # Create abundance object
         abundances = Abundances(
             metallicity=float(params_["metallicity"]),
-            dust_to_metal_ratio=params_["dust_to_metal_ratio"],
+            reference=params_["reference_abundance"],
             alpha=params_["alpha"],
-            nitrogen_abundance=params_["nitrogen_abundance"],
-            carbon_abundance=params_["carbon_abundance"],
+            abundances=params_["abundance_scalings"],
+            depletion_model=params_["depletion_model"],
+            depletion_scale=params_["depletion_scale"],
         )
 
         # For cloudy based grids it makes most sense to assume a fixed ionisation
