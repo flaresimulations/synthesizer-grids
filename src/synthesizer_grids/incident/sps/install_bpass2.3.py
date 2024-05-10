@@ -91,7 +91,7 @@ def make_single_alpha_grid(
     )
 
     # input directory of this specific bpass model (hence the trailing "_")
-    input_dir_ = f'{input_dir}/{model["original_model_name"]}/'
+    input_dir_ = f'{input_dir}/{model["original_model_name"]}'
 
     # create metallicity grid and dictionary
     map_key_to_met = {
@@ -207,7 +207,7 @@ def make_full_grid(
     )
 
     # input directory of this specific bpass model (hence the trailing "_")
-    input_dir_ = f'{input_dir}/{model["original_model_name"]}/'
+    input_dir_ = f'{input_dir}/{model["original_model_name"]}'
 
     # create metallicity grid and dictionary
     map_key_to_met = {
