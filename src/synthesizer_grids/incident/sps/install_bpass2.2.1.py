@@ -90,7 +90,7 @@ def make_grid(original_model_name, bin, input_dir, grid_dir):
 
     # input directory of this specific bpass model (hence the trailing "_")
     input_dir_ = (
-        f'{input_dir}/{model["original_model_name"]}/'
+        f'{input_dir}/{model["original_model_name"]}'
     )
 
     # dictionary mapping filename metallicity to float
