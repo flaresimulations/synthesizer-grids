@@ -1,16 +1,17 @@
 """
 Download BC03 and convert to HDF5 synthesizer grid.
 """
-import numpy as np
-import os
-import wget
-from pathlib import Path
-import tarfile
-from unyt import angstrom, erg, s, cm
 
-from synthesizer_grids.parser import Parser
-from synthesizer_grids.grid_io import GridFile
+import os
+import tarfile
+from pathlib import Path
+
+import numpy as np
+import wget
 from synthesizer.conversions import flam_to_fnu
+from synthesizer_grids.grid_io import GridFile
+from synthesizer_grids.parser import Parser
+from unyt import angstrom, cm, erg, s
 from utils import get_model_filename
 
 
@@ -41,9 +42,7 @@ def make_grid(model, imf, hr_morphology, input_dir, grid_dir):
     print(synthesizer_model_name)
 
     # Define output
-    out_filename = (
-        f"{grid_dir}/{synthesizer_model_name}.hdf5"
-    )
+    out_filename = f"{grid_dir}/{synthesizer_model_name}.hdf5"
 
     # NOTE THE LOWEST METALLICITY MODEL DOES NOT HAVE YOUNG AGES so don't use
     metallicities = np.array(
@@ -127,7 +126,7 @@ if __name__ == "__main__":
 
     # append sps_name to input_dir to define where to store downloaded input
     # files
-    input_dir += f'/{sps_name}'
+    input_dir += f"/{sps_name}"
 
     # create directory to store downloaded output if it doesn't exist
     if not os.path.exists(input_dir):
@@ -139,7 +138,6 @@ if __name__ == "__main__":
     Sed_Mar05_SSP_Salpeter.tar.gz"""
 
     for imf in imfs:
-
         # Download the data if necessary
         if args.download:
             download_data(input_dir, original_data_url[imf])

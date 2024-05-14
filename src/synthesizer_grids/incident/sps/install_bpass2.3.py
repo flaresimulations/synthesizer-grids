@@ -1,10 +1,11 @@
 """
 Download BPASS v2.3 and convert to HDF5 synthesizer grid.
 """
+
 import numpy as np
-from unyt import angstrom, erg, s, Hz
-from synthesizer_grids.parser import Parser
 from synthesizer_grids.grid_io import GridFile
+from synthesizer_grids.parser import Parser
+from unyt import Hz, angstrom, erg, s
 from utils import get_model_filename
 
 
@@ -42,20 +43,18 @@ def resolve_name(original_model_name, bin, alpha=False):
 
 
 def parse_starmass_file(filename):
-
     """
     Parse a BPASS starmass file.
     """
     data = np.loadtxt(filename).T
     log10ages = data[0]
-    stellar_fraction = data[1] / 1E6
+    stellar_fraction = data[1] / 1e6
     # remnant_fraction = data[2] / 1E6
 
     return log10ages, stellar_fraction
 
 
 def parse_spectra_file(filename):
-
     """
     Parse a BPASS spectra file.
     """
@@ -67,11 +66,8 @@ def parse_spectra_file(filename):
 
 
 def make_single_alpha_grid(
-        original_model_name,
-        input_dir,
-        grid_dir,
-        ae="+00",
-        bs="bin"):
+    original_model_name, input_dir, grid_dir, ae="+00", bs="bin"
+):
     """make a grid for a single alpha enhancement"""
 
     # convert bpass alpha code (e.g. '+02' into a numerical alpha e.g. 0.2)
@@ -86,9 +82,7 @@ def make_single_alpha_grid(
     print(synthesizer_model_name)
 
     # this is the full path to the ultimate HDF5 grid file
-    out_filename = (
-        f"{grid_dir}/{synthesizer_model_name}.hdf5"
-    )
+    out_filename = f"{grid_dir}/{synthesizer_model_name}.hdf5"
 
     # input directory of this specific bpass model (hence the trailing "_")
     input_dir_ = f'{input_dir}/{model["original_model_name"]}/'
@@ -114,8 +108,7 @@ def make_single_alpha_grid(
 
     # get ages and remaining fraction
     fn_ = f"starmass-{bs}-imf_{bpass_imf}.a{ae}.zem5.dat"
-    log10ages, stellar_fraction_ = (
-        parse_starmass_file(f"{input_dir_}/{fn_}"))
+    log10ages, stellar_fraction_ = parse_starmass_file(f"{input_dir_}/{fn_}")
 
     # open spectra file
     fn_ = f"spectra-{bs}-imf_{bpass_imf}.a{ae}.zem5.dat"
@@ -138,13 +131,13 @@ def make_single_alpha_grid(
     spectra = np.zeros((na, nmetal, len(wavelengths)))
 
     for imetal, metal in enumerate(metallicities):
-
         metallicity_key = map_met_to_key[metallicities[imetal]]
 
         # get ages and remaining fraction
         fn_ = f"starmass-{bs}-imf_{bpass_imf}.a{ae}.{metallicity_key}.dat"
-        log10ages, stellar_fraction_ = (
-            parse_starmass_file(f"{input_dir_}/{fn_}"))
+        log10ages, stellar_fraction_ = parse_starmass_file(
+            f"{input_dir_}/{fn_}"
+        )
 
         stellar_fraction[:, imetal] = stellar_fraction_
         # remnant_fraction[:, imetal] = remnant_fraction_
@@ -154,7 +147,6 @@ def make_single_alpha_grid(
         wavelengths, spectra_ = parse_spectra_file(f"{input_dir_}/{fn_}")
 
         for ia, _ in enumerate(log10ages):
-
             spec_ = spectra_[ia]  # Lsol AA^-1 10^6 Msol^-1
 
             # convert from Llam to Lnu
@@ -187,12 +179,7 @@ def make_single_alpha_grid(
     out_grid.add_specific_ionising_lum()
 
 
-def make_full_grid(
-        original_model_name,
-        input_dir,
-        grid_dir,
-        bs="bin"):
-
+def make_full_grid(original_model_name, input_dir, grid_dir, bs="bin"):
     """make a full grid for different alpha-ehancements"""
 
     # returns a dictionary containing the sps model parameters
@@ -202,9 +189,7 @@ def make_full_grid(
     synthesizer_model_name = get_model_filename(model)
 
     # this is the full path to the ultimate HDF5 grid file
-    out_filename = (
-        f"{grid_dir}/{synthesizer_model_name}.hdf5"
-    )
+    out_filename = f"{grid_dir}/{synthesizer_model_name}.hdf5"
 
     # input directory of this specific bpass model (hence the trailing "_")
     input_dir_ = f'{input_dir}/{model["original_model_name"]}/'
@@ -232,16 +217,10 @@ def make_full_grid(
     # create alpha-enhancement grid
 
     # list of available alpha enhancements
-    alpha_enhancements = np.array(
-        [-0.2, 0.0, 0.2, 0.4, 0.6])
+    alpha_enhancements = np.array([-0.2, 0.0, 0.2, 0.4, 0.6])
 
     # look up dictionary for filename
-    ae_to_aek = {
-        -0.2: "-02",
-        0.0: "+00",
-        0.2: "+02",
-        0.4: "+04",
-        0.6: "+06"}
+    ae_to_aek = {-0.2: "-02", 0.0: "+00", 0.2: "+02", 0.4: "+04", 0.6: "+06"}
 
     # first metallicity
     metalk = map_met_to_key[metallicities[0]]
@@ -249,8 +228,7 @@ def make_full_grid(
     # get ages and remaining fraction for first alpha-enhancement and
     # metallicity
     fn_ = f"""starmass-{bs}-imf_{bpass_imf}.a+00.{metalk}.dat"""
-    log10ages, stellar_fraction_ = (
-        parse_starmass_file(f"{input_dir_}/{fn_}"))
+    log10ages, stellar_fraction_ = parse_starmass_file(f"{input_dir_}/{fn_}")
 
     # open spectra file for first alpha-enhancement and
     # metallicity
@@ -275,7 +253,6 @@ def make_full_grid(
 
     for imetal, metal in enumerate(metallicities):
         for iae, alpha_enhancement in enumerate(alpha_enhancements):
-
             aek = ae_to_aek[alpha_enhancement]
             metalk = map_met_to_key[metal]
 
@@ -283,8 +260,9 @@ def make_full_grid(
             fn_ = f"""starmass-{bs}-imf_{bpass_imf}.a{aek}.{metalk}.dat"""
 
             # get ages and remaining fraction
-            log10ages, stellar_fraction_ = (
-                parse_starmass_file(f"{input_dir_}/{fn_}"))
+            log10ages, stellar_fraction_ = parse_starmass_file(
+                f"{input_dir_}/{fn_}"
+            )
 
             stellar_fraction[:, imetal, iae] = stellar_fraction_
             # remnant_fraction[:, imetal, iae] = remnant_fraction_
@@ -304,9 +282,7 @@ def make_full_grid(
                 spectra[ia, imetal, iae, :] = spec_  # Lsol AA^-1 10^6 Msol^-1
 
     # Create the GridFile ready to take outputs
-    out_grid = GridFile(out_filename,
-                        mode="a",
-                        overwrite=True)
+    out_grid = GridFile(out_filename, mode="a", overwrite=True)
 
     # Write everything out thats common to all models
     out_grid.write_grid_common(
@@ -365,7 +341,7 @@ if __name__ == "__main__":
 
     # append sps_name to input_dir to define where to store downloaded input
     # files
-    input_dir += f'/{sps_name}'
+    input_dir += f"/{sps_name}"
 
     models = args.models
 
@@ -377,15 +353,11 @@ if __name__ == "__main__":
                     print(ae)
                     # for ae in ['+00']: # used for testing
                     out_filename = make_single_alpha_grid(
-                        model,
-                        input_dir,
-                        grid_dir,
-                        ae=ae,
-                        bs=bs)
+                        model, input_dir, grid_dir, ae=ae, bs=bs
+                    )
 
             # make a full 3D grid
             if full:
-                out_filename = make_full_grid(model,
-                                              input_dir,
-                                              grid_dir,
-                                              bs=bs)
+                out_filename = make_full_grid(
+                    model, input_dir, grid_dir, bs=bs
+                )

@@ -1,22 +1,22 @@
+"""
+Script to make a reduced grid, for example limiting the number of age bins
+to a specific set or a max age.
 
+Example:
+    python create_reduced_grid.py -grid_dir grids \
+        -original_grid bpass-2.2.1-bin_chabrier03-0.1,300.0 -ages=6.,7.,8.
+    python create_reduced_grid.py -grid_dir grids \
+        -original_grid bpass-2.2.1-bin_chabrier03-0.1,300.0 \
+        -ages=6.,7. -metallicities=0.001,0.0
+"""
 
-import numpy as np
 import argparse
+
 import h5py
+import numpy as np
 from synthesizer.grid import Grid
 
-
 if __name__ == "__main__":
-
-    """
-    Scrip to make a reduced grid, for example limiting the number of age bins
-    to a specific set or a max age.
-
-    Example:
-    python create_reduced_grid.py -grid_dir /Users/sw376/Dropbox/Research/data/synthesizer/grids -original_grid bpass-2.2.1-bin_chabrier03-0.1,300.0 -ages=6.,7.,8.
-    python create_reduced_grid.py -grid_dir /Users/sw376/Dropbox/Research/data/synthesizer/grids -original_grid bpass-2.2.1-bin_chabrier03-0.1,300.0 -ages=6.,7. -metallicities=0.001,0.01
-    """
-
     parser = argparse.ArgumentParser(description="Reduce a grid")
 
     parser.add_argument(
@@ -59,7 +59,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-
     # open the parent incident grid
     original_grid = Grid(
         args.original_grid,
@@ -74,7 +73,9 @@ if __name__ == "__main__":
         print(ages)
 
     if args.metallicities:
-        metallicities = np.array(list(map(float, args.metallicities.split(","))))
+        metallicities = np.array(
+            list(map(float, args.metallicities.split(",")))
+        )
         print(metallicities)
 
     # get name of new grid
@@ -84,7 +85,7 @@ if __name__ == "__main__":
         new_grid_name += f"-ages:{args.ages}"
     elif args.max_age:
         new_grid_name += f"-max_age:{args.max_age}"
-    
+
     if args.metallicities:
         new_grid_name += f"-metallicities:{args.metallicities}"
 
@@ -109,7 +110,9 @@ if __name__ == "__main__":
     if args.metallicities:
         metallicity_indices = []
         for metallicity in metallicities:
-            metallicity_indices.append(np.where(original_grid.metallicity == metallicity)[0][0])
+            metallicity_indices.append(
+                np.where(original_grid.metallicity == metallicity)[0][0]
+            )
         metallicity_indices = np.array(metallicity_indices)
     else:
         metallicity_indices = all_metallicity_indices
@@ -120,11 +123,8 @@ if __name__ == "__main__":
     # print(combined_indices.shape)
     # print(combined_indices)
 
-
     # open the new grid
-    with h5py.File(
-        f"{args.grid_dir}/{new_grid_name}.hdf5", "w"
-    ) as hf:
+    with h5py.File(f"{args.grid_dir}/{new_grid_name}.hdf5", "w") as hf:
         # open the original incident model grid
         with h5py.File(
             f"{args.grid_dir}/{args.original_grid}.hdf5", "r"
@@ -143,11 +143,15 @@ if __name__ == "__main__":
                 hf.attrs[k] = v
 
             # copy axes, modifying the age axis
-            hf["axes/metallicity"] = hf_original["axes/metallicity"][metallicity_indices]
+            hf["axes/metallicity"] = hf_original["axes/metallicity"][
+                metallicity_indices
+            ]
             hf["axes/log10age"] = hf_original["axes/log10age"][age_indices]
 
             # copy log10_specific_ionising_lum
-            for ion in hf_original["log10_specific_ionising_luminosity"].keys():
+            for ion in hf_original[
+                "log10_specific_ionising_luminosity"
+            ].keys():
                 a = hf_original["log10_specific_ionising_luminosity"][ion][()]
                 a = a[np.ix_(age_indices, metallicity_indices)]
                 hf[f"log10_specific_ionising_luminosity/{ion}"] = a

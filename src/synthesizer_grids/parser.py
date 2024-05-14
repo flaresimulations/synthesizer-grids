@@ -7,6 +7,7 @@ Example Usage:
     args = parser.parse()
 
 """
+
 import argparse
 
 
@@ -44,7 +45,7 @@ class Parser(argparse.ArgumentParser):
         )
 
         # Add filepath argument for the input files used to create SPS incident
-        # grids.
+        # grids.
         self.add_argument(
             "--input_dir",
             type=str,

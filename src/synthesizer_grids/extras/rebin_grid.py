@@ -1,9 +1,10 @@
-""" Create a rebinned grid for testing. This test grid should not be used for
-science """
+"""Create a rebinned grid for testing. This test grid should not be used for
+science"""
 
 import argparse
-import numpy as np
+
 import h5py
+import numpy as np
 from spectres import spectres
 
 
