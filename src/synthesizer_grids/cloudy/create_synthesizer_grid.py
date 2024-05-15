@@ -3,16 +3,17 @@ This reads in a cloudy grid of models
 
 """
 
+import argparse
 import os
 import shutil
-from unyt import eV
-import argparse
-import numpy as np
+
 import h5py
+import numpy as np
 
 # synthesizer modules
 from synthesizer.photoionisation import cloudy17, cloudy23
 from synthesizer.sed import Sed
+from unyt import eV
 
 # local modules
 from utils import get_grid_properties
@@ -120,10 +121,7 @@ def add_spectra(grid_name, grid_dir, cloudy_dir):
     """
 
     #  the cloudy spectra to save (others can be generated later)
-    spec_names = ["incident",
-                  "transmitted",
-                  "nebular",
-                  "linecont"]
+    spec_names = ["incident", "transmitted", "nebular", "linecont"]
 
     # open the new grid
     with h5py.File(f"{grid_dir}/{grid_name}.hdf5", "a") as hf:
@@ -139,19 +137,17 @@ def add_spectra(grid_name, grid_dir, cloudy_dir):
         ) = get_grid_properties_hf(hf)
 
         # Determine the cloudy version...
-        cloudy_version = hf.attrs['cloudy_version']
+        cloudy_version = hf.attrs["cloudy_version"]
 
         # ... and use to select the correct module.
-        if cloudy_version.split('.')[0] == 'c23':
+        if cloudy_version.split(".")[0] == "c23":
             cloudy = cloudy23
-        elif cloudy_version.split('.')[0] == 'c17':
+        elif cloudy_version.split(".")[0] == "c17":
             cloudy = cloudy17
 
         # Read first spectra from the first grid point to get length and
         # wavelength grid.
-        lam = cloudy.read_wavelength(
-            f"{cloudy_dir}/{grid_name}/1"
-        )
+        lam = cloudy.read_wavelength(f"{cloudy_dir}/{grid_name}/1")
 
         if "spectra" in hf:
             del hf["spectra"]
@@ -194,13 +190,14 @@ def add_spectra(grid_name, grid_dir, cloudy_dir):
                 # calculate Q
                 ionising_photon_production_rate = (
                     sed.calculate_ionising_photon_production_rate(
-                        ionisation_energy=13.6*eV,
-                        limit=100))
+                        ionisation_energy=13.6 * eV, limit=100
+                    )
+                )
 
                 # calculate normalisation
-                normalisation = (
-                    hf["log10_specific_ionising_luminosity/HI"][indices]
-                    - np.log10(ionising_photon_production_rate))
+                normalisation = hf["log10_specific_ionising_luminosity/HI"][
+                    indices
+                ] - np.log10(ionising_photon_production_rate)
 
                 # save normalisation for later use (rescaling lines)
                 spectra["normalisation"][indices] = 10**normalisation
@@ -251,12 +248,12 @@ def add_lines(
         ) = get_grid_properties_hf(hf)
 
         # Determine the cloudy version...
-        cloudy_version = hf.attrs['cloudy_version']
+        cloudy_version = hf.attrs["cloudy_version"]
 
         # ... and use to select the correct module.
-        if cloudy_version.split('.')[0] == 'c23':
+        if cloudy_version.split(".")[0] == "c23":
             cloudy = cloudy23
-        elif cloudy_version.split('.')[0] == 'c17':
+        elif cloudy_version.split(".")[0] == "c17":
             cloudy = cloudy17
 
         # delete lines group if it already exists
@@ -275,8 +272,8 @@ def add_lines(
         if line_type == "linelist":
             infile = f"{cloudy_dir}/{grid_name}/1"
             lines_to_include, _, _ = cloudy.read_linelist(
-                infile,
-                extension='emergent_elin')
+                infile, extension="emergent_elin"
+            )
 
         # set up output arrays
         for line_id in lines_to_include:
@@ -319,8 +316,8 @@ def add_lines(
 
             elif line_type == "linelist":
                 id, wavelength, luminosity = cloudy.read_linelist(
-                    infile,
-                    extension='emergent_elin')
+                    infile, extension="emergent_elin"
+                )
 
             for id_, wavelength_, luminosity_ in zip(
                 id, wavelength, luminosity
@@ -372,15 +369,12 @@ if __name__ == "__main__":
     parser.add_argument("-cloudy_dir", type=str, required=True)
 
     # the name of the incident grid
-    parser.add_argument("-incident_grid",
-                        type=str,
-                        required=True)
+    parser.add_argument("-incident_grid", type=str, required=True)
 
     # the cloudy parameters, including any grid axes
-    parser.add_argument("-cloudy_params",
-                        type=str,
-                        required=False,
-                        default="c17.03-sps")
+    parser.add_argument(
+        "-cloudy_params", type=str, required=False, default="c17.03-sps"
+    )
 
     # include spectra
     parser.add_argument(
@@ -430,22 +424,18 @@ if __name__ == "__main__":
     # Check cloudy runs and potentially replace them by the nearest grid point
     # if they fail.
     failed_list = check_cloudy_runs(
-        grid_name,
-        grid_dir,
-        cloudy_dir,
-        replace=args.replace
+        grid_name, grid_dir, cloudy_dir, replace=args.replace
     )
-    print('list of failed cloudy runs:', failed_list)
+    print("list of failed cloudy runs:", failed_list)
 
     # If any runs have failed prompt to re-run.
     if len(failed_list) > 0:
-
         # get number of failed runs
         n_fail = len(failed_list)
 
         print(f"ERROR: {n_fail} cloudy runs have failed.")
 
-        if args.machine == 'apollo':
+        if args.machine == "apollo":
             # apollo specific command
             print("Re-run with this command:")
             print(f"qsub -t 1:{n_fail} run_grid.job")
@@ -458,12 +448,9 @@ if __name__ == "__main__":
 
     # If no runs have failed, go ahead and add spectra and lines.
     else:
-
         # add spectra
         if include_spectra:
-            add_spectra(grid_name,
-                        grid_dir,
-                        cloudy_dir)
+            add_spectra(grid_name, grid_dir, cloudy_dir)
 
         # add lines
         add_lines(

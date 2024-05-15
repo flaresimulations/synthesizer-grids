@@ -1,13 +1,10 @@
-import sys
 import os
+import sys
+
 import numpy as np
-from unyt import c
-import scipy.integrate as integrate
 
 # import function from incident_utils module
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-import incident_utils
-from incident_utils import *
 
 # __tag__ = incident_utils.__tag__
 

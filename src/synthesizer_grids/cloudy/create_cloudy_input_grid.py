@@ -3,12 +3,12 @@ Create a grid of cloudy scripts based on combining an incident grid with a set
 of cloudy parameters. Also creates a machine specific script.
 """
 
-import numpy as np
 import argparse
 from pathlib import Path
-import yaml
-import h5py
 
+import h5py
+import numpy as np
+import yaml
 from synthesizer.abundances import (
     Abundances,
 )
@@ -16,7 +16,7 @@ from synthesizer.grid import Grid
 from synthesizer.photoionisation import cloudy17, cloudy23
 
 # local modules
-from utils import get_grid_properties, apollo_submission_script
+from utils import apollo_submission_script, get_grid_properties
 
 
 def load_grid_params(param_file="c17.03-sps", param_dir="params"):
@@ -48,7 +48,6 @@ def load_grid_params(param_file="c17.03-sps", param_dir="params"):
 
     # loop over parameters
     for k, v in params.items():
-
         # if parameter is a list store it in the grid_parameters dictionary
         # and convert to a numpy array
         if isinstance(v, list):
@@ -80,10 +79,7 @@ if __name__ == "__main__":
 
     # the cloudy reference parameter set
     parser.add_argument(
-        "-cloudy_params",
-        type=str,
-        required=True,
-        default="c17.03-sps-default"
+        "-cloudy_params", type=str, required=True, default="c17.03-sps-default"
     )
 
     # a second cloudy parameter set which supersedes the above
@@ -111,21 +107,22 @@ if __name__ == "__main__":
     # if an additional parameter set is provided supersede the default
     # parameters with these.
     if args.cloudy_params_addition:
-        additional_fixed_params, additional_grid_params = (
-            load_grid_params(args.cloudy_params_addition))
+        additional_fixed_params, additional_grid_params = load_grid_params(
+            args.cloudy_params_addition
+        )
         fixed_params = fixed_params | additional_fixed_params
         grid_params = grid_params | additional_grid_params
 
     # set cloudy version
-    if fixed_params['cloudy_version'] == 'c17.03':
+    if fixed_params["cloudy_version"] == "c17.03":
         cloudy = cloudy17
-    if fixed_params['cloudy_version'] == 'c23.01':
+    if fixed_params["cloudy_version"] == "c23.01":
         cloudy = cloudy23
     print(cloudy)
 
     # open the parent incident grid
     incident_grid = Grid(
-        args.incident_grid+'.hdf5',
+        args.incident_grid + ".hdf5",
         grid_dir=f"{args.grid_dir}",
         read_lines=False,
     )
@@ -136,10 +133,11 @@ if __name__ == "__main__":
 
     # if an additional parameter set append this to the new grid name
     if args.cloudy_params_addition:
-        # ignore the directory part
-        cloudy_params_addition_name = (
-            args.cloudy_params_addition.split('/')[-1])
-        new_grid_name += '-' + cloudy_params_addition_name
+        # ignore the directory part
+        cloudy_params_addition_name = args.cloudy_params_addition.split("/")[
+            -1
+        ]
+        new_grid_name += "-" + cloudy_params_addition_name
 
     # define output directories
     output_dir = f"{args.cloudy_dir}/{new_grid_name}"
@@ -185,7 +183,7 @@ if __name__ == "__main__":
     params = fixed_params | grid_params
 
     # add the parameter file as a parameter
-    params['parameter_file'] = args.cloudy_params
+    params["parameter_file"] = args.cloudy_params
 
     # save all parameters
     yaml.dump(params, open(f"{output_dir}/params.yaml", "w"))
@@ -207,18 +205,16 @@ if __name__ == "__main__":
         with h5py.File(
             f"{args.grid_dir}/{args.incident_grid}.hdf5", "r"
         ) as hf_incident:
-
             # print out datasets
             if verbose:
                 hf_incident.visit(print)
 
             # copy top-level attributes
             for k, v in hf_incident.attrs.items():
-
                 # If v is None then convert to string None for saving in the
                 # HDF5 file.
                 if v is None:
-                    v = 'None'
+                    v = "None"
 
                 hf.attrs[k] = v
                 if verbose:
@@ -267,9 +263,9 @@ if __name__ == "__main__":
                     )
 
                     # reshape array to match new shape and save
-                    hf[
-                        f"log10_specific_ionising_luminosity/{ion}"
-                    ] = np.reshape(log10_specific_ionising_luminosity, shape)
+                    hf[f"log10_specific_ionising_luminosity/{ion}"] = (
+                        np.reshape(log10_specific_ionising_luminosity, shape)
+                    )
 
         # add attribute with full grid axes
         hf.attrs["axes"] = axes
@@ -280,16 +276,15 @@ if __name__ == "__main__":
 
         # add other parameters as attributes
         for k, v in params.items():
-
             # If v is None then convert to string None for saving in the
             # HDF5 file.
             if v is None:
-                v = 'None'
+                v = "None"
 
             # if the parameter is a dictionary (e.g. as used for abundances)
             if isinstance(v, dict):
                 for k2, v2 in v.items():
-                    hf.attrs[k+'_'+k2] = v2
+                    hf.attrs[k + "_" + k2] = v2
             else:
                 hf.attrs[k] = v
 
