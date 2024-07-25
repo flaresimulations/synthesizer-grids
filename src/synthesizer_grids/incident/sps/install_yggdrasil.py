@@ -204,10 +204,9 @@ def make_grid(input_dir, grid_dir, ver, fcov, model):
             add = f"_fcov_{fcov}"
 
         out_grid.write_grid_common(
-            axes={"log10age": log10ages, "metallicity": metallicities},
+            axes={"log10ages": log10ages, "metallicities": metallicities},
             wavelength=lam * angstrom,
             spectra={f"nebular{add}": spec * erg / s / Hz},
-            alt_axes=("log10ages", "metallicities"),
         )
 
     else:
@@ -220,10 +219,9 @@ def make_grid(input_dir, grid_dir, ver, fcov, model):
 
         out_grid.write_grid_common(
             model=model,
-            axes={"log10age": log10ages, "metallicity": metallicities},
+            axes={"log10ages": log10ages, "metallicities": metallicities},
             wavelength=grid_lam,
             spectra={"incident": interp_spec * erg / s / Hz},
-            alt_axes=("log10ages", "metallicities"),
         )
 
         # Include the specific ionising photon luminosity

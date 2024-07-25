@@ -162,10 +162,9 @@ def make_grid(original_model_name, bin, input_dir, grid_dir):
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"log10age": log10ages, "metallicity": metallicities},
+        axes={"log10ages": log10ages, "metallicities": metallicities},
         wavelength=wavelengths * angstrom,
         spectra={"incident": spectra * erg / s / Hz},
-        alt_axes=("log10ages", "metallicities"),
     )
 
     # Write datasets specific to BPASS 2.3

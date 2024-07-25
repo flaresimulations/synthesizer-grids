@@ -257,10 +257,9 @@ def make_grid(input_dir, grid_dir, synthesizer_model_name):
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"log10age": log10ages, "metallicity": metallicities},
+        axes={"log10ages": log10ages, "metallicities": metallicities},
         wavelength=lam * angstrom,
         spectra={"incident": spec * erg / s / Hz},
-        alt_axes=("log10ages", "metallicities"),
     )
 
     # Include the specific ionising photon luminosity

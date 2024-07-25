@@ -89,10 +89,9 @@ def make_grid(model, imf, hr_morphology, input_dir, grid_dir):
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"log10age": log10ages, "metallicity": metallicities},
+        axes={"log10ages": log10ages, "metallicities": metallicities},
         wavelength=lam,
         spectra={"incident": spec},
-        alt_axes=("log10ages", "metallicities"),
     )
 
     # Include the specific ionising photon luminosity
