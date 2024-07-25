@@ -15,8 +15,25 @@ from synthesizer.abundances import (
 from synthesizer.grid import Grid
 from synthesizer.photoionisation import cloudy17, cloudy23
 
+from unyt import dimensionless, cm
+
 # local modules
 from utils import apollo_submission_script, get_grid_properties
+
+
+cloudy_parameter_descriptions = {
+    'depletion_scale': 'The Jenkins (2009) depletion scale parameter.',
+    'hydrogen_density': 'The density of hydrogen.',
+    'reference_ionisation_parameter': 'The reference ionisation parameter.',
+    'ionisation_parameter': 'The ionisation parameter.',
+}
+
+cloudy_parameter_units = {
+    'depletion_scale': dimensionless,
+    'hydrogen_density': cm**-3,
+    'reference_ionisation_parameter': dimensionless,
+    'ionisation_parameter': dimensionless,
+}
 
 
 def load_grid_params(param_file="c17.03-sps", param_dir="params"):
@@ -277,8 +294,18 @@ if __name__ == "__main__":
                 # copy values
                 hf[f"axes/{axis}"] = grid_params[axis]
 
-                # copy attributes
-                hf[f"axes/{axis}"].attrs = hf_incident.attrs[f"axes/{axis}"]
+                # if axis is in incident_grid the use the description and
+                # units from there
+                if axis in incident_grid.axes:
+                    hf[f"axes/{axis}"].attrs = hf_incident.attrs[
+                        f"axes/{axis}"]
+                    
+                # otherwise populate using dictionaries defined above
+                else:
+                    hf[f"axes/{axis}"].attrs["Description"] = (
+                        cloudy_parameter_descriptions[axis])
+                    hf[f"axes/{axis}"].attrs["Units"] = (
+                        cloudy_parameter_units[axis])
 
 
         # add other parameters as attributes
