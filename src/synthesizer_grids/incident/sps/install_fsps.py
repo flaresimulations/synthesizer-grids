@@ -2,7 +2,7 @@ import fsps
 import numpy as np
 from synthesizer_grids.grid_io import GridFile
 from synthesizer_grids.parser import Parser
-from unyt import Hz, angstrom, erg, s
+from unyt import Hz, angstrom, erg, s, yr
 from utils import get_model_filename
 
 
@@ -75,10 +75,13 @@ def generate_grid(model):
     # Create the GridFile ready to take outputs
     out_grid = GridFile(out_filename, mode="a", overwrite=True)
 
+    # Define ages
+    ages = 10**log10ages * yr
+
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"log10ages": log10ages, "metallicities": metallicities},
+        axes={"ages": ages, "metallicities": metallicities},
         wavelength=lam * angstrom,
         spectra={"incident": spec * erg / s / Hz},
     )

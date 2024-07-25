@@ -104,10 +104,13 @@ def make_grid(model, imf, variant, output_dir, grid_dir):
     # Create the GridFile ready to take outputs
     out_grid = GridFile(out_filename, mode="w", overwrite=True)
 
+    # Define ages
+    ages = 10**log10ages * yr
+
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"log10ages": log10ages, "metallicities": metallicities},
+        axes={"ages": ages, "metallicities": metallicities},
         wavelength=lam,
         spectra={"incident": spec},
     )

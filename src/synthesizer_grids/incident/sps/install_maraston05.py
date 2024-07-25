@@ -11,7 +11,7 @@ import wget
 from synthesizer.conversions import flam_to_fnu
 from synthesizer_grids.grid_io import GridFile
 from synthesizer_grids.parser import Parser
-from unyt import angstrom, cm, erg, s
+from unyt import angstrom, cm, erg, s, yr
 from utils import get_model_filename
 
 
@@ -86,10 +86,13 @@ def make_grid(model, imf, hr_morphology, input_dir, grid_dir):
     # Create the GridFile ready to take outputs
     out_grid = GridFile(out_filename, mode="w", overwrite=True)
 
+    # Define ages
+    ages = 10**log10ages * yr
+
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"log10ages": log10ages, "metallicities": metallicities},
+        axes={"ages": ages, "metallicities": metallicities},
         wavelength=lam,
         spectra={"incident": spec},
     )

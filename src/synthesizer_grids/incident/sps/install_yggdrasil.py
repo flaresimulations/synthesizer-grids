@@ -34,7 +34,7 @@ from spectres import spectres
 from synthesizer_grids.grid_io import GridFile
 from synthesizer_grids.parser import Parser
 from tqdm import tqdm
-from unyt import Hz, angstrom, c, erg, s
+from unyt import Hz, angstrom, c, erg, s, yr
 
 
 def download_data(input_dir, ver, fcov):
@@ -195,6 +195,9 @@ def make_grid(input_dir, grid_dir, ver, fcov, model):
     # Create the grid file
     out_grid = GridFile(out_filename, mode="a", overwrite=True)
 
+    # Define ages
+    ages = 10**log10ages * yr
+
     if fcov != "0":
         # Write everything out thats common to all models
         if fcov == "1":
@@ -204,7 +207,7 @@ def make_grid(input_dir, grid_dir, ver, fcov, model):
             add = f"_fcov_{fcov}"
 
         out_grid.write_grid_common(
-            axes={"log10ages": log10ages, "metallicities": metallicities},
+            axes={"ages": ages, "metallicities": metallicities},
             wavelength=lam * angstrom,
             spectra={f"nebular{add}": spec * erg / s / Hz},
         )
@@ -219,7 +222,7 @@ def make_grid(input_dir, grid_dir, ver, fcov, model):
 
         out_grid.write_grid_common(
             model=model,
-            axes={"log10ages": log10ages, "metallicities": metallicities},
+            axes={"ages": ages, "metallicities": metallicities},
             wavelength=grid_lam,
             spectra={"incident": interp_spec * erg / s / Hz},
         )
