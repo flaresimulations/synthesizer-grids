@@ -300,7 +300,6 @@ def make_full_grid(original_model_name, input_dir, grid_dir, bs="bin"):
         descriptions={"alpha_enhancement": r"alpha ehanncement [\alpha/Fe]"},
         wavelength=wavelengths * angstrom,
         spectra={"incident": spectra * erg / s / Hz},
-       
     )
 
     # Write datasets specific to BPASS 2.3

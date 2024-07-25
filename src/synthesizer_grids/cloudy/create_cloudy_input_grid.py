@@ -218,7 +218,7 @@ if __name__ == "__main__":
     # create new synthesizer grid to contain the new grid
     # open the new grid
     with h5py.File(f"{args.grid_dir}/{new_grid_name}.hdf5", "w") as hf:
-        
+
         # open the original incident model grid
         with h5py.File(
             f"{args.grid_dir}/{args.incident_grid}.hdf5", "r"
@@ -299,14 +299,13 @@ if __name__ == "__main__":
                 if axis in incident_grid.axes:
                     hf[f"axes/{axis}"].attrs = hf_incident.attrs[
                         f"axes/{axis}"]
-                    
+
                 # otherwise populate using dictionaries defined above
                 else:
                     hf[f"axes/{axis}"].attrs["Description"] = (
                         cloudy_parameter_descriptions[axis])
                     hf[f"axes/{axis}"].attrs["Units"] = (
-                        cloudy_parameter_units[axis])
-
+                        str(cloudy_parameter_units[axis]))
 
         # add other parameters as attributes
         for k, v in params.items():

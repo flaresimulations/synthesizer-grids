@@ -13,7 +13,7 @@ import numpy as np
 # synthesizer modules
 from synthesizer.photoionisation import cloudy17, cloudy23
 from synthesizer.sed import Sed
-from unyt import eV
+from unyt import eV, Angstrom, erg, Hz, s
 
 # local modules
 from utils import get_grid_properties
@@ -161,12 +161,26 @@ def add_spectra(grid_name, grid_dir, cloudy_dir):
         # save the wavelength
         spectra["wavelength"] = lam
 
+        # define units
+        wavelength_units = Angstrom
+        spectra_units = erg/s/Hz
+
+        # Set the wavelength units and description attribute
+        spectra["wavelength"].attrs["Units"] = str(wavelength_units.units)
+        spectra["wavelength"].attrs["Description"] = "wavelength grid"
+
         # number of wavelength points
         nlam = len(lam)
 
         # make spectral grids and set them to zero
         for spec_name in spec_names:
+
             spectra[spec_name] = np.zeros((*shape, nlam))
+
+            # Set the spectra units and description attribute
+            spectra[spec_name].attrs["Units"] = str(spectra_units.units)
+            spectra[spec_name].attrs["Description"] = f"{spec_name} spectral "
+            "luminosity density"
 
         # array for holding the normalisation which is calculated below and
         # used by lines
@@ -275,12 +289,41 @@ def add_lines(
                 infile, extension="emergent_elin"
             )
 
+        luminosity_units = erg / s
+        continuum_units = erg / s / Hz
+
         # set up output arrays
         for line_id in lines_to_include:
+
             lines[f"{line_id}/luminosity"] = np.zeros(shape)
+            lines[f"{line_id}/luminosity"].attrs["Units"] = (
+                str(luminosity_units.units))
+            lines[f"{line_id}/luminosity"].attrs["Description"] = (
+                f"{line_id} line luminosity")
+
             lines[f"{line_id}/transmitted_continuum"] = np.zeros(shape)
+            lines[f"{line_id}/transmitted_continuum"].attrs["Units"] = (
+                str(continuum_units.units))
+            lines[f"{line_id}/transmitted_continuum"].attrs["Description"] = (
+                f"transmitted continuum at {line_id} wavelength")
+
+            lines[f"{line_id}/incident_continuum"] = np.zeros(shape)
+            lines[f"{line_id}/incident_continuum"].attrs["Units"] = (
+                str(continuum_units.units))
+            lines[f"{line_id}/incident_continuum"].attrs["Description"] = (
+                f"incident continuum at {line_id} wavelength")
+
             lines[f"{line_id}/nebular_continuum"] = np.zeros(shape)
+            lines[f"{line_id}/nebular_continuum"].attrs["Units"] = (
+                str(continuum_units.units))
+            lines[f"{line_id}/nebular_continuum"].attrs["Description"] = (
+                f"nebular continuum at {line_id} wavelength")
+
             lines[f"{line_id}/continuum"] = np.zeros(shape)
+            lines[f"{line_id}/continuum"].attrs["Units"] = (
+                str(continuum_units.units))
+            lines[f"{line_id}/continuum"].attrs["Description"] = (
+                f"total continuum at {line_id} wavelength")
 
         for i, indices in enumerate(index_list):
             # convert indices array to tuple
@@ -338,8 +381,13 @@ def add_lines(
                 line["luminosity"][indices] = luminosity_ * norm  # erg s^-1
 
                 if include_spectra:
-                    # Calculate transmitted continuum at the line wavelength
-                    # and save it.
+                    # Calculate incident, transmitted, and nebular continuum
+                    # at the line wavelength and save it.
+
+                    line["incident_continuum"][indices] = np.interp(
+                        wavelength_, lam, spectra["incident"][indices]
+                    )  # erg s^-1 Hz^-1
+
                     line["transmitted_continuum"][indices] = np.interp(
                         wavelength_, lam, spectra["transmitted"][indices]
                     )  # erg s^-1 Hz^-1
