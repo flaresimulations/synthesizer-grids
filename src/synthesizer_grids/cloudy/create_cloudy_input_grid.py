@@ -201,6 +201,7 @@ if __name__ == "__main__":
     # create new synthesizer grid to contain the new grid
     # open the new grid
     with h5py.File(f"{args.grid_dir}/{new_grid_name}.hdf5", "w") as hf:
+        
         # open the original incident model grid
         with h5py.File(
             f"{args.grid_dir}/{args.incident_grid}.hdf5", "r"
@@ -267,12 +268,18 @@ if __name__ == "__main__":
                         np.reshape(log10_specific_ionising_luminosity, shape)
                     )
 
-        # add attribute with full grid axes
-        hf.attrs["axes"] = axes
+            # add attribute with full grid axes
+            hf.attrs["axes"] = axes
 
-        # add the bin centres for the grid bins
-        for axis in axes:
-            hf[f"axes/{axis}"] = grid_params[axis]
+            # add the bin centres for the grid bins
+            for axis in axes:
+
+                # copy values
+                hf[f"axes/{axis}"] = grid_params[axis]
+
+                # copy attributes
+                hf[f"axes/{axis}"].attrs = hf_incident.attrs[f"axes/{axis}"]
+
 
         # add other parameters as attributes
         for k, v in params.items():
@@ -319,14 +326,14 @@ if __name__ == "__main__":
         params_ = fixed_params | grid_params_
 
         # set cloudy metallicity parameter to the stellar metallicity
-        if "metallicity" in grid_params_.keys():
-            params_["metallicity"] = grid_params_["metallicity"]
-        elif "log10metallicity" in grid_params_.keys():
-            params_["metallicity"] = 10 ** grid_params_["log10metallicity"]
+        if "metallicities" in grid_params_.keys():
+            params_["metallicities"] = grid_params_["metallicities"]
+        elif "log10metallicities" in grid_params_.keys():
+            params_["metallicities"] = 10 ** grid_params_["log10metallicities"]
 
         # create abundance object
         abundances = Abundances(
-            metallicity=float(params_["metallicity"]),
+            metallicity=float(params_["metallicities"]),
             reference=params_["reference_abundance"],
             alpha=params_["alpha"],
             abundances=params_["abundance_scalings"],
