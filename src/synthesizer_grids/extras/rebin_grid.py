@@ -1,15 +1,17 @@
-""" Create a rebinned grid for testing. This test grid should not be used for science """
+"""Create a rebinned grid for testing. This test grid should not be used for
+science"""
 
-import matplotlib.pyplot as plt
 import argparse
-import numpy as np
+
 import h5py
+import numpy as np
 from spectres import spectres
 
 
 def get_grid_properties_hf(hf, verbose=False):
     """
-    A wrapper over get_grid_properties to get the grid properties for a HDF5 grid.
+    A wrapper over get_grid_properties to get the grid properties for a HDF5
+    grid.
     """
 
     axes = hf.attrs["axes"]  # list of axes in the correct order
@@ -99,8 +101,9 @@ if __name__ == "__main__":
     for k, v in original_grid.attrs.items():
         rebinned_grid.attrs[k] = v
 
-    # copy various quantities (all excluding the spectra) from the original grid
-    for ds in ["axes", "log10_specific_ionising_lum", "lines"]:
+    # copy various quantities (all excluding the spectra) from the original
+    # grid
+    for ds in ["axes", "log10_specific_ionising_luminosity", "lines"]:
         original_grid.copy(original_grid[ds], rebinned_grid["/"], ds)
 
     # define the new wavelength grid

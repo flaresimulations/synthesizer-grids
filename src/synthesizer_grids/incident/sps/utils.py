@@ -1,11 +1,12 @@
-import numpy as np
-import sys
 import os
+import sys
+
+import numpy as np
 
 # import function from incident_utils module
-sys.path.append(
-    os.path.join(os.path.dirname(__file__), "../..")
-)  # allow it to see anything two folders up so that grid_utils and incident_utils can be accessed
+# allow it to see anything two folders up so that grid_utils and
+# incident_utils can be accessed
+sys.path.append(os.path.join(os.path.dirname(__file__), "../.."))
 # import incident_utils
 
 # __tag__ = incident_utils.__tag__

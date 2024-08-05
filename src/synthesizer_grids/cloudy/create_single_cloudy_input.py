@@ -3,24 +3,17 @@ Create a single cloudy script. This is used for testing.
 """
 
 import numpy as np
-import argparse
-from pathlib import Path
 import yaml
-import h5py
 
 # synthesiser modules
 from synthesizer.abundances import (
     Abundances,
-    depletion_models,
-    solar_abundance_patterns,
 )
-
 from synthesizer.grid import Grid
 from synthesizer.photoionisation import cloudy17, cloudy23
 
-
 # local modules
-from utils import get_grid_properties, apollo_submission_script
+from utils import get_grid_properties
 
 
 def load_grid_params(param_file="c17.03-sps", param_dir="params"):
@@ -52,7 +45,6 @@ def load_grid_params(param_file="c17.03-sps", param_dir="params"):
 
     # loop over parameters
     for k, v in params.items():
-
         # if parameter is a list store it in the grid_parameters dictionary
         # and convert to a numpy array
         if isinstance(v, list):
@@ -66,13 +58,12 @@ def load_grid_params(param_file="c17.03-sps", param_dir="params"):
 
 
 if __name__ == "__main__":
-
-    machine = 'apollo'
-    incident_grid = 'bc03-2016-BaSeL_chabrier-0.1,100'
-    grid_dir = '/Users/sw376/Dropbox/Research/data/synthesizer/grids'
-    cloudy_dir = '/Users/sw376/Dropbox/Research/data/synthesizer/cloudy'
-    cloudy_params = 'c23.01-sps-c17.03'
-    cloudy_params = 'c17.03-sps'
+    machine = "apollo"
+    incident_grid = "bc03-2016-BaSeL_chabrier-0.1,100"
+    grid_dir = "/Users/sw376/Dropbox/Research/data/synthesizer/grids"
+    cloudy_dir = "/Users/sw376/Dropbox/Research/data/synthesizer/cloudy"
+    cloudy_params = "c23.01-sps-c17.03"
+    cloudy_params = "c17.03-sps"
 
     verbose = True
 
@@ -80,14 +71,11 @@ if __name__ == "__main__":
     fixed_params, grid_params = load_grid_params(cloudy_params)
 
     # set cloudy version
-    if fixed_params['cloudy_version'] == 'c17.03':
+    if fixed_params["cloudy_version"] == "c17.03":
         cloudy = cloudy17
-    if fixed_params['cloudy_version'] == 'c23.01':
+    if fixed_params["cloudy_version"] == "c23.01":
         cloudy = cloudy23
     print(cloudy)
-
-
-
 
     # open the parent incident grid
     incident_grid = Grid(
@@ -96,7 +84,8 @@ if __name__ == "__main__":
         read_lines=False,
     )
 
-    # get name of new grid (concatenation of incident_grid and cloudy parameter file)
+    # get name of new grid (concatenation of incident_grid and cloudy
+    # parameter file)
     new_grid_name = f"{incident_grid}_cloudy-{cloudy_params}"
 
     # set a list of the axes
@@ -117,9 +106,11 @@ if __name__ == "__main__":
         for k, v in grid_params.items():
             print(k, v)
 
-    # if the U model is the reference model (i.e. not fixed) save the grid point for the reference values
+    # if the U model is the reference model (i.e. not fixed) save the grid
+    # point for the reference values
     if fixed_params["ionisation_parameter_model"] == "ref":
-        # get the indices of the reference grid point (this is used by the reference model)
+        # get the indices of the reference grid point (this is used by the
+        # reference model)
         incident_ref_grid_point = incident_grid.get_grid_point(
             [fixed_params["reference_" + k] for k in incident_grid.axes]
         )
@@ -141,7 +132,6 @@ if __name__ == "__main__":
         index_list,
     ) = get_grid_properties(axes, grid_params, verbose=True)
 
-    
     # loop over all models
     for i, (grid_params_tuple, grid_index_tuple) in enumerate(
         zip(model_list[:1], index_list[:1])
@@ -182,7 +172,7 @@ if __name__ == "__main__":
 
         # if reference U model is used
         if params_["ionisation_parameter_model"] == "ref":
-            # Calculate the difference between the reference 
+            # Calculate the difference between the reference
             # log10_specific_ionising_luminosity for HI and the current grid
             # point
             delta_log10_specific_ionising_luminosity = (
@@ -211,7 +201,8 @@ if __name__ == "__main__":
 
             else:
                 print(
-                    f"ERROR: do not understand geometry choice: {params_['geometry']}"
+                    "ERROR: do not understand geometry choice: "
+                    f"{params_['geometry']}"
                 )
 
         # if fixed U model is used
@@ -220,7 +211,8 @@ if __name__ == "__main__":
 
         else:
             print(
-                f"ERROR: do not understand U model choice: {params_['ionisation_parameter_model']}"
+                "ERROR: do not understand U model choice: "
+                f"{params_['ionisation_parameter_model']}"
             )
 
         # set log10U to provide cloudy
@@ -232,9 +224,10 @@ if __name__ == "__main__":
         # get luminosity
         lnu = incident_grid.spectra["incident"][incident_grid_point]
 
-        # this returns the relevant shape commands, in this case for a tabulated SED
+        # this returns the relevant shape commands, in this case for a
+        # tabulated SED
         shape_commands = cloudy.ShapeCommands.table_sed(
-            str(i + 1), lam, lnu, output_dir='test/'
+            str(i + 1), lam, lnu, output_dir="test/"
         )
 
         # create cloudy input file
@@ -242,11 +235,8 @@ if __name__ == "__main__":
             str(i + 1),
             shape_commands,
             abundances,
-            output_dir='test/',
+            output_dir="test/",
             **params_,
         )
 
-        
-        print(''.join(cinput))
-        
-  
+        print("".join(cinput))

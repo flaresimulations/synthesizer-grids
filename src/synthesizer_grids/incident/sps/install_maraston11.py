@@ -1,16 +1,17 @@
 """
 Download Maraston2011 and convert to HDF5 synthesizer grid.
 """
-import numpy as np
-import os
-from pathlib import Path
-import tarfile
-from unyt import erg, s, Angstrom, yr
-from synthesizer.conversions import llam_to_lnu
-import wget
 
+import os
+import tarfile
+from pathlib import Path
+
+import numpy as np
+import wget
+from synthesizer.conversions import llam_to_lnu
 from synthesizer_grids.grid_io import GridFile
 from synthesizer_grids.parser import Parser
+from unyt import Angstrom, erg, s, yr
 from utils import get_model_filename
 
 
@@ -65,9 +66,7 @@ def make_grid(model, imf, variant, output_dir, grid_dir):
     print(synthesizer_model_name)
 
     # output filename
-    out_filename = (
-        f"{grid_dir}/{synthesizer_model_name}.hdf5"
-    )
+    out_filename = f"{grid_dir}/{synthesizer_model_name}.hdf5"
 
     metallicities = np.array([0.02])  # array of available metallicities
 
@@ -75,9 +74,9 @@ def make_grid(model, imf, variant, output_dir, grid_dir):
 
     # define the extension
     if variant:
-        extension = '_' + variant
+        extension = "_" + variant
     else:
-        extension = ''
+        extension = ""
 
     fn = f"""{output_dir}/ssp_M11_Pickles{extension}.{imf_code[imf]}
     z{metallicity_code[metallicities[0]]}"""
