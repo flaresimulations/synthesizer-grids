@@ -37,6 +37,9 @@ def make_grid(model, imf, input_dir, grid_dir):
         [0.001, 0.01, 0.02, 0.04]
     )  # array of available metallicities
 
+    if imf == "kroupa100":
+        metallicities = np.array([0.02])
+
     metallicity_code = {
         0.001: "0001",
         0.01: "001",
@@ -95,7 +98,7 @@ if __name__ == "__main__":
     # Define the model metadata
     sps_name = "maraston13"
     imfs = ["salpeter", "kroupa"]
-    imf_code = {"salpeter": "ss", "kroupa": "kr"}
+    imf_code = {"salpeter": "ss", "kroupa": "kr", "kroupa100": "100kr"}
     model = {
         "sps_name": sps_name,
         "sps_version": False,
@@ -109,5 +112,10 @@ if __name__ == "__main__":
     if not os.path.exists(input_dir):
         os.mkdir(input_dir)
 
+    # run the single kroupa100 model
+    imf = "kroupa100"
+    make_grid(model, imf, input_dir, grid_dir)
+
+    # then run the rest
     for imf in imfs:
         make_grid(model, imf, input_dir, grid_dir)
