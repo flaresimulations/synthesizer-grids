@@ -35,12 +35,12 @@ def make_grid(model, imf, input_dir, grid_dir):
     out_filename = f"{grid_dir}/{sps_name}_{imf}.hdf5"
     out_filename = f"{grid_dir}/{sps_name}_{imf}.hdf5"
 
-    metallicities = np.array(
+    metallicity = np.array(
         [0.001, 0.01, 0.02, 0.04]
     )  # array of available metallicities
 
     if imf == "kroupa100":
-        metallicities = np.array([0.02])
+        metallicity = np.array([0.02])
 
     metallicity_code = {
         0.001: "0001",
@@ -52,43 +52,43 @@ def make_grid(model, imf, input_dir, grid_dir):
     # open first raw data file to get age
     fn = (
         f"{input_dir}/sed_M13.{imf_code[imf]}"
-        f"z{metallicity_code[metallicities[0]]}"
+        f"z{metallicity_code[metallicity[0]]}"
     )
 
-    ages_, _, lam_, llam_ = np.loadtxt(fn).T  # llam is in (ergs /s /AA /Msun)
+    age_, _, lam_, llam_ = np.loadtxt(fn).T  # llam is in (ergs /s /AA /Msun)
 
-    ages_Gyr = np.sort(np.array(list(set(ages_))))  # Gyr
-    ages = ages_Gyr * 1e9 * yr
-    log10ages = np.log10(ages)
+    age_Gyr = np.sort(np.array(list(set(age_))))  # Gyr
+    age = age_Gyr * 1e9 * yr
+    log10age = np.log10(age)
 
-    lam = lam_[ages_ == ages_[0]] * Angstrom
+    lam = lam_[age_ == age_[0]] * Angstrom
 
-    spec = np.zeros((len(ages), len(metallicities), len(lam)))
+    spec = np.zeros((len(age), len(metallicity), len(lam)))
 
     # Create the GridFile ready to take outputs
     out_grid = GridFile(out_filename, mode="w", overwrite=True)
 
     # at each point in spec convert the units
-    for imetal, metallicity in enumerate(metallicities):
-        for ia, age_Gyr in enumerate(ages_Gyr):
+    for iZ, Z in enumerate(metallicity):
+        for ia, a_Gyr in enumerate(age_Gyr):
             fn = (
                 f"{input_dir}/sed_M13.{imf_code[imf]}"
-                f"z{metallicity_code[metallicity]}"
+                f"z{metallicity_code[Z]}"
             )
-            print(imetal, ia, fn)
-            ages_, _, lam_, llam_ = np.loadtxt(fn).T
+            print(iZ, ia, fn)
+            age_, _, lam_, llam_ = np.loadtxt(fn).T
 
-            llam = llam_[ages_ == age_Gyr] * erg / s / Angstrom
+            llam = llam_[age_ == a_Gyr] * erg / s / Angstrom
             lnu = llam_to_lnu(lam, llam)
-            spec[ia, imetal] = lnu
+            spec[ia, iZ] = lnu
 
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"log10age": log10ages, "metallicity": metallicities},
+        axes={"log10age": log10age, "metallicity": metallicity},
         wavelength=lam,
         spectra={"incident": spec},  # check this unit
-        alt_axes=("log10ages", "metallicities"),
+        alt_axes=("log10age", "metallicity"),
     )
 
     # Include the specific ionising photon luminosity
