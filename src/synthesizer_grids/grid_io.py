@@ -54,8 +54,8 @@ class GridFile:
     descriptions = {
         "log10age": "Logged stellar population ages (dex(yr))",
         "log10ages": "Logged stellar population ages (dex(yr))",
-        "age": "Stellar population ages",
-        "ages": "Stellar population ages",
+        "age": "Stellar population ages (yr)",
+        "ages": "Stellar population ages (yr)",
         "log10metallicities": "Logged stellar population metallicity",
         "log10metallicity": "Logged stellar population metallicity",
         "metallicities": "Stellar population metallicity",
@@ -435,11 +435,16 @@ class GridFile:
         # Write out each axis array
         for axis_key, axis_arr in axes.items():
 
+            print('in write grid common', axis_key, type(axis_key))
+
             # Determine whether the axis should be logged based on log_on_read
             if log_on_read.get(axis_key, True):
                 axis_arr = np.log10(axis_arr)
-                axis_key = f"log10{axis_key}" # rewrite name by adding a log10
+                new_axis_key = f"log10{axis_key}" # rewrite name by adding a log10
+                axes[new_axis_key] = axis_arr
                 units = "dimensionless"
+
+                del axes[axis_key] # remove old key
 
             else:
                 units = str(axis_arr.units)
@@ -565,7 +570,6 @@ class GridFile:
         self._open_file()
 
         # Create a group for the model metadata
-        # print(self.hdf)
         grp = self.hdf.create_group("Model")
 
         # Write out model parameters as attributes
