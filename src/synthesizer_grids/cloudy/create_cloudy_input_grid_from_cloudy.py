@@ -12,7 +12,8 @@ import yaml
 
 # synthesiser modules
 from synthesizer.abundances import Abundances
-from synthesizer.photoionisation import cloudy17 as cloudy
+from synthesizer.grid import Grid
+from synthesizer.photoionisation import cloudy17, cloudy23
 
 # local modules
 from utils import apollo_submission_script, get_grid_properties
@@ -153,9 +154,15 @@ if __name__ == "__main__":
     )
 
     print(incident_fixed_params, incident_grid_params)
-
-    # Get name of new grid (concatenation of incident_grid and cloudy
-    # parameter file)
+    
+    # set cloudy version
+    if cloudy_fixed_params['cloudy_version'] == 'c17.03':
+        cloudy = cloudy17
+    if cloudy_fixed_params['cloudy_version'] == 'c23.01':
+        cloudy = cloudy23
+    print(cloudy)
+    
+    # get name of new grid (concatenation of incident_grid and cloudy parameter file)
     new_grid_name = f"{args.incident_cloudy_model}_cloudy-{args.cloudy_params}"
 
     print(new_grid_name)
@@ -221,7 +228,18 @@ if __name__ == "__main__":
 
         # add other parameters as attributes
         for k, v in params.items():
-            hf.attrs[k] = v
+
+            # If v is None then convert to string None for saving in the
+            # HDF5 file.
+            if v is None:
+                v = 'None'
+
+            # if the parameter is a dictionary (e.g. as used for abundances)
+            if isinstance(v, dict):
+                for k2, v2 in v.items():
+                    hf.attrs[k+'_'+k2] = v2
+            else:
+                hf.attrs[k] = v
 
         if verbose:
             print("-" * 50)
@@ -255,13 +273,13 @@ if __name__ == "__main__":
 
         print(incident_params_)
 
-        # Create abundances object
         abundances = Abundances(
             metallicity=float(params_["metallicity"]),
-            dust_to_metal_ratio=params_["dust_to_metal_ratio"],
+            reference=params_["reference_abundance"],
             alpha=params_["alpha"],
-            nitrogen_abundance=params_["nitrogen_abundance"],
-            carbon_abundance=params_["carbon_abundance"],
+            abundances=params_["abundance_scalings"],
+            depletion_model=params_["depletion_model"],
+            depletion_scale=params_["depletion_scale"],
         )
 
         # For cloudy based grids it makes most sense to assume a fixed
