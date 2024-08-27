@@ -205,7 +205,7 @@ class GridFile:
         data,
         description,
         log_on_read,
-        units=,
+        units,
         verbose=True,
         **kwargs,
     ):
