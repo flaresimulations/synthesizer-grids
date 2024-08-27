@@ -363,7 +363,7 @@ class GridFile:
         axes,
         wavelength,
         spectra,
-        log_on_read_values,
+        log_on_read,
         alt_axes=(),
         descriptions={},
         model={},
@@ -387,7 +387,7 @@ class GridFile:
                 A dictionary containing the spectra grids. Each key value pair
                 should be {"spectra_type": spectra_grid}. "spectra_type" will
                 be the key used for the dataset.
-            log_on_read_values (dict)
+            log_on_read (dict)
                 A dictionary with Boolean values for each axis, where True 
                 indicates that the attribute should be interpolated in 
                 logarithmic space.
@@ -438,7 +438,7 @@ class GridFile:
         for axis_key, axis_arr in axes.items():
 
             # Determine whether the axis should be logged based on log_on_read
-            if log_on_read_values.get(axis_key, True):
+            if log_on_read.get(axis_key, True):
                 units = "dimensionless"
                 axis_arr = np.log10(axis_array)
 

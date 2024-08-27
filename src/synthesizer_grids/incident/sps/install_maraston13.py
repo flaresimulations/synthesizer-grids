@@ -85,7 +85,7 @@ def make_grid(model, imf, input_dir, grid_dir):
     # A dictionary with Boolean values for each axis, where True 
     # indicates that the attribute should be interpolated in 
     # logarithmic space.
-    log_on_read_values = {
+    log_on_read = {
         "age": True
         "metallicity": False
     }
@@ -96,7 +96,7 @@ def make_grid(model, imf, input_dir, grid_dir):
         axes={"age": age, "metallicity": metallicity},
         wavelength=lam,
         spectra={"incident": spec}, 
-        log_on_read_values = log_on_read_values,
+        log_on_read = log_on_read,
         alt_axes=("log10age", "metallicity"),
     )
 
