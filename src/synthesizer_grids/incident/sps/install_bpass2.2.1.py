@@ -8,12 +8,13 @@ import os
 import tarfile
 
 import numpy as np
-from synthesizer_grids.grid_io import GridFile
-from synthesizer_grids.parser import Parser
 
 # from hoki import load
 from unyt import Hz, angstrom, erg, s
 from utils import get_model_filename
+
+from synthesizer_grids.grid_io import GridFile
+from synthesizer_grids.parser import Parser
 
 
 def resolve_name(original_model_name, bin):
