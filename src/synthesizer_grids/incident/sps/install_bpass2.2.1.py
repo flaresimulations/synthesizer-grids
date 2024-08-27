@@ -8,12 +8,13 @@ import os
 import tarfile
 
 import numpy as np
-from synthesizer_grids.grid_io import GridFile
-from synthesizer_grids.parser import Parser
 
 # from hoki import load
 from unyt import Hz, angstrom, erg, s
 from utils import get_model_filename
+
+from synthesizer_grids.grid_io import GridFile
+from synthesizer_grids.parser import Parser
 
 
 def resolve_name(original_model_name, bin):
@@ -89,9 +90,7 @@ def make_grid(original_model_name, bin, input_dir, grid_dir):
     out_filename = f"{grid_dir}/{synthesizer_model_name}.hdf5"
 
     # input directory of this specific bpass model (hence the trailing "_")
-    input_dir_ = (
-        f'{input_dir}/{model["original_model_name"]}'
-    )
+    input_dir_ = f'{input_dir}/{model["original_model_name"]}'
 
     # dictionary mapping filename metallicity to float
     map_key_to_met = {
