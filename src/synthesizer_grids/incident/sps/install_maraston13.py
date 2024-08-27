@@ -8,7 +8,7 @@ import numpy as np
 from synthesizer.conversions import llam_to_lnu
 from synthesizer_grids.grid_io import GridFile
 from synthesizer_grids.parser import Parser
-from unyt import Angstrom, erg, s, yr, dimensionless
+from unyt import Angstrom, dimensionless, erg, s, yr
 
 
 def make_grid(model, imf, input_dir, grid_dir):
@@ -40,7 +40,7 @@ def make_grid(model, imf, input_dir, grid_dir):
     )  # array of available metallicities
 
     if imf == "kroupa100":
-        metallicity = np.array([0.02]) 
+        metallicity = np.array([0.02])
 
     metallicity_code = {
         0.001: "0001",
@@ -81,22 +81,18 @@ def make_grid(model, imf, input_dir, grid_dir):
             lnu = llam_to_lnu(lam, llam)
             spec[ia, iZ] = lnu
 
-
-    # A dictionary with Boolean values for each axis, where True 
-    # indicates that the attribute should be interpolated in 
+    # A dictionary with Boolean values for each axis, where True
+    # indicates that the attribute should be interpolated in
     # logarithmic space.
-    log_on_read = {
-        "age": True,
-        "metallicity": False
-    }
+    log_on_read = {"age": True, "metallicity": False}
 
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
         axes={"age": age, "metallicity": metallicity * dimensionless},
         wavelength=lam,
-        spectra={"incident": spec}, 
-        log_on_read = log_on_read,
+        spectra={"incident": spec},
+        log_on_read=log_on_read,
         alt_axes=("log10age", "metallicity"),
     )
 
