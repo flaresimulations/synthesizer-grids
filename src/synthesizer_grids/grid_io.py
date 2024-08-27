@@ -270,13 +270,7 @@ class GridFile:
         dset.attrs["Units"] = units
 
         # Store log_on_read dictionary as a string attribute
-
-        # Convert numpy.bool_ to standard Python bool
-        print(log_on_read, type(log_on_read))
-        # This prints the description name????
-        log_on_read_json = {k: bool(v) for k, v in log_on_read.items()}
-        log_on_read_str = json.dumps(log_on_read_json)
-        print(log_on_read_str) 
+        log_on_read_str = json.dumps(log_on_read)
         dset.attrs["log_on_read"] = log_on_read_str
 
         # Include a brief description
@@ -496,6 +490,7 @@ class GridFile:
                 units=str(val.units)
                 if isinstance(val, unyt_array)
                 else "dimensionless",
+                log_on_read=log_on_read
             )
 
     def add_specific_ionising_lum(self, ions=("HI", "HeII"), limit=100):
