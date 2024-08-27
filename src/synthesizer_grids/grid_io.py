@@ -222,6 +222,10 @@ class GridFile:
             description (str)
                 A short description of the dataset to be stored alongside
                 the data.
+            log_on_read (dict)
+                A dictionary with Boolean values for each axis, where True 
+                indicates that the attribute should be interpolated in 
+                logarithmic space.
             units (str)
                 The units of this dataset. Defaults to "dimensionless". These
                 should be in the same format unyt would produce.
@@ -262,8 +266,10 @@ class GridFile:
 
         # Set the units attribute
         dset.attrs["Units"] = units
-    
-        dset.attrs["log_on_read"] = log_on_read
+
+        # Store log_on_read dictionary as a string attribute
+        log_on_read_str = json.dumps(log_on_read)
+        dset.attrs["log_on_read"] = log_on_read_str
 
         # Include a brief description
         dset.attrs["Description"] = description
@@ -350,11 +356,12 @@ class GridFile:
 
         # Get the data to copy
         data = self.hdf[key][...]
+        log_on_read = self.hdf[key].attrs["log_on_read"]
         des = self.hdf[key].attrs["Description"]
         units = self.hdf[key].attrs["Units"]
 
         # Write the alternative version
-        self.write_dataset(alt_key, data, des, units=units)
+        self.write_dataset(alt_key, data, log_on_read, des, units=units)
 
         self._close_file()
 
@@ -450,7 +457,7 @@ class GridFile:
                 axis_arr.value
                 if isinstance(axis_arr, unyt_array)
                 else axis_arr,
-                log_on_read,
+                log_on_read[axis_key],
                 descriptions[axis_key],
                 units=units,
             )
@@ -466,6 +473,7 @@ class GridFile:
             wavelength.value
             if isinstance(wavelength, unyt_array)
             else wavelength,
+            log_on_read,
             "Wavelength of the spectra grid",
             units=str(wavelength.units),
         )
