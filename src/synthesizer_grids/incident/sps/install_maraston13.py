@@ -37,10 +37,10 @@ def make_grid(model, imf, input_dir, grid_dir):
 
     metallicity = np.array(
         [0.001, 0.01, 0.02, 0.04]
-    ) * dimensionless # array of available metallicities
+    )  # array of available metallicities
 
     if imf == "kroupa100":
-        metallicity = np.array([0.02]) * dimensionless
+        metallicity = np.array([0.02]) 
 
     metallicity_code = {
         0.001: "0001",
@@ -93,7 +93,7 @@ def make_grid(model, imf, input_dir, grid_dir):
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"age": age, "metallicity": metallicity},
+        axes={"age": age, "metallicity": metallicity * dimensionless},
         wavelength=lam,
         spectra={"incident": spec}, 
         log_on_read = log_on_read,
