@@ -206,7 +206,6 @@ class GridFile:
         key,
         data,
         description,
-        log_on_read,
         units,
         verbose=True,
         **kwargs,
@@ -223,11 +222,6 @@ class GridFile:
                 input data.
             description (str)
                 A short description of the dataset to be stored alongside
-                the data.
-            log_on_read (dict)
-                A dictionary with Boolean values for each axis, where True 
-                indicates that the attribute should be interpolated in 
-                logarithmic space.
             units (str)
                 The units of this dataset. Defaults to "dimensionless". These
                 should be in the same format unyt would produce.
@@ -268,10 +262,6 @@ class GridFile:
 
         # Set the units attribute
         dset.attrs["Units"] = units
-
-        # Store log_on_read dictionary as a string attribute
-        log_on_read_str = json.dumps(log_on_read)
-        dset.attrs["log_on_read"] = log_on_read_str
 
         # Include a brief description
         dset.attrs["Description"] = description
@@ -358,12 +348,11 @@ class GridFile:
 
         # Get the data to copy
         data = self.hdf[key][...]
-        log_on_read = self.hdf[key].attrs["log_on_read"]
         des = self.hdf[key].attrs["Description"]
         units = self.hdf[key].attrs["Units"]
 
         # Write the alternative version
-        self.write_dataset(alt_key, data, log_on_read, des, units=units)
+        self.write_dataset(alt_key, data, des, units=units)
 
         self._close_file()
 
@@ -460,8 +449,7 @@ class GridFile:
                 if isinstance(axis_arr, unyt_array)
                 else axis_arr,
                 descriptions[axis_key],
-                units=units,
-                log_on_read=log_on_read[axis_key],
+                units=units
             )
 
         # Create soft links for the alternative naming
@@ -476,8 +464,7 @@ class GridFile:
             if isinstance(wavelength, unyt_array)
             else wavelength,
             "Wavelength of the spectra grid",
-            units=str(wavelength.units),
-            log_on_read=log_on_read
+            units=str(wavelength.units)
         )
 
         # Write out each spectra
@@ -489,8 +476,7 @@ class GridFile:
                 "[age, metallicity, wavelength]",
                 units=str(val.units)
                 if isinstance(val, unyt_array)
-                else "dimensionless",
-                log_on_read=log_on_read
+                else "dimensionless"
             )
 
     def add_specific_ionising_lum(self, ions=("HI", "HeII"), limit=100):
@@ -562,7 +548,7 @@ class GridFile:
                 f"log10_specific_ionising_luminosity/{ion}",
                 out_arrs[ion],
                 "Two-dimensional {ion} ionising photon "
-                "production rate grid, [age, Z]",
+                "production rate grid, [age, Z]"
             )
 
         self._close_file()
