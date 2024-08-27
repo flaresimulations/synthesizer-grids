@@ -86,7 +86,7 @@ def make_grid(model, imf, input_dir, grid_dir):
     # indicates that the attribute should be interpolated in 
     # logarithmic space.
     log_on_read = {
-        "age": True
+        "age": True,
         "metallicity": False
     }
 
