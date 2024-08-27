@@ -450,6 +450,7 @@ class GridFile:
                 axis_arr.value
                 if isinstance(axis_arr, unyt_array)
                 else axis_arr,
+                log_on_read,
                 descriptions[axis_key],
                 units=units,
             )
