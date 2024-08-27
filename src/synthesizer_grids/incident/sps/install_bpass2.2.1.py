@@ -3,14 +3,16 @@ Download BPASS v2.2.1 and convert to HDF5 synthesizer grid.
 """
 
 import os
-import numpy as np
+
 # import gdown
 import tarfile
-# from hoki import load
-from unyt import angstrom, erg, s, Hz
 
+import numpy as np
 from synthesizer_grids.grid_io import GridFile
 from synthesizer_grids.parser import Parser
+
+# from hoki import load
+from unyt import Hz, angstrom, erg, s
 from utils import get_model_filename
 
 
@@ -44,14 +46,13 @@ def resolve_name(original_model_name, bin):
 
 
 def parse_starmass_file(filename):
-
     """
     Parse a BPASS starmass file.
     """
     data = np.loadtxt(filename).T
     log10ages = data[0]
-    stellar_fraction = data[1] / 1E6
-    remnant_fraction = data[2] / 1E6
+    stellar_fraction = data[1] / 1e6
+    remnant_fraction = data[2] / 1e6
     # the final element is broken so replace with the previous one
     stellar_fraction[-1] = stellar_fraction[-2]
 
@@ -59,7 +60,6 @@ def parse_starmass_file(filename):
 
 
 def parse_spectra_file(filename):
-
     """
     Parse a BPASS spectra file.
     """
@@ -90,7 +90,7 @@ def make_grid(original_model_name, bin, input_dir, grid_dir):
 
     # input directory of this specific bpass model (hence the trailing "_")
     input_dir_ = (
-        f'{input_dir}/{model["original_model_name"]}/'
+        f'{input_dir}/{model["original_model_name"]}'
     )
 
     # dictionary mapping filename metallicity to float
@@ -115,8 +115,9 @@ def make_grid(original_model_name, bin, input_dir, grid_dir):
 
     # get ages and remaining fraction of first metallicity
     fn_ = f"starmass-{bin}-imf{bpass_imf}.zem5.dat"
-    log10ages, stellar_fraction_, remnant_fraction_ = (
-        parse_starmass_file(f"{input_dir_}/{fn_}"))
+    log10ages, stellar_fraction_, remnant_fraction_ = parse_starmass_file(
+        f"{input_dir_}/{fn_}"
+    )
 
     # open spectra file
     fn_ = f"spectra-{bin}-imf{bpass_imf}.zem5.dat"
@@ -132,13 +133,13 @@ def make_grid(original_model_name, bin, input_dir, grid_dir):
 
     # loop over metallicity
     for imetal, metal in enumerate(metallicities):
-
         metallicity_key = map_met_to_key[metallicities[imetal]]
 
         # get ages and remaining fraction
         fn_ = f"starmass-{bin}-imf{bpass_imf}.{metallicity_key}.dat"
-        log10ages, stellar_fraction_, remnant_fraction_ = (
-            parse_starmass_file(f"{input_dir_}/{fn_}"))
+        log10ages, stellar_fraction_, remnant_fraction_ = parse_starmass_file(
+            f"{input_dir_}/{fn_}"
+        )
 
         # open spectra file
         fn_ = f"spectra-{bin}-imf{bpass_imf}.{metallicity_key}.dat"
@@ -193,7 +194,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-models",
         "--models",
-        description="""list of models to process, separated by ','.
+        help="""list of models to process, separated by ','.
 By default uses 'bpass_v2.2.1_imf_chab100'.
 Use 'all' to process all models.""",
         default="bpass_v2.2.1_imf_chab100",
@@ -209,29 +210,29 @@ Use 'all' to process all models.""",
     grid_dir = args.grid_dir
 
     # define base sps model
-    sps_name = 'bpass'
+    sps_name = "bpass"
 
     # append sps_name to input_dir to define where to store downloaded input
     # files
-    input_dir += f'/{sps_name}'
+    input_dir += f"/{sps_name}"
 
     # get list of models
     models = args.models
 
     # If all models are specified
-    if models == 'all':
+    if models == "all":
         models = [
-            "bpass_v2.2.1_imf_chab100",
-            "bpass_v2.2.1_imf_chab300",
-            "bpass_v2.2.1_imf100_300",
-            "bpass_v2.2.1_imf135_300",
+            # "bpass_v2.2.1_imf_chab100",
+            # "bpass_v2.2.1_imf_chab300",
+            # "bpass_v2.2.1_imf100_300",
+            # "bpass_v2.2.1_imf135_300",
             "bpass_v2.2.1_imf170_300",
-            "bpass_v2.2.1_imf100_100",
-            "bpass_v2.2.1_imf135_100",
-            "bpass_v2.2.1_imf170_100"
-            ]
+            # "bpass_v2.2.1_imf100_100",
+            # "bpass_v2.2.1_imf135_100",
+            # "bpass_v2.2.1_imf170_100"
+        ]
     else:
-        models = models.split(',')
+        models = models.split(",")
 
     # loop over all models
     for model in models:

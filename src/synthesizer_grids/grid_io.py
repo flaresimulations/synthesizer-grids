@@ -14,15 +14,16 @@ Example usage:
     )
 
 """
+
 from datetime import date
+
 import h5py
 import numpy as np
-from unyt import unyt_array
-from tqdm import tqdm
-
-from synthesizer.sed import Sed
-from synthesizer.photoionisation import Ions
 from synthesizer._version import __version__ as synthesizer_version
+from synthesizer.photoionisation import Ions
+from synthesizer.sed import Sed
+from tqdm import tqdm
+from unyt import unyt_array
 
 from synthesizer_grids._version import __version__ as grids_version
 
@@ -147,8 +148,8 @@ class GridFile:
 
         Args:
             group (str)
-                The key of the group where key is stored. Must be the full path,
-                i.e. "Group/SubGroup".
+                The key of the group where key is stored. Must be the full
+                path, i.e. "Group/SubGroup".
             attr_key (str)
                 The attribute key.
         """
@@ -411,8 +412,9 @@ class GridFile:
                 descriptions[key] = self.descriptions[key]
             else:
                 raise ValueError(
-                    f"No description was provided for non-standard axis ({key})."
-                    "Pass a description to the descriptions kwarg."
+                    "No description was provided for non-standard "
+                    f"axis ({key}). Pass a description to the descriptions "
+                    "kwarg."
                 )
 
         # Handle any alternative axis names that have been given
@@ -461,7 +463,8 @@ class GridFile:
             self.write_dataset(
                 "spectra/" + key,
                 val.value if isinstance(val, unyt_array) else val,
-                "Three-dimensional spectra grid, [age, metallicity, wavelength]",
+                "Three-dimensional spectra grid, "
+                "[age, metallicity, wavelength]",
                 units=str(val.units)
                 if isinstance(val, unyt_array)
                 else "dimensionless",

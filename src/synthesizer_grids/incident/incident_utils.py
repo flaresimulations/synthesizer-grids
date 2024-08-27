@@ -1,15 +1,14 @@
 """
-Generic incident grid creation functions module. 
+Generic incident grid creation functions module.
 """
 
 import os
 import sys
+
 import h5py
 import numpy as np
-
-from synthesizer.sed import Sed
 from synthesizer.photoionisation import Ions
-from unyt import unyt_quantity
+from synthesizer.sed import Sed
 from unyt import Angstrom
 
 # import functions from grid_utils module
@@ -53,10 +52,9 @@ def add_log10_specific_ionising_lum(
             hf[f"log10_specific_ionising_lum/{ion}"] = np.zeros(shape)
 
         # get spectra group
-        spectra = hf[f"spectra"]
+        spectra = hf["spectra"]
 
         # get wavelength grid, including with units
-        # lam = spectra['wavelength'] * unyt_quantity.from_string(spectra['wavelength'].attrs['Units']).replace('AA','angstrom')
         lam = np.array(spectra["wavelength"]) * Angstrom
 
         # loop over grid points and calculate Q and store it
@@ -81,55 +79,6 @@ def add_log10_specific_ionising_lum(
 
                 # save
                 hf[f"log10_specific_ionising_lum/{ion}"][indices] = np.log10(Q)
-
-
-# def add_log10_specific_ionising_lum(grid_filename, ions=['HI', 'HeII'], limit=100):
-#     """
-#     A function to calculate the ionising photon luminosity for different ions.
-
-#     Parameters
-#     ---------
-#     grid_filename : str
-#         the filename of the HDF5 grid
-#     ions : list
-#         a list of ions to calculate Q for
-#     limit: float or int, optional
-#         An upper bound on the number of subintervals
-#         used in the integration adaptive algorithm.
-
-#     """
-
-#     with h5py.File(grid_filename, 'a') as hf:
-
-#         # THIS NEEDS UPDATING TO USE MORE GENERAL GRIDS
-#         metallicities = hf['axes/metallicity'][()]
-#         log10ages = hf['axes/log10age'][()]
-
-#         nmetal = len(metallicities)
-#         na = len(log10ages)
-
-#         lam = hf['spectra/wavelength'][()]
-
-#         if 'log10_specific_ionising_lum' in hf.keys():
-#             del hf['log10_specific_ionising_lum']  # delete log10_specific_ionising_lum if it already exists
-
-#         for ion in ions:
-
-#             ionisation_energy = Ions.energy[ion]
-
-#             hf[f'log10_specific_ionising_lum/{ion}'] = np.zeros((na, nmetal))
-
-#             # ---- determine stellar log10_specific_ionising_lum
-
-#             for imetal, metal in enumerate(metallicities):
-#                 for ia, log10age in enumerate(log10ages):
-#                     # print(ia, imetal)
-
-#                     lnu = hf['spectra/stellar'][ia, imetal, :]
-
-#                     Q = calc_log10_specific_ionising_lum(lam, lnu, ionisation_energy=ionisation_energy, limit=limit)
-
-#                     hf[f'log10_specific_ionising_lum/{ion}'][ia, imetal] = np.log10(Q)
 
 
 def write_data_h5py(filename, name, data, overwrite=False):
