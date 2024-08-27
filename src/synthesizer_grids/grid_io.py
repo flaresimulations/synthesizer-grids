@@ -435,16 +435,10 @@ class GridFile:
         # Write out each axis array
         for axis_key, axis_arr in axes.items():
 
-            print('in write grid common', axis_key, type(axis_key))
-
             # Determine whether the axis should be logged based on log_on_read
             if log_on_read.get(axis_key, True):
                 axis_arr = np.log10(axis_arr)
-                new_axis_key = f"log10{axis_key}" # rewrite name by adding a log10
-                axes[new_axis_key] = axis_arr
                 units = "dimensionless"
-
-                del axes[axis_key] # remove old key
 
             else:
                 units = str(axis_arr.units)
@@ -457,6 +451,7 @@ class GridFile:
                 descriptions[axis_key],
                 units=units
             )
+
 
         # Create soft links for the alternative naming
         # No need for logic, if alt_axes is empty there will be no loop
