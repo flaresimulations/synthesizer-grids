@@ -24,6 +24,7 @@ from synthesizer.photoionisation import Ions
 from synthesizer.sed import Sed
 from tqdm import tqdm
 from unyt import unyt_array
+import json
 
 from synthesizer_grids._version import __version__ as grids_version
 
@@ -59,6 +60,7 @@ class GridFile:
         "log10metallicity": "Logged stellar population metallicity",
         "metallicities": "Stellar population metallicity",
         "metallicity": "Stellar population metallicity",
+        "log_on_read": "Boolean, True for interpolated axes"
     }
 
     def __init__(self, filepath, mode="w", overwrite=False):
@@ -268,7 +270,13 @@ class GridFile:
         dset.attrs["Units"] = units
 
         # Store log_on_read dictionary as a string attribute
-        log_on_read_str = json.dumps(log_on_read)
+
+        # Convert numpy.bool_ to standard Python bool
+        print(log_on_read, type(log_on_read))
+        # This prints the description name????
+        log_on_read_json = {k: bool(v) for k, v in log_on_read.items()}
+        log_on_read_str = json.dumps(log_on_read_json)
+        print(log_on_read_str) 
         dset.attrs["log_on_read"] = log_on_read_str
 
         # Include a brief description
@@ -457,9 +465,9 @@ class GridFile:
                 axis_arr.value
                 if isinstance(axis_arr, unyt_array)
                 else axis_arr,
-                log_on_read[axis_key],
                 descriptions[axis_key],
                 units=units,
+                log_on_read=log_on_read[axis_key],
             )
 
         # Create soft links for the alternative naming
@@ -473,9 +481,9 @@ class GridFile:
             wavelength.value
             if isinstance(wavelength, unyt_array)
             else wavelength,
-            log_on_read,
             "Wavelength of the spectra grid",
             units=str(wavelength.units),
+            log_on_read=log_on_read
         )
 
         # Write out each spectra
