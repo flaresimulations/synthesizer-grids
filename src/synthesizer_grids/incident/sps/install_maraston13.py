@@ -85,7 +85,7 @@ def make_grid(model, imf, input_dir, grid_dir):
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"log10age": log10age, "metallicity": metallicity},
+        axes={"age": age, "metallicity": metallicity},
         wavelength=lam,
         spectra={"incident": spec},  # check this unit
         alt_axes=("log10age", "metallicity"),
