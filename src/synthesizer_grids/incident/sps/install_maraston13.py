@@ -8,7 +8,7 @@ import numpy as np
 from synthesizer.conversions import llam_to_lnu
 from synthesizer_grids.grid_io import GridFile
 from synthesizer_grids.parser import Parser
-from unyt import Angstrom, erg, s, yr
+from unyt import Angstrom, erg, s, yr, dimensionless
 
 
 def make_grid(model, imf, input_dir, grid_dir):
@@ -37,10 +37,10 @@ def make_grid(model, imf, input_dir, grid_dir):
 
     metallicity = np.array(
         [0.001, 0.01, 0.02, 0.04]
-    )  # array of available metallicities
+    ) * dimensionless # array of available metallicities
 
     if imf == "kroupa100":
-        metallicity = np.array([0.02])
+        metallicity = np.array([0.02]) * dimensionless
 
     metallicity_code = {
         0.001: "0001",
