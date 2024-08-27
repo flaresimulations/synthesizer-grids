@@ -530,8 +530,6 @@ class GridFile:
                 # Get incident spectrum
                 lnu = self.read_dataset("spectra/incident", indices=indices)
 
-                # print(lam.shape, lnu.shape)
-                # print(lam, lnu)
                 # Calculate Q
                 sed = Sed(lam, lnu)
                 ionising_lum = sed.calculate_ionising_photon_production_rate(
@@ -548,7 +546,8 @@ class GridFile:
                 f"log10_specific_ionising_luminosity/{ion}",
                 out_arrs[ion],
                 "Two-dimensional {ion} ionising photon "
-                "production rate grid, [age, Z]"
+                "production rate grid, [age, Z]",
+                units="dimensionless"
             )
 
         self._close_file()
