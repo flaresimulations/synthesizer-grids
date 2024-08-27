@@ -437,8 +437,9 @@ class GridFile:
 
             # Determine whether the axis should be logged based on log_on_read
             if log_on_read.get(axis_key, True):
-                units = "dimensionless"
                 axis_arr = np.log10(axis_arr)
+                axis_key = f"log10{axis_key}" # rewrite name by adding a log10
+                units = "dimensionless"
 
             else:
                 units = str(axis_arr.units)
