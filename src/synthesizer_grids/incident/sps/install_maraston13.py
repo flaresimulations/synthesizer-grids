@@ -1,12 +1,14 @@
 """
 Download the Maraston2013 SPS model and convert to HDF5 synthesizer grid.
 """
+
 import os
+
 import numpy as np
-from unyt import erg, s, Angstrom, yr
 from synthesizer.conversions import llam_to_lnu
-from synthesizer_grids.parser import Parser
 from synthesizer_grids.grid_io import GridFile
+from synthesizer_grids.parser import Parser
+from unyt import Angstrom, erg, s, yr
 
 
 def make_grid(model, imf, input_dir, grid_dir):
@@ -45,7 +47,10 @@ def make_grid(model, imf, input_dir, grid_dir):
     }  # codes for converting metallicty
 
     # open first raw data file to get age
-    fn = f"{input_dir}/sed_M13.{imf_code[imf]}z{metallicity_code[metallicities[0]]}"
+    fn = (
+        f"{input_dir}/sed_M13.{imf_code[imf]}"
+        f"z{metallicity_code[metallicities[0]]}"
+    )
 
     ages_, _, lam_, llam_ = np.loadtxt(fn).T  # llam is in (ergs /s /AA /Msun)
 
@@ -63,7 +68,10 @@ def make_grid(model, imf, input_dir, grid_dir):
     # at each point in spec convert the units
     for imetal, metallicity in enumerate(metallicities):
         for ia, age_Gyr in enumerate(ages_Gyr):
-            fn = f"{input_dir}/sed_M13.{imf_code[imf]}z{metallicity_code[metallicity]}"
+            fn = (
+                f"{input_dir}/sed_M13.{imf_code[imf]}"
+                f"z{metallicity_code[metallicity]}"
+            )
             print(imetal, ia, fn)
             ages_, _, lam_, llam_ = np.loadtxt(fn).T
 
@@ -103,7 +111,7 @@ if __name__ == "__main__":
     }
 
     input_dir = args.input_dir
-    input_dir += f'/{sps_name}'
+    input_dir += f"/{sps_name}"
 
     # create directory to store downloaded output if it doesn't exist
     if not os.path.exists(input_dir):

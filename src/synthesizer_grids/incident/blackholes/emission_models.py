@@ -6,11 +6,10 @@ In addition to these models there is the model built in to cloudy.
 """
 
 import numpy as np
-from unyt import c, Angstrom
+from unyt import Angstrom, c
 
 
 class Feltre16:
-
     """
     A class to hold routines for employing the Feltre16 AGN model.
     """

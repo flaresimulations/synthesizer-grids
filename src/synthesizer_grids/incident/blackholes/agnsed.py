@@ -2,16 +2,15 @@
 Create a synthesizer incident grid for the agnsed model
 """
 
-import h5py
-import numpy as np
-from unyt import c, Angstrom
-
-# from utils import __tag__, broken_power_law, add_log10_specific_ionising_lum
-from utils import broken_power_law, add_log10_specific_ionising_lum
-from datetime import date
-
 # adding relagn to pythonpath
 import sys
+from datetime import date
+
+import h5py
+import numpy as np
+
+# from utils import __tag__, broken_power_law, add_log10_specific_ionising_lum
+from utils import add_log10_specific_ionising_lum
 
 sys.path.append(
     "/Users/sw376/Dropbox/Research/projects/flares_emissiveagn/packages/RELAGN/src/"
@@ -28,9 +27,9 @@ axes = ["mass", "accretion_rate_eddington", "cosine_inclination"]
 
 axes_descriptions = {}
 axes_descriptions["mass"] = "blackhole mass"
-axes_descriptions[
-    "accretion_rate_eddington"
-] = "BH accretion rate / Edding accretion rate [LEdd=\eta MdotEdd c^2]"
+axes_descriptions["accretion_rate_eddington"] = (
+    r"BH accretion rate / Edding accretion rate [LEdd=\eta MdotEdd c^2]"
+)
 axes_descriptions["cosine_inclination"] = "cosine of the inclination"
 
 axes_units = {}
@@ -70,9 +69,9 @@ with h5py.File(filename, "w") as hf:
 
     # save wavelength dataset
     hf["spectra/wavelength"] = lam
-    hf["spectra/wavelength"].attrs[
-        "Description"
-    ] = "Wavelength of the spectra grid"
+    hf["spectra/wavelength"].attrs["Description"] = (
+        "Wavelength of the spectra grid"
+    )
     hf["spectra/wavelength"].attrs["Units"] = "Angstrom"
 
     # create empty spectra grid

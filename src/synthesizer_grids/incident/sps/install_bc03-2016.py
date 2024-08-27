@@ -2,26 +2,26 @@
 Download BC03 and convert to HDF5 synthesizer grid.
 
 """
-import os
-import sys
-import glob
-import numpy as np
-import re
-import requests
-import tarfile
-from tqdm import tqdm
-import gzip
-import shutil
-from unyt import angstrom, erg, s, Hz
 
+import glob
+import gzip
+import os
+import re
+import shutil
+import sys
+import tarfile
+
+import numpy as np
+import requests
 from synthesizer_grids.grid_io import GridFile
 from synthesizer_grids.parser import Parser
+from tqdm import tqdm
+from unyt import Hz, angstrom, erg, s
 from utils import get_model_filename
 
 
 def extract_and_decompress_ised_files(directory):
-
-    """ Walk through the extracted directory and extract the ised files to the
+    """Walk through the extracted directory and extract the ised files to the
     top directory and delete anything else.
     """
 
@@ -36,15 +36,14 @@ def extract_and_decompress_ised_files(directory):
 
     # delete all files but these
     for root, dirs, files in os.walk(directory):
-        if root.split('/')[-1] not in ['bc03-2016', 'bc03', 'src']:
+        if root.split("/")[-1] not in ["bc03-2016", "bc03", "src"]:
             shutil.rmtree(root)
 
 
 def extract_and_decompress_tgz(file_path, extract_path):
-
-    """ Extract and decompress the parent .tgz file. Subsequently calles
+    """Extract and decompress the parent .tgz file. Subsequently calles
     extract_and_decompress_ised_files() to only extract the required ised
-    files and delete everything else. """
+    files and delete everything else."""
 
     with tarfile.open(file_path, "r:gz") as tar:
         tar.extractall(path=extract_path)
@@ -95,9 +94,7 @@ def download_utility(input_dir):
     save_path = f"{input_dir}/src.tar"
 
     # Define the url
-    url = (
-        "http://www.bruzual.org/bc03/Updated_version_2016/src.tgz"
-    )
+    url = "http://www.bruzual.org/bc03/Updated_version_2016/src.tgz"
 
     # Call the server and get the response
     response = requests.get(url, stream=True)
@@ -119,8 +116,7 @@ def download_utility(input_dir):
 
 
 def compile_utility(input_dir):
-
-    """ Compile the ascii_ised (which converts the binary .ised files to ascii)
+    """Compile the ascii_ised (which converts the binary .ised files to ascii)
     tool."""
 
     source_dir = f"{input_dir}/bc03/src"
@@ -128,7 +124,6 @@ def compile_utility(input_dir):
 
 
 def convert_to_ascii(input_dir):
-
     """
     Using the ascii_ised tool convert all the .ised files in a given directory
     to ascii.
@@ -163,14 +158,14 @@ def readBC03Array(file, lastLineFloat=None):
     # Read array 'header' (i.e. number of elements)
     arrayCount = int(lastLineFloat[0])  # Length of returned array
     array = np.empty(arrayCount)  # Initialise the array
-    lastLineFloat = lastLineFloat[1: len(lastLineFloat)]
+    lastLineFloat = lastLineFloat[1 : len(lastLineFloat)]
     iA = 0  # Running array index
     while True:  # Read numbers until array is full
         for iL in range(0, len(lastLineFloat)):  # Loop numbers in line
             array[iA] = lastLineFloat[iL]
             iA = iA + 1
             if iA >= arrayCount:  # Array is full so return
-                return array, lastLineFloat[iL + 1:]
+                return array, lastLineFloat[iL + 1 :]
         line = file.readline()  # Went through the line so get the next one
         lineStr = line.split()
         lastLineFloat = [float(x) for x in lineStr]
@@ -234,7 +229,7 @@ def convertBC03(files=None):
 
         print(line)
         # These last three lines are identical and contain the metallicity
-        (jmetal,) = re.search("Z=([0-9]+\.?[0-9]*)", line).groups()
+        (jmetal,) = re.search(r"Z=([0-9]+\.?[0-9]*)", line).groups()
         metalBins[iFile] = eval(jmetal)
         seds.resize(
             (len(metalBins), seds.shape[1], seds.shape[2]), refcheck=False
@@ -282,11 +277,11 @@ def make_grid(variant, imf_type, input_dir, out_filename):
     produce grids used by synthesizer"""
 
     # Define imf code
-    if imf_type == 'salpeter':
+    if imf_type == "salpeter":
         imf_code = "salp"
-    if imf_type == 'chabrier':
+    if imf_type == "chabrier":
         imf_code = "chab"
-    if imf_type == 'kroupa':
+    if imf_type == "kroupa":
         imf_code = "kroup"
 
     # Define variant code
@@ -308,7 +303,7 @@ def make_grid(variant, imf_type, input_dir, out_filename):
         f"bc2003_{variant_code}_m82_{imf_code}_ssp.ised_ASCII",
     ]
 
-    out = convertBC03([input_dir + '/' + s for s in files])
+    out = convertBC03([input_dir + "/" + s for s in files])
 
     metallicities = out[1]
 
@@ -359,7 +354,7 @@ if __name__ == "__main__":
 
     # append sps_name to input_dir to define where to store downloaded input
     # files
-    input_dir += f'/{sps_name}'
+    input_dir += f"/{sps_name}"
 
     # create directory to store downloaded output if it doesn't exist
     if not os.path.exists(input_dir):
@@ -385,7 +380,7 @@ if __name__ == "__main__":
 
     # do not bother with the top-heavy IMF it has a different naming scheme
     # not worth the hassle.
-    imf_types = ['kroupa', 'salpeter', 'chabrier']
+    imf_types = ["kroupa", "salpeter", "chabrier"]
 
     if args.download:
         # download all the variant and IMF types desired
@@ -398,7 +393,6 @@ if __name__ == "__main__":
 
     for variant in variants:
         for imf_type in imf_types:
-
             model_variations = {"sps_variant": variant, "imf_type": imf_type}
 
             model = default_model | model_variations
@@ -407,8 +401,6 @@ if __name__ == "__main__":
             print(synthesizer_model_name)
 
             # this is the full path to the ultimate HDF5 grid file
-            out_filename = (
-                f"{grid_dir}/{synthesizer_model_name}.hdf5"
-            )
+            out_filename = f"{grid_dir}/{synthesizer_model_name}.hdf5"
 
             make_grid(variant, imf_type, input_dir, out_filename)
