@@ -59,7 +59,6 @@ def make_grid(model, imf, input_dir, grid_dir):
 
     age_Gyr = np.sort(np.array(list(set(age_))))  # Gyr
     age = age_Gyr * 1e9 * yr
-    log10age = np.log10(age)
 
     lam = lam_[age_ == age_[0]] * Angstrom
 
@@ -82,12 +81,22 @@ def make_grid(model, imf, input_dir, grid_dir):
             lnu = llam_to_lnu(lam, llam)
             spec[ia, iZ] = lnu
 
+
+    # A dictionary with Boolean values for each axis, where True 
+    # indicates that the attribute should be interpolated in 
+    # logarithmic space.
+    log_on_read_values = {
+        "age": True
+        "metallicity": False
+    }
+
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
         axes={"age": age, "metallicity": metallicity},
         wavelength=lam,
-        spectra={"incident": spec},  # check this unit
+        spectra={"incident": spec}, 
+        log_on_read_values = log_on_read_values,
         alt_axes=("log10age", "metallicity"),
     )
 
