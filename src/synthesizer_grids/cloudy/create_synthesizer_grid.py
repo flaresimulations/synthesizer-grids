@@ -97,7 +97,7 @@ def check_cloudy_runs(
                     for ext in files_to_check:
                         shutil.copyfile(
                             f"{cloudy_dir}/{grid_name}/{i}.{ext}",
-                            infile + ".lines",
+                            infile + f".{ext}",
                         )
 
         # If the files have been replace set the failed list to empty so the
