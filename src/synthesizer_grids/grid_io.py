@@ -221,6 +221,7 @@ class GridFile:
                 input data.
             description (str)
                 A short description of the dataset to be stored alongside
+                the data.
             units (str)
                 The units of this dataset. Defaults to "dimensionless". These
                 should be in the same format unyt would produce.
