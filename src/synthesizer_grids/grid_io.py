@@ -226,6 +226,10 @@ class GridFile:
             units (str)
                 The units of this dataset. Defaults to "dimensionless". These
                 should be in the same format unyt would produce.
+            log_on_read (bool)
+                A dictionary with Boolean values for each axis, where True
+                indicates that the attribute should be interpolated in
+                logarithmic space.
             verbose (bool)
                 Are we talking?
             kwargs (dict)
@@ -450,6 +454,7 @@ class GridFile:
                 if isinstance(axis_arr, unyt_array)
                 else axis_arr,
                 descriptions[axis_key],
+                log_on_read=log_on_read,
                 units=units,
             )
 
