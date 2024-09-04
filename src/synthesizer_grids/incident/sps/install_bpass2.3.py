@@ -3,10 +3,11 @@ Download BPASS v2.3 and convert to HDF5 synthesizer grid.
 """
 
 import numpy as np
-from synthesizer_grids.grid_io import GridFile
-from synthesizer_grids.parser import Parser
 from unyt import Hz, angstrom, erg, s
 from utils import get_model_filename
+
+from synthesizer_grids.grid_io import GridFile
+from synthesizer_grids.parser import Parser
 
 
 def resolve_name(original_model_name, bin, alpha=False):

@@ -24,7 +24,6 @@ from synthesizer.photoionisation import Ions
 from synthesizer.sed import Sed
 from tqdm import tqdm
 from unyt import unyt_array
-import json
 
 from synthesizer_grids._version import __version__ as grids_version
 
@@ -60,7 +59,7 @@ class GridFile:
         "log10metallicity": "Logged stellar population metallicity",
         "metallicities": "Stellar population metallicity",
         "metallicity": "Stellar population metallicity",
-        "log_on_read": "Boolean, True for interpolated axes"
+        "log_on_read": "Boolean, True for interpolated axes",
     }
 
     def __init__(self, filepath, mode="w", overwrite=False):
@@ -386,8 +385,8 @@ class GridFile:
                 should be {"spectra_type": spectra_grid}. "spectra_type" will
                 be the key used for the dataset.
             log_on_read (dict)
-                A dictionary with Boolean values for each axis, where True 
-                indicates that the attribute should be interpolated in 
+                A dictionary with Boolean values for each axis, where True
+                indicates that the attribute should be interpolated in
                 logarithmic space.
             alt_axes (list, string)
                 Alternative names for the axes. These will create soft links
@@ -434,7 +433,6 @@ class GridFile:
 
         # Write out each axis array
         for axis_key, axis_arr in axes.items():
-
             # Determine whether the axis should be logged based on log_on_read
             if log_on_read.get(axis_key, True):
                 axis_arr = np.log10(axis_arr)
@@ -449,9 +447,8 @@ class GridFile:
                 if isinstance(axis_arr, unyt_array)
                 else axis_arr,
                 descriptions[axis_key],
-                units=units
+                units=units,
             )
-
 
         # Create soft links for the alternative naming
         # No need for logic, if alt_axes is empty there will be no loop
@@ -465,7 +462,7 @@ class GridFile:
             if isinstance(wavelength, unyt_array)
             else wavelength,
             "Wavelength of the spectra grid",
-            units=str(wavelength.units)
+            units=str(wavelength.units),
         )
 
         # Write out each spectra
@@ -477,7 +474,7 @@ class GridFile:
                 "[age, metallicity, wavelength]",
                 units=str(val.units)
                 if isinstance(val, unyt_array)
-                else "dimensionless"
+                else "dimensionless",
             )
 
     def add_specific_ionising_lum(self, ions=("HI", "HeII"), limit=100):
@@ -548,7 +545,7 @@ class GridFile:
                 out_arrs[ion],
                 "Two-dimensional {ion} ionising photon "
                 "production rate grid, [age, Z]",
-                units="dimensionless"
+                units="dimensionless",
             )
 
         self._close_file()

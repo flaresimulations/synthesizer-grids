@@ -13,11 +13,12 @@ import tarfile
 
 import numpy as np
 import requests
-from synthesizer_grids.grid_io import GridFile
-from synthesizer_grids.parser import Parser
 from tqdm import tqdm
 from unyt import Hz, angstrom, erg, s
 from utils import get_model_filename
+
+from synthesizer_grids.grid_io import GridFile
+from synthesizer_grids.parser import Parser
 
 
 def extract_and_decompress_ised_files(directory):
