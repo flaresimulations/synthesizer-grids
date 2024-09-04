@@ -6,9 +6,10 @@ import os
 
 import numpy as np
 from synthesizer.conversions import llam_to_lnu
+from unyt import Angstrom, dimensionless, erg, s, yr
+
 from synthesizer_grids.grid_io import GridFile
 from synthesizer_grids.parser import Parser
-from unyt import Angstrom, erg, s, yr, dimensionless
 
 
 def make_grid(model, imf, input_dir, grid_dir):
@@ -40,7 +41,7 @@ def make_grid(model, imf, input_dir, grid_dir):
     )  # array of available metallicities
 
     if imf == "kroupa100":
-        metallicities = np.array([0.02]) 
+        metallicities = np.array([0.02])
 
     metallicity_codes = {
         0.001: "0001",
@@ -57,10 +58,10 @@ def make_grid(model, imf, input_dir, grid_dir):
 
     ages_, _, lam_, llam_ = np.loadtxt(fn).T  # llam is in (ergs /s /AA /Msun)
 
-    ages_Gyr = np.sort(np.array(list(set(age_))))  # Gyr
+    ages_Gyr = np.sort(np.array(list(set(ages_))))  # Gyr
     ages = ages_Gyr * 1e9 * yr
 
-    lam = lam_[ages_ == age_[0]] * Angstrom
+    lam = lam_[ages_ == ages_[0]] * Angstrom
 
     spec = np.zeros((len(ages), len(metallicities), len(lam)))
 
@@ -81,22 +82,18 @@ def make_grid(model, imf, input_dir, grid_dir):
             lnu = llam_to_lnu(lam, llam)
             spec[ia, iZ] = lnu
 
-
-    # A dictionary with Boolean values for each axis, where True 
-    # indicates that the attribute should be interpolated in 
+    # A dictionary with Boolean values for each axis, where True
+    # indicates that the attribute should be interpolated in
     # logarithmic space.
-    log_on_read = {
-        "ages": True,
-        "metallicities": False
-    }
+    log_on_read = {"ages": True, "metallicities": False}
 
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
         axes={"ages": ages, "metallicities": metallicities * dimensionless},
         wavelength=lam,
-        spectra={"incident": spec}, 
-        log_on_read = log_on_read,
+        spectra={"incident": spec},
+        log_on_read=log_on_read,
         alt_axes=("log10ages", "metallicities"),
     )
 
