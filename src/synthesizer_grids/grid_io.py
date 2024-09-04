@@ -27,10 +27,6 @@ from unyt import unyt_array
 
 from synthesizer_grids._version import __version__ as grids_version
 
-# from synthesizer_grids.create_grids.grid_utils import (
-#     get_grid_properties_from_hdf5,
-# )
-
 
 class GridFile:
     """
@@ -271,6 +267,7 @@ class GridFile:
         # Include a brief description
         dset.attrs["Description"] = description
 
+        # Write out whether we should log this dataset when read
         dset.attrs["log_on_read"] = log_on_read
 
         # Handle any other attributes passed as kwargs
@@ -357,9 +354,16 @@ class GridFile:
         data = self.hdf[key][...]
         des = self.hdf[key].attrs["Description"]
         units = self.hdf[key].attrs["Units"]
+        log_on_read = self.hdf[key].attrs["log_on_read"]
 
         # Write the alternative version
-        self.write_dataset(alt_key, data, des, units=units)
+        self.write_dataset(
+            alt_key,
+            data,
+            des,
+            units=units,
+            log_on_read=log_on_read,
+        )
 
         self._close_file()
 
@@ -454,7 +458,7 @@ class GridFile:
                 if isinstance(axis_arr, unyt_array)
                 else axis_arr,
                 descriptions[axis_key],
-                log_on_read=log_on_read,
+                log_on_read=log_on_read[axis_key],
                 units=units,
             )
 
@@ -471,6 +475,7 @@ class GridFile:
             else wavelength,
             "Wavelength of the spectra grid",
             units=str(wavelength.units),
+            log_on_read=False,
         )
 
         # Write out each spectra
@@ -483,6 +488,7 @@ class GridFile:
                 units=str(val.units)
                 if isinstance(val, unyt_array)
                 else "dimensionless",
+                log_on_read=False,
             )
 
     def add_specific_ionising_lum(self, ions=("HI", "HeII"), limit=100):
@@ -554,6 +560,7 @@ class GridFile:
                 "Two-dimensional {ion} ionising photon "
                 "production rate grid, [age, Z]",
                 units="dimensionless",
+                log_on_read=False,
             )
 
         self._close_file()
