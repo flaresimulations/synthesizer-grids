@@ -206,6 +206,7 @@ class GridFile:
         data,
         description,
         units,
+        log_on_read,
         verbose=True,
         **kwargs,
     ):
@@ -265,6 +266,8 @@ class GridFile:
 
         # Include a brief description
         dset.attrs["Description"] = description
+
+        dset.attrs["log_on_read"] = log_on_read
 
         # Handle any other attributes passed as kwargs
         for dset_attr_key, val in kwargs.items():
