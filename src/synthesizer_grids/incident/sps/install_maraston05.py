@@ -51,7 +51,7 @@ def make_grid(model, imf, hr_morphology, input_dir, grid_dir):
     )  # array of avialable metallicities
 
     # Codes for converting metallicty
-    metallicity_code = {
+    metallicity_codes = {
         0.0001: "10m4",
         0.001: "0001",
         0.01: "001",
@@ -61,8 +61,10 @@ def make_grid(model, imf, hr_morphology, input_dir, grid_dir):
     }
 
     # Open first file to get age
-    fn = f"""{input_dir}/sed.{imf}z{metallicity_code[metallicities[0]]}
-    .{hr_morphology}"""
+    fn = (
+        f"{input_dir}/sed.{imf}z{metallicity_codes[metallicities[0]]}."
+        f"{hr_morphology}"
+    )
     ages_, _, lam_, flam_ = np.loadtxt(fn).T
 
     ages_Gyr = np.sort(np.array(list(set(ages_))))  # Gyr
@@ -74,8 +76,10 @@ def make_grid(model, imf, hr_morphology, input_dir, grid_dir):
 
     for imetal, metallicity in enumerate(metallicities):
         for ia, age_Gyr in enumerate(ages_Gyr):
-            fn = f"""{input_dir}/sed.{imf}z{metallicity_code[metallicity]}
-            .{hr_morphology}"""
+            fn = (
+                f"{input_dir}/sed.{imf}z{metallicity_codes[metallicity]}."
+                f"{hr_morphology}"
+            )
             print(imetal, ia, fn)
             ages_, _, lam_, flam_ = np.loadtxt(fn).T
 
@@ -94,7 +98,7 @@ def make_grid(model, imf, hr_morphology, input_dir, grid_dir):
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"ages": ages, "metallicity": metallicities * dimensionless},
+        axes={"ages": ages, "metallicities": metallicities * dimensionless},
         wavelength=lam,
         spectra={"incident": spec},
         alt_axes=("ages", "metallicities"),
@@ -140,12 +144,13 @@ if __name__ == "__main__":
 
     # Define the download URL
     original_data_url = {}
-    original_data_url["ss"] = """http://www.icg.port.ac.uk/~maraston/SSPn/SED/
-    Sed_Mar05_SSP_Salpeter.tar.gz"""
+    original_data_url["ss"] = """
+    http://www.icg.port.ac.uk/~maraston/SSPn/SED/Sed_Mar05_SSP_Salpeter.tar.gz"""
 
     for imf in imfs:
         # Download the data if necessary
         if args.download:
+            print(original_data_url[imf])
             download_data(input_dir, original_data_url[imf])
 
         if imf == "ss":
