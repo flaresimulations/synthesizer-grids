@@ -71,7 +71,7 @@ def make_grid(model, imf, variant, output_dir, grid_dir):
 
     metallicities = np.array([0.02])  # array of available metallicities
 
-    metallicity_code = {0.02: "002"}  # codes for converting metallicty
+    metallicity_codes = {0.02: "002"}  # codes for converting metallicty
 
     # define the extension
     if variant:
@@ -79,14 +79,15 @@ def make_grid(model, imf, variant, output_dir, grid_dir):
     else:
         extension = ""
 
-    fn = f"""{output_dir}/ssp_M11_Pickles{extension}.{imf_code[imf]}
-    z{metallicity_code[metallicities[0]]}"""
+    fn = (
+        f"{output_dir}/ssp_M11_Pickles{extension}.{imf_code[imf]}"
+        f"z{metallicity_codes[metallicities[0]]}"
+    )
 
     ages_, _, lam_, llam_ = np.loadtxt(fn).T  # llam is in (ergs /s /AA /Msun)
 
     ages_Gyr = np.sort(np.array(list(set(ages_))))  # Gyr
     ages = ages_Gyr * 1e9 * yr
-    log10ages = np.log10(ages)
 
     lam = lam_[ages_ == ages_[0]] * Angstrom
 
@@ -105,13 +106,19 @@ def make_grid(model, imf, variant, output_dir, grid_dir):
     # Create the GridFile ready to take outputs
     out_grid = GridFile(out_filename, mode="w", overwrite=True)
 
+    # A dictionary with Boolean values for each axis, where True
+    # indicates that the attribute should be interpolated in
+    # logarithmic space.
+    log_on_read = {"ages": True, "metallicities": False}
+
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"log10age": log10ages, "metallicity": metallicities},
+        axes={"ages": ages, "metallicities": metallicities},
         wavelength=lam,
         spectra={"incident": spec},
-        alt_axes=("log10ages", "metallicities"),
+        alt_axes=("ages", "metallicities"),
+        log_on_read=log_on_read,
     )
 
     # Include the specific ionising photon luminosity
