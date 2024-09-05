@@ -262,7 +262,7 @@ def make_grid(input_dir, grid_dir, synthesizer_model_name):
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"ages": ages, "metallicity": metallicities * dimensionless},
+        axes={"ages": ages, "metallicities": metallicities * dimensionless},
         wavelength=lam * angstrom,
         spectra={"incident": spec * erg / s / Hz},
         alt_axes=("ages", "metallicities"),
