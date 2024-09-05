@@ -14,7 +14,9 @@ def resolve_name(original_model_name, bin, alpha=False):
     """Resolve the original BPASS model name into what we need. This is
     specific to 2.3. e.g. 'bpass_v2.3_chab300'"""
 
-    bpass_imf = original_model_name.split("_")[-1]
+    # bpass_imf = original_model_name.split("_")[-1]
+    bpass_imf = "135_300"
+    print("bpass imf:", bpass_imf)
     hmc = float(bpass_imf[-3:])  # high-mass cutoff
 
     if bpass_imf[:4] == "chab":
@@ -108,11 +110,11 @@ def make_single_alpha_grid(
     metallicities = np.sort(np.array(list(map_met_to_key.keys())))
 
     # get ages and remaining fraction
-    fn_ = f"starmass-{bs}-imf_{bpass_imf}.a{ae}.zem5.dat"
+    fn_ = f"starmass-{bs}-imf{bpass_imf}.a{ae}.zem5.dat"
     log10ages, stellar_fraction_ = parse_starmass_file(f"{input_dir_}/{fn_}")
 
     # open spectra file
-    fn_ = f"spectra-{bs}-imf_{bpass_imf}.a{ae}.zem5.dat"
+    fn_ = f"spectra-{bs}-imf{bpass_imf}.a{ae}.zem5.dat"
     wavelengths, spectra_ = parse_spectra_file(f"{input_dir_}/{fn_}")
     nu = 3e8 / (wavelengths * 1e-10)
 
@@ -135,7 +137,7 @@ def make_single_alpha_grid(
         metallicity_key = map_met_to_key[metallicities[imetal]]
 
         # get ages and remaining fraction
-        fn_ = f"starmass-{bs}-imf_{bpass_imf}.a{ae}.{metallicity_key}.dat"
+        fn_ = f"starmass-{bs}-imf{bpass_imf}.a{ae}.{metallicity_key}.dat"
         log10ages, stellar_fraction_ = parse_starmass_file(
             f"{input_dir_}/{fn_}"
         )
@@ -144,7 +146,7 @@ def make_single_alpha_grid(
         # remnant_fraction[:, imetal] = remnant_fraction_
 
         # open spectra file
-        fn_ = f"spectra-{bs}-imf_{bpass_imf}.a{ae}.{metallicity_key}.dat"
+        fn_ = f"spectra-{bs}-imf{bpass_imf}.a{ae}.{metallicity_key}.dat"
         wavelengths, spectra_ = parse_spectra_file(f"{input_dir_}/{fn_}")
 
         for ia, _ in enumerate(log10ages):
@@ -228,12 +230,12 @@ def make_full_grid(original_model_name, input_dir, grid_dir, bs="bin"):
 
     # get ages and remaining fraction for first alpha-enhancement and
     # metallicity
-    fn_ = f"""starmass-{bs}-imf_{bpass_imf}.a+00.{metalk}.dat"""
+    fn_ = f"""starmass-{bs}-imf{bpass_imf}.a+00.{metalk}.dat"""
     log10ages, stellar_fraction_ = parse_starmass_file(f"{input_dir_}/{fn_}")
 
     # open spectra file for first alpha-enhancement and
     # metallicity
-    fn_ = f"""spectra-{bs}-imf_{bpass_imf}.a+00.{metalk}.dat"""
+    fn_ = f"""spectra-{bs}-imf{bpass_imf}.a+00.{metalk}.dat"""
     wavelengths, spectra_ = parse_spectra_file(f"{input_dir_}/{fn_}")
     nu = 3e8 / (wavelengths * 1e-10)
 
@@ -258,7 +260,7 @@ def make_full_grid(original_model_name, input_dir, grid_dir, bs="bin"):
             metalk = map_met_to_key[metal]
 
             # --- get remaining and remnant fraction
-            fn_ = f"""starmass-{bs}-imf_{bpass_imf}.a{aek}.{metalk}.dat"""
+            fn_ = f"""starmass-{bs}-imf{bpass_imf}.a{aek}.{metalk}.dat"""
 
             # get ages and remaining fraction
             log10ages, stellar_fraction_ = parse_starmass_file(
@@ -269,7 +271,7 @@ def make_full_grid(original_model_name, input_dir, grid_dir, bs="bin"):
             # remnant_fraction[:, imetal, iae] = remnant_fraction_
 
             # open spectra file
-            fn_ = f"""spectra-{bs}-imf_{bpass_imf}.a{aek}.{metalk}.dat"""
+            fn_ = f"""spectra-{bs}-imf{bpass_imf}.a{aek}.{metalk}.dat"""
             wavelengths, spectra_ = parse_spectra_file(f"{input_dir_}/{fn_}")
 
             for ia, log10age in enumerate(log10ages):
@@ -321,7 +323,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-models",
         "--models",
-        default="bpass_v2.3_chab300",
+        default="bpass_v2.3_imf135_300",
         type=lambda arg: arg.split(","),
     )
 
