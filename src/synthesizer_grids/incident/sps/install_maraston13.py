@@ -90,7 +90,10 @@ def make_grid(model, imf, input_dir, grid_dir):
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"ages": ages, "metallicities": metallicities * dimensionless},
+        axes={
+            "ages": ages * yr,
+            "metallicities": metallicities * dimensionless,
+        },
         wavelength=lam,
         spectra={"incident": spec},
         log_on_read=log_on_read,

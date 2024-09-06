@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import wget
 from synthesizer.conversions import flam_to_fnu
-from unyt import angstrom, cm, dimensionless, erg, s
+from unyt import angstrom, cm, dimensionless, erg, s, yr
 from utils import get_model_filename
 
 from synthesizer_grids.grid_io import GridFile
@@ -98,7 +98,10 @@ def make_grid(model, imf, hr_morphology, input_dir, grid_dir):
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"ages": ages, "metallicities": metallicities * dimensionless},
+        axes={
+            "ages": ages * yr,
+            "metallicities": metallicities * dimensionless,
+        },
         wavelength=lam,
         spectra={"incident": spec},
         alt_axes=("ages", "metallicities"),

@@ -1,6 +1,6 @@
 import fsps
 import numpy as np
-from unyt import Hz, angstrom, dimensionless, erg, s
+from unyt import Hz, angstrom, dimensionless, erg, s, yr
 from utils import get_model_filename
 
 from synthesizer_grids.grid_io import GridFile
@@ -87,7 +87,10 @@ def generate_grid(model):
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"ages": ages, "metallicities": metallicities * dimensionless},
+        axes={
+            "ages": ages * yr,
+            "metallicities": metallicities * dimensionless,
+        },
         wavelength=lam * angstrom,
         spectra={"incident": spec * erg / s / Hz},
         alt_axes=("log10ages", "metallicities"),

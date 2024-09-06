@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import wget
 from synthesizer.conversions import llam_to_lnu
-from unyt import Angstrom, erg, s, yr
+from unyt import Angstrom, dimensionless, erg, s, yr
 from utils import get_model_filename
 
 from synthesizer_grids.grid_io import GridFile
@@ -87,7 +87,7 @@ def make_grid(model, imf, variant, output_dir, grid_dir):
     ages_, _, lam_, llam_ = np.loadtxt(fn).T  # llam is in (ergs /s /AA /Msun)
 
     ages_Gyr = np.sort(np.array(list(set(ages_))))  # Gyr
-    ages = ages_Gyr * 1e9 * yr
+    ages = ages_Gyr * 1e9
 
     lam = lam_[ages_ == ages_[0]] * Angstrom
 
@@ -114,7 +114,10 @@ def make_grid(model, imf, variant, output_dir, grid_dir):
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"ages": ages, "metallicities": metallicities},
+        axes={
+            "ages": ages * yr,
+            "metallicities": metallicities * dimensionless,
+        },
         wavelength=lam,
         spectra={"incident": spec},
         alt_axes=("ages", "metallicities"),

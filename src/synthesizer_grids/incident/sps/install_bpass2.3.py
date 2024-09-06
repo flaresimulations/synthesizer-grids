@@ -3,7 +3,7 @@ Download BPASS v2.3 and convert to HDF5 synthesizer grid.
 """
 
 import numpy as np
-from unyt import Hz, angstrom, erg, s
+from unyt import Hz, angstrom, erg, s, yr
 from utils import get_model_filename
 
 from synthesizer_grids.grid_io import GridFile
@@ -158,16 +158,25 @@ def make_single_alpha_grid(
             spec_ *= wavelengths / nu  # erg s^-1 Hz^-1 Msol^-1
             spectra[ia, imetal, :] = spec_
 
+    # convert ages
+    ages = 10**log10ages
+
     # Create the GridFile ready to take outputs
     out_grid = GridFile(out_filename, mode="a", overwrite=True)
+
+    # A dictionary with Boolean values for each axis, where True
+    # indicates that the attribute should be interpolated in
+    # logarithmic space.
+    log_on_read = {"ages": True, "metallicities": False}
 
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"log10age": log10ages, "metallicity": metallicities},
+        axes={"ages": ages * yr, "metallicities": metallicities},
         wavelength=wavelengths * angstrom,
         spectra={"incident": spectra * erg / s / Hz},
         alt_axes=("log10ages", "metallicities"),
+        log_on_read=log_on_read,
     )
 
     # Write datasets specific to BPASS 2.3

@@ -32,7 +32,7 @@ import numpy as np
 import requests
 from spectres import spectres
 from tqdm import tqdm
-from unyt import Hz, angstrom, c, dimensionless, erg, s
+from unyt import Hz, angstrom, c, dimensionless, erg, s, yr
 
 from synthesizer_grids.grid_io import GridFile
 from synthesizer_grids.parser import Parser
@@ -210,7 +210,7 @@ def make_grid(input_dir, grid_dir, ver, fcov, model):
 
         out_grid.write_grid_common(
             axes={
-                "ages": ages,
+                "ages": ages * yr,
                 "metallicities": metallicities * dimensionless,
             },
             wavelength=lam * angstrom,
@@ -230,7 +230,7 @@ def make_grid(input_dir, grid_dir, ver, fcov, model):
         out_grid.write_grid_common(
             model=model,
             axes={
-                "ages": ages,
+                "ages": ages * yr,
                 "metallicities": metallicities * dimensionless,
             },
             wavelength=grid_lam,
