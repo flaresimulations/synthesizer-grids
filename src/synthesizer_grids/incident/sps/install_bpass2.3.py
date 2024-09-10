@@ -12,7 +12,7 @@ from synthesizer_grids.parser import Parser
 
 def resolve_name(original_model_name, bin, alpha=False):
     """Resolve the original BPASS model name into what we need. This is
-    specific to 2.3. e.g. 'bpass_v2.3_chab300'"""
+    specific to 2.3, e.g. 'bpass_v2.3_imf135_300'"""
 
     # bpass_imf = original_model_name.split("_")[-1]
     bpass_imf = "135_300"
