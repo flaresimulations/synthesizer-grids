@@ -45,16 +45,14 @@ def resolve_name(original_model_name, bin, alpha=False):
     return model, bpass_imf
 
 
-def parse_starmass_file(filename):
+def parse_ionizing_file(filename):
     """
-    Parse a BPASS starmass file.
+    Parse a BPASS ionizing file.
     """
     data = np.loadtxt(filename).T
     log10ages = data[0]
-    stellar_fraction = data[1] / 1e6
-    # remnant_fraction = data[2] / 1E6
 
-    return log10ages, stellar_fraction
+    return log10ages
 
 
 def parse_spectra_file(filename):
@@ -109,9 +107,9 @@ def make_single_alpha_grid(
     map_met_to_key = {k: v for v, k in map_key_to_met.items()}
     metallicities = np.sort(np.array(list(map_met_to_key.keys())))
 
-    # get ages and remaining fraction
-    fn_ = f"starmass-{bs}-imf{bpass_imf}.a{ae}.zem5.dat"
-    log10ages, stellar_fraction_ = parse_starmass_file(f"{input_dir_}/{fn_}")
+    # get ages
+    fn_ = f"ionizing-{bs}-imf{bpass_imf}.a{ae}.zem5.dat"
+    log10ages = parse_ionizing_file(f"{input_dir_}/{fn_}")
 
     # open spectra file
     fn_ = f"spectra-{bs}-imf{bpass_imf}.a{ae}.zem5.dat"
@@ -123,8 +121,6 @@ def make_single_alpha_grid(
     na = len(log10ages)
 
     # set up outputs
-    stellar_fraction = np.zeros((na, nmetal))
-    # remnant_fraction = np.zeros((na, nmetal))
 
     # the ionising photon production rate
     log10_specific_ionising_lum = {}
@@ -137,13 +133,8 @@ def make_single_alpha_grid(
         metallicity_key = map_met_to_key[metallicities[imetal]]
 
         # get ages and remaining fraction
-        fn_ = f"starmass-{bs}-imf{bpass_imf}.a{ae}.{metallicity_key}.dat"
-        log10ages, stellar_fraction_ = parse_starmass_file(
-            f"{input_dir_}/{fn_}"
-        )
-
-        stellar_fraction[:, imetal] = stellar_fraction_
-        # remnant_fraction[:, imetal] = remnant_fraction_
+        fn_ = f"ionizing-{bs}-imf{bpass_imf}.a{ae}.{metallicity_key}.dat"
+        log10ages = parse_ionizing_file(f"{input_dir_}/{fn_}")
 
         # open spectra file
         fn_ = f"spectra-{bs}-imf{bpass_imf}.a{ae}.{metallicity_key}.dat"
@@ -177,14 +168,6 @@ def make_single_alpha_grid(
         spectra={"incident": spectra * erg / s / Hz},
         alt_axes=("log10ages", "metallicities"),
         log_on_read=log_on_read,
-    )
-
-    # Write datasets specific to BPASS 2.3
-    out_grid.write_dataset(
-        "star_fraction",
-        stellar_fraction,
-        "Two-dimensional remaining stellar fraction grid, [age, Z]",
-        units="Msun",
     )
 
     # Include the specific ionising photon luminosity
@@ -229,18 +212,18 @@ def make_full_grid(original_model_name, input_dir, grid_dir, bs="bin"):
     # create alpha-enhancement grid
 
     # list of available alpha enhancements
-    alpha_enhancements = np.array([-0.2, 0.0, 0.2, 0.4, 0.6])
+    alpha_enhancements = np.array([0.0, 0.2, 0.6])
 
     # look up dictionary for filename
-    ae_to_aek = {-0.2: "-02", 0.0: "+00", 0.2: "+02", 0.4: "+04", 0.6: "+06"}
+    ae_to_aek = {0.0: "+00", 0.2: "+02", 0.6: "+06"}
 
     # first metallicity
     metalk = map_met_to_key[metallicities[0]]
 
     # get ages and remaining fraction for first alpha-enhancement and
     # metallicity
-    fn_ = f"""starmass-{bs}-imf{bpass_imf}.a+00.{metalk}.dat"""
-    log10ages, stellar_fraction_ = parse_starmass_file(f"{input_dir_}/{fn_}")
+    fn_ = f"""ionizing-{bs}-imf{bpass_imf}.a+00.{metalk}.dat"""
+    log10ages = parse_ionizing_file(f"{input_dir_}/{fn_}")
 
     # open spectra file for first alpha-enhancement and
     # metallicity
@@ -253,8 +236,6 @@ def make_full_grid(original_model_name, input_dir, grid_dir, bs="bin"):
     nae = len(alpha_enhancements)
 
     # set up outputs
-    stellar_fraction = np.zeros((na, nmetal, nae))
-    # remnant_fraction = np.zeros((na, nmetal, nae))
 
     # the ionising photon production rate
     log10_specific_ionising_lum = {}
@@ -269,15 +250,10 @@ def make_full_grid(original_model_name, input_dir, grid_dir, bs="bin"):
             metalk = map_met_to_key[metal]
 
             # --- get remaining and remnant fraction
-            fn_ = f"""starmass-{bs}-imf{bpass_imf}.a{aek}.{metalk}.dat"""
+            fn_ = f"""ionizing-{bs}-imf{bpass_imf}.a{aek}.{metalk}.dat"""
 
             # get ages and remaining fraction
-            log10ages, stellar_fraction_ = parse_starmass_file(
-                f"{input_dir_}/{fn_}"
-            )
-
-            stellar_fraction[:, imetal, iae] = stellar_fraction_
-            # remnant_fraction[:, imetal, iae] = remnant_fraction_
+            log10ages = parse_ionizing_file(f"{input_dir_}/{fn_}")
 
             # open spectra file
             fn_ = f"""spectra-{bs}-imf{bpass_imf}.a{aek}.{metalk}.dat"""
@@ -308,14 +284,6 @@ def make_full_grid(original_model_name, input_dir, grid_dir, bs="bin"):
         wavelength=wavelengths * angstrom,
         spectra={"incident": spectra * erg / s / Hz},
         alt_axes=("log10ages", "metallicities", "alpha_enhancements"),
-    )
-
-    # Write datasets specific to BPASS 2.3
-    out_grid.write_dataset(
-        "star_fraction",
-        stellar_fraction,
-        "Two-dimensional remaining stellar fraction grid, [age, Z]",
-        units="Msun",
     )
 
     # Include the specific ionising photon luminosity
