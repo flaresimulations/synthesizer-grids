@@ -3,7 +3,7 @@ Download BPASS v2.3 and convert to HDF5 synthesizer grid.
 """
 
 import numpy as np
-from unyt import Hz, angstrom, erg, s, yr
+from unyt import Hz, angstrom, dimensionless, erg, s, yr
 from utils import get_model_filename
 
 from synthesizer_grids.grid_io import GridFile
@@ -51,8 +51,9 @@ def parse_ionizing_file(filename):
     """
     data = np.loadtxt(filename).T
     log10ages = data[0]
+    ages = 10**log10ages
 
-    return log10ages
+    return ages
 
 
 def parse_spectra_file(filename):
@@ -109,7 +110,7 @@ def make_single_alpha_grid(
 
     # get ages
     fn_ = f"ionizing-{bs}-imf{bpass_imf}.a{ae}.zem5.dat"
-    log10ages = parse_ionizing_file(f"{input_dir_}/{fn_}")
+    ages = parse_ionizing_file(f"{input_dir_}/{fn_}")
 
     # open spectra file
     fn_ = f"spectra-{bs}-imf{bpass_imf}.a{ae}.zem5.dat"
@@ -118,7 +119,7 @@ def make_single_alpha_grid(
 
     # number of metallicities and ages
     nmetal = len(metallicities)
-    na = len(log10ages)
+    na = len(ages)
 
     # set up outputs
 
@@ -134,13 +135,13 @@ def make_single_alpha_grid(
 
         # get ages and remaining fraction
         fn_ = f"ionizing-{bs}-imf{bpass_imf}.a{ae}.{metallicity_key}.dat"
-        log10ages = parse_ionizing_file(f"{input_dir_}/{fn_}")
+        ages = parse_ionizing_file(f"{input_dir_}/{fn_}")
 
         # open spectra file
         fn_ = f"spectra-{bs}-imf{bpass_imf}.a{ae}.{metallicity_key}.dat"
         wavelengths, spectra_ = parse_spectra_file(f"{input_dir_}/{fn_}")
 
-        for ia, _ in enumerate(log10ages):
+        for ia, _ in enumerate(ages):
             spec_ = spectra_[ia]  # Lsol AA^-1 10^6 Msol^-1
 
             # convert from Llam to Lnu
@@ -148,9 +149,6 @@ def make_single_alpha_grid(
             spec_ *= 3.826e33  # erg s^-1 AA^-1 Msol^-1
             spec_ *= wavelengths / nu  # erg s^-1 Hz^-1 Msol^-1
             spectra[ia, imetal, :] = spec_
-
-    # convert ages
-    ages = 10**log10ages
 
     # Create the GridFile ready to take outputs
     out_grid = GridFile(out_filename, mode="a", overwrite=True)
@@ -163,7 +161,10 @@ def make_single_alpha_grid(
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"ages": ages * yr, "metallicities": metallicities},
+        axes={
+            "ages": ages * yr,
+            "metallicities": metallicities * dimensionless,
+        },
         wavelength=wavelengths * angstrom,
         spectra={"incident": spectra * erg / s / Hz},
         alt_axes=("log10ages", "metallicities"),
@@ -223,7 +224,7 @@ def make_full_grid(original_model_name, input_dir, grid_dir, bs="bin"):
     # get ages and remaining fraction for first alpha-enhancement and
     # metallicity
     fn_ = f"""ionizing-{bs}-imf{bpass_imf}.a+00.{metalk}.dat"""
-    log10ages = parse_ionizing_file(f"{input_dir_}/{fn_}")
+    ages = parse_ionizing_file(f"{input_dir_}/{fn_}")
 
     # open spectra file for first alpha-enhancement and
     # metallicity
@@ -231,7 +232,7 @@ def make_full_grid(original_model_name, input_dir, grid_dir, bs="bin"):
     wavelengths, spectra_ = parse_spectra_file(f"{input_dir_}/{fn_}")
     nu = 3e8 / (wavelengths * 1e-10)
 
-    na = len(log10ages)
+    na = len(ages)
     nmetal = len(log10metallicities)
     nae = len(alpha_enhancements)
 
@@ -253,13 +254,13 @@ def make_full_grid(original_model_name, input_dir, grid_dir, bs="bin"):
             fn_ = f"""ionizing-{bs}-imf{bpass_imf}.a{aek}.{metalk}.dat"""
 
             # get ages and remaining fraction
-            log10ages = parse_ionizing_file(f"{input_dir_}/{fn_}")
+            ages = parse_ionizing_file(f"{input_dir_}/{fn_}")
 
             # open spectra file
             fn_ = f"""spectra-{bs}-imf{bpass_imf}.a{aek}.{metalk}.dat"""
             wavelengths, spectra_ = parse_spectra_file(f"{input_dir_}/{fn_}")
 
-            for ia, log10age in enumerate(log10ages):
+            for ia, age in enumerate(ages):
                 spec_ = spectra_[ia]  # Lsol AA^-1 10^6 Msol^-1
 
                 # --- convert from Llam to Lnu
@@ -272,18 +273,25 @@ def make_full_grid(original_model_name, input_dir, grid_dir, bs="bin"):
     # Create the GridFile ready to take outputs
     out_grid = GridFile(out_filename, mode="a", overwrite=True)
 
+    log_on_read = {
+        "ages": True,
+        "metallicities": False,
+        "alpha_enhancement": False,
+    }
+
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
         axes={
-            "log10age": log10ages,
-            "metallicity": metallicities,
-            "alpha_enhancement": alpha_enhancements,
+            "ages": ages * yr,
+            "metallicities": metallicities * dimensionless,
+            "alpha_enhancement": alpha_enhancements * dimensionless,
         },
         descriptions={"alpha_enhancement": r"alpha ehanncement [\alpha/Fe]"},
         wavelength=wavelengths * angstrom,
         spectra={"incident": spectra * erg / s / Hz},
         alt_axes=("log10ages", "metallicities", "alpha_enhancements"),
+        log_on_read=log_on_read,
     )
 
     # Include the specific ionising photon luminosity
@@ -329,9 +337,8 @@ if __name__ == "__main__":
         for bs in ["bin"]:  # no single star models , 'sin'
             # make a grid with a single alpha enahancement value
             if individual:
-                for ae in ["-02", "+00", "+02", "+04", "+06"]:
+                for ae in ["+00", "+02", "+06"]:
                     print(ae)
-                    # for ae in ['+00']: # used for testing
                     out_filename = make_single_alpha_grid(
                         model, input_dir, grid_dir, ae=ae, bs=bs
                     )
