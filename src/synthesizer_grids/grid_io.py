@@ -27,10 +27,6 @@ from unyt import unyt_array
 
 from synthesizer_grids._version import __version__ as grids_version
 
-# from synthesizer_grids.create_grids.grid_utils import (
-#     get_grid_properties_from_hdf5,
-# )
-
 
 class GridFile:
     """
@@ -53,12 +49,13 @@ class GridFile:
     descriptions = {
         "log10age": "Logged stellar population ages (dex(yr))",
         "log10ages": "Logged stellar population ages (dex(yr))",
-        "age": "Stellar population ages",
-        "ages": "Stellar population ages",
+        "age": "Stellar population ages (yr)",
+        "ages": "Stellar population ages (yr)",
         "log10metallicities": "Logged stellar population metallicity",
         "log10metallicity": "Logged stellar population metallicity",
         "metallicities": "Stellar population metallicity",
         "metallicity": "Stellar population metallicity",
+        "log_on_read": "Boolean, True for interpolated axes",
     }
 
     def __init__(self, filepath, mode="w", overwrite=False):
@@ -204,7 +201,8 @@ class GridFile:
         key,
         data,
         description,
-        units="dimensionless",
+        units,
+        log_on_read,
         verbose=True,
         **kwargs,
     ):
@@ -224,6 +222,10 @@ class GridFile:
             units (str)
                 The units of this dataset. Defaults to "dimensionless". These
                 should be in the same format unyt would produce.
+            log_on_read (bool)
+                A dictionary with Boolean values for each axis, where True
+                indicates that the attribute should be interpolated in
+                logarithmic space.
             verbose (bool)
                 Are we talking?
             kwargs (dict)
@@ -264,6 +266,9 @@ class GridFile:
 
         # Include a brief description
         dset.attrs["Description"] = description
+
+        # Write out whether we should log this dataset when read
+        dset.attrs["log_on_read"] = log_on_read
 
         # Handle any other attributes passed as kwargs
         for dset_attr_key, val in kwargs.items():
@@ -349,9 +354,16 @@ class GridFile:
         data = self.hdf[key][...]
         des = self.hdf[key].attrs["Description"]
         units = self.hdf[key].attrs["Units"]
+        log_on_read = self.hdf[key].attrs["log_on_read"]
 
         # Write the alternative version
-        self.write_dataset(alt_key, data, des, units=units)
+        self.write_dataset(
+            alt_key,
+            data,
+            des,
+            units=units,
+            log_on_read=log_on_read,
+        )
 
         self._close_file()
 
@@ -360,6 +372,7 @@ class GridFile:
         axes,
         wavelength,
         spectra,
+        log_on_read,
         alt_axes=(),
         descriptions={},
         model={},
@@ -383,6 +396,10 @@ class GridFile:
                 A dictionary containing the spectra grids. Each key value pair
                 should be {"spectra_type": spectra_grid}. "spectra_type" will
                 be the key used for the dataset.
+            log_on_read (dict)
+                A dictionary with Boolean values for each axis, where True
+                indicates that the attribute should be interpolated in
+                logarithmic space.
             alt_axes (list, string)
                 Alternative names for the axes. These will create soft links
                 within the file. THIS WILL LIKELY BE DEPRECATED IN THE FUTURE.
@@ -431,6 +448,7 @@ class GridFile:
             # Handled unitless, logged and linear axes gracefully
             if "log" in axis_key or not isinstance(axis_arr, unyt_array):
                 units = "dimensionless"
+
             else:
                 units = str(axis_arr.units)
 
@@ -440,6 +458,7 @@ class GridFile:
                 if isinstance(axis_arr, unyt_array)
                 else axis_arr,
                 descriptions[axis_key],
+                log_on_read=log_on_read[axis_key],
                 units=units,
             )
 
@@ -456,6 +475,7 @@ class GridFile:
             else wavelength,
             "Wavelength of the spectra grid",
             units=str(wavelength.units),
+            log_on_read=False,
         )
 
         # Write out each spectra
@@ -468,6 +488,7 @@ class GridFile:
                 units=str(val.units)
                 if isinstance(val, unyt_array)
                 else "dimensionless",
+                log_on_read=False,
             )
 
     def add_specific_ionising_lum(self, ions=("HI", "HeII"), limit=100):
@@ -521,8 +542,6 @@ class GridFile:
                 # Get incident spectrum
                 lnu = self.read_dataset("spectra/incident", indices=indices)
 
-                # print(lam.shape, lnu.shape)
-                # print(lam, lnu)
                 # Calculate Q
                 sed = Sed(lam, lnu)
                 ionising_lum = sed.calculate_ionising_photon_production_rate(
@@ -540,6 +559,8 @@ class GridFile:
                 out_arrs[ion],
                 "Two-dimensional {ion} ionising photon "
                 "production rate grid, [age, Z]",
+                units="dimensionless",
+                log_on_read=False,
             )
 
         self._close_file()
@@ -556,7 +577,6 @@ class GridFile:
         self._open_file()
 
         # Create a group for the model metadata
-        # print(self.hdf)
         grp = self.hdf.create_group("Model")
 
         # Write out model parameters as attributes

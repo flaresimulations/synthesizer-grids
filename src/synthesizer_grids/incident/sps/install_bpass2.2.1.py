@@ -3,14 +3,10 @@ Download BPASS v2.2.1 and convert to HDF5 synthesizer grid.
 """
 
 import os
-
-# import gdown
 import tarfile
 
 import numpy as np
-
-# from hoki import load
-from unyt import Hz, angstrom, erg, s
+from unyt import Hz, angstrom, dimensionless, erg, s, yr
 from utils import get_model_filename
 
 from synthesizer_grids.grid_io import GridFile
@@ -155,30 +151,44 @@ def make_grid(original_model_name, bin, input_dir, grid_dir):
     spectra *= 3.826e33  # erg s^-1 AA^-1 Msol^-1
     spectra *= wavelengths / nu  # erg s^-1 Hz^-1 Msol^-1
 
+    # convert log10ages to ages
+    ages = 10**log10ages
+
     # Create the GridFile ready to take outputs
-    out_grid = GridFile(out_filename, mode="a", overwrite=True)
+    out_grid = GridFile(out_filename, mode="w", overwrite=True)
+
+    # A dictionary with Boolean values for each axis, where True
+    # indicates that the attribute should be interpolated in
+    # logarithmic space.
+    log_on_read = {"ages": True, "metallicities": False}
 
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"log10age": log10ages, "metallicity": metallicities},
+        axes={
+            "ages": ages * yr,
+            "metallicities": metallicities * dimensionless,
+        },
         wavelength=wavelengths * angstrom,
         spectra={"incident": spectra * erg / s / Hz},
         alt_axes=("log10ages", "metallicities"),
+        log_on_read=log_on_read,
     )
 
-    # Write datasets specific to BPASS 2.3
+    # Write datasets specific to BPASS
     out_grid.write_dataset(
         "star_fraction",
         stellar_fraction,
         "Two-dimensional remaining stellar fraction grid, [age, Z]",
         units="Msun",
+        log_on_read=False,
     )
     out_grid.write_dataset(
         "remnant_fraction",
         remnant_fraction,
         "Two-dimensional remaining remnant fraction grid, [age, Z]",
         units="Msun",
+        log_on_read=False,
     )
 
     # Include the specific ionising photon luminosity
@@ -194,8 +204,8 @@ if __name__ == "__main__":
         "-models",
         "--models",
         help="""list of models to process, separated by ','.
-By default uses 'bpass_v2.2.1_imf_chab100'.
-Use 'all' to process all models.""",
+        By default uses 'bpass_v2.2.1_imf_chab100'.
+        Use 'all' to process all models.""",
         default="bpass_v2.2.1_imf_chab100",
     )
 
@@ -221,14 +231,14 @@ Use 'all' to process all models.""",
     # If all models are specified
     if models == "all":
         models = [
-            # "bpass_v2.2.1_imf_chab100",
-            # "bpass_v2.2.1_imf_chab300",
-            # "bpass_v2.2.1_imf100_300",
-            # "bpass_v2.2.1_imf135_300",
+            "bpass_v2.2.1_imf_chab100",
+            "bpass_v2.2.1_imf_chab300",
+            "bpass_v2.2.1_imf100_300",
+            "bpass_v2.2.1_imf135_300",
             "bpass_v2.2.1_imf170_300",
-            # "bpass_v2.2.1_imf100_100",
-            # "bpass_v2.2.1_imf135_100",
-            # "bpass_v2.2.1_imf170_100"
+            "bpass_v2.2.1_imf100_100",
+            "bpass_v2.2.1_imf135_100",
+            "bpass_v2.2.1_imf170_100",
         ]
     else:
         models = models.split(",")

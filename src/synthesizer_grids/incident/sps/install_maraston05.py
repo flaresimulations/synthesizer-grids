@@ -1,5 +1,5 @@
 """
-Download BC03 and convert to HDF5 synthesizer grid.
+Download M05 and convert to HDF5 synthesizer grid.
 """
 
 import os
@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import wget
 from synthesizer.conversions import flam_to_fnu
-from unyt import angstrom, cm, erg, s
+from unyt import angstrom, cm, dimensionless, erg, s, yr
 from utils import get_model_filename
 
 from synthesizer_grids.grid_io import GridFile
@@ -51,7 +51,7 @@ def make_grid(model, imf, hr_morphology, input_dir, grid_dir):
     )  # array of avialable metallicities
 
     # Codes for converting metallicty
-    metallicity_code = {
+    metallicity_codes = {
         0.0001: "10m4",
         0.001: "0001",
         0.01: "001",
@@ -61,13 +61,14 @@ def make_grid(model, imf, hr_morphology, input_dir, grid_dir):
     }
 
     # Open first file to get age
-    fn = f"""{input_dir}/sed.{imf}z{metallicity_code[metallicities[0]]}
-    .{hr_morphology}"""
+    fn = (
+        f"{input_dir}/sed.{imf}z{metallicity_codes[metallicities[0]]}."
+        f"{hr_morphology}"
+    )
     ages_, _, lam_, flam_ = np.loadtxt(fn).T
 
     ages_Gyr = np.sort(np.array(list(set(ages_))))  # Gyr
     ages = ages_Gyr * 1e9  # yr
-    log10ages = np.log10(ages)
 
     lam = lam_[ages_ == ages_[0]] * angstrom
 
@@ -75,8 +76,10 @@ def make_grid(model, imf, hr_morphology, input_dir, grid_dir):
 
     for imetal, metallicity in enumerate(metallicities):
         for ia, age_Gyr in enumerate(ages_Gyr):
-            fn = f"""{input_dir}/sed.{imf}z{metallicity_code[metallicity]}
-            .{hr_morphology}"""
+            fn = (
+                f"{input_dir}/sed.{imf}z{metallicity_codes[metallicity]}."
+                f"{hr_morphology}"
+            )
             print(imetal, ia, fn)
             ages_, _, lam_, flam_ = np.loadtxt(fn).T
 
@@ -87,13 +90,22 @@ def make_grid(model, imf, hr_morphology, input_dir, grid_dir):
     # Create the GridFile ready to take outputs
     out_grid = GridFile(out_filename, mode="w", overwrite=True)
 
+    # A dictionary with Boolean values for each axis, where True
+    # indicates that the attribute should be interpolated in
+    # logarithmic space.
+    log_on_read = {"ages": True, "metallicities": False}
+
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"log10age": log10ages, "metallicity": metallicities},
+        axes={
+            "ages": ages * yr,
+            "metallicities": metallicities * dimensionless,
+        },
         wavelength=lam,
         spectra={"incident": spec},
-        alt_axes=("log10ages", "metallicities"),
+        alt_axes=("ages", "metallicities"),
+        log_on_read=log_on_read,
     )
 
     # Include the specific ionising photon luminosity
@@ -135,12 +147,13 @@ if __name__ == "__main__":
 
     # Define the download URL
     original_data_url = {}
-    original_data_url["ss"] = """http://www.icg.port.ac.uk/~maraston/SSPn/SED/
-    Sed_Mar05_SSP_Salpeter.tar.gz"""
+    original_data_url["ss"] = """
+    http://www.icg.port.ac.uk/~maraston/SSPn/SED/Sed_Mar05_SSP_Salpeter.tar.gz"""
 
     for imf in imfs:
         # Download the data if necessary
         if args.download:
+            print(original_data_url[imf])
             download_data(input_dir, original_data_url[imf])
 
         if imf == "ss":

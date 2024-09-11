@@ -6,7 +6,7 @@ import os
 
 import numpy as np
 from synthesizer.conversions import llam_to_lnu
-from unyt import Angstrom, erg, s, yr
+from unyt import Angstrom, dimensionless, erg, s, yr
 
 from synthesizer_grids.grid_io import GridFile
 from synthesizer_grids.parser import Parser
@@ -40,7 +40,10 @@ def make_grid(model, imf, input_dir, grid_dir):
         [0.001, 0.01, 0.02, 0.04]
     )  # array of available metallicities
 
-    metallicity_code = {
+    if imf == "kroupa100":
+        metallicities = np.array([0.02])
+
+    metallicity_codes = {
         0.001: "0001",
         0.01: "001",
         0.02: "002",
@@ -50,14 +53,13 @@ def make_grid(model, imf, input_dir, grid_dir):
     # open first raw data file to get age
     fn = (
         f"{input_dir}/sed_M13.{imf_code[imf]}"
-        f"z{metallicity_code[metallicities[0]]}"
+        f"z{metallicity_codes[metallicities[0]]}"
     )
 
     ages_, _, lam_, llam_ = np.loadtxt(fn).T  # llam is in (ergs /s /AA /Msun)
 
     ages_Gyr = np.sort(np.array(list(set(ages_))))  # Gyr
     ages = ages_Gyr * 1e9 * yr
-    log10ages = np.log10(ages)
 
     lam = lam_[ages_ == ages_[0]] * Angstrom
 
@@ -67,25 +69,34 @@ def make_grid(model, imf, input_dir, grid_dir):
     out_grid = GridFile(out_filename, mode="w", overwrite=True)
 
     # at each point in spec convert the units
-    for imetal, metallicity in enumerate(metallicities):
+    for iZ, Z in enumerate(metallicities):
         for ia, age_Gyr in enumerate(ages_Gyr):
             fn = (
                 f"{input_dir}/sed_M13.{imf_code[imf]}"
-                f"z{metallicity_code[metallicity]}"
+                f"z{metallicity_codes[Z]}"
             )
-            print(imetal, ia, fn)
+            print(iZ, ia, fn)
             ages_, _, lam_, llam_ = np.loadtxt(fn).T
 
             llam = llam_[ages_ == age_Gyr] * erg / s / Angstrom
             lnu = llam_to_lnu(lam, llam)
-            spec[ia, imetal] = lnu
+            spec[ia, iZ] = lnu
+
+    # A dictionary with Boolean values for each axis, where True
+    # indicates that the attribute should be interpolated in
+    # logarithmic space.
+    log_on_read = {"ages": True, "metallicities": False}
 
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"log10age": log10ages, "metallicity": metallicities},
+        axes={
+            "ages": ages * yr,
+            "metallicities": metallicities * dimensionless,
+        },
         wavelength=lam,
-        spectra={"incident": spec},  # check this unit
+        spectra={"incident": spec},
+        log_on_read=log_on_read,
         alt_axes=("log10ages", "metallicities"),
     )
 
@@ -104,7 +115,7 @@ if __name__ == "__main__":
     # Define the model metadata
     sps_name = "maraston13"
     imfs = ["salpeter", "kroupa"]
-    imf_code = {"salpeter": "ss", "kroupa": "kr"}
+    imf_code = {"salpeter": "ss", "kroupa": "kr", "kroupa100": "100kr"}
     model = {
         "sps_name": sps_name,
         "sps_version": False,
@@ -118,5 +129,10 @@ if __name__ == "__main__":
     if not os.path.exists(input_dir):
         os.mkdir(input_dir)
 
+    # run the single kroupa100 model
+    imf = "kroupa100"
+    make_grid(model, imf, input_dir, grid_dir)
+
+    # then run the rest
     for imf in imfs:
         make_grid(model, imf, input_dir, grid_dir)

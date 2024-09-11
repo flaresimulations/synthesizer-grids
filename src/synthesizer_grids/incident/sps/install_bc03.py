@@ -12,7 +12,7 @@ import tarfile
 import numpy as np
 import requests
 from tqdm import tqdm
-from unyt import Hz, angstrom, erg, s
+from unyt import Hz, angstrom, dimensionless, erg, s, yr
 from utils import get_model_filename
 
 from synthesizer_grids.grid_io import GridFile
@@ -240,7 +240,6 @@ def make_grid(input_dir, grid_dir, synthesizer_model_name):
 
     ages = out[2]
     ages[0] = 1e5
-    log10ages = np.log10(ages)
 
     lam = out[3]
     nu = 3e8 / (lam * 1e-10)
@@ -255,13 +254,22 @@ def make_grid(input_dir, grid_dir, synthesizer_model_name):
     # Create the GridFile ready to take outputs
     out_grid = GridFile(out_filename, mode="w", overwrite=True)
 
+    # A dictionary with Boolean values for each axis, where True
+    # indicates that the attribute should be interpolated in
+    # logarithmic space.
+    log_on_read = {"ages": True, "metallicities": False}
+
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"log10age": log10ages, "metallicity": metallicities},
+        axes={
+            "ages": ages * yr,
+            "metallicities": metallicities * dimensionless,
+        },
         wavelength=lam * angstrom,
         spectra={"incident": spec * erg / s / Hz},
-        alt_axes=("log10ages", "metallicities"),
+        alt_axes=("ages", "metallicities"),
+        log_on_read=log_on_read,
     )
 
     # Include the specific ionising photon luminosity

@@ -32,7 +32,7 @@ import numpy as np
 import requests
 from spectres import spectres
 from tqdm import tqdm
-from unyt import Hz, angstrom, c, erg, s
+from unyt import Hz, angstrom, c, dimensionless, erg, s, yr
 
 from synthesizer_grids.grid_io import GridFile
 from synthesizer_grids.parser import Parser
@@ -179,7 +179,6 @@ def make_grid(input_dir, grid_dir, ver, fcov, model):
     metallicities = out[1]
 
     ages = out[2] * 1e6  # since ages are quoted in Myr
-    log10ages = np.log10(ages)
 
     lam = out[3]
 
@@ -196,6 +195,11 @@ def make_grid(input_dir, grid_dir, ver, fcov, model):
     # Create the grid file
     out_grid = GridFile(out_filename, mode="a", overwrite=True)
 
+    # A dictionary with Boolean values for each axis, where True
+    # indicates that the attribute should be interpolated in
+    # logarithmic space.
+    log_on_read = {"ages": True, "metallicities": False}
+
     if fcov != "0":
         # Write everything out thats common to all models
         if fcov == "1":
@@ -205,10 +209,14 @@ def make_grid(input_dir, grid_dir, ver, fcov, model):
             add = f"_fcov_{fcov}"
 
         out_grid.write_grid_common(
-            axes={"log10age": log10ages, "metallicity": metallicities},
+            axes={
+                "ages": ages * yr,
+                "metallicities": metallicities * dimensionless,
+            },
             wavelength=lam * angstrom,
             spectra={f"nebular{add}": spec * erg / s / Hz},
             alt_axes=("log10ages", "metallicities"),
+            log_on_read=log_on_read,
         )
 
     else:
@@ -221,10 +229,14 @@ def make_grid(input_dir, grid_dir, ver, fcov, model):
 
         out_grid.write_grid_common(
             model=model,
-            axes={"log10age": log10ages, "metallicity": metallicities},
+            axes={
+                "ages": ages * yr,
+                "metallicities": metallicities * dimensionless,
+            },
             wavelength=grid_lam,
             spectra={"incident": interp_spec * erg / s / Hz},
             alt_axes=("log10ages", "metallicities"),
+            log_on_read=log_on_read,
         )
 
         # Include the specific ionising photon luminosity
