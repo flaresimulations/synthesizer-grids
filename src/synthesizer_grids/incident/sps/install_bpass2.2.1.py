@@ -6,7 +6,7 @@ import os
 import tarfile
 
 import numpy as np
-from unyt import Hz, angstrom, dimensionless, erg, s, yr
+from unyt import Hz, Msun, angstrom, dimensionless, erg, s, yr
 from utils import get_model_filename
 
 from synthesizer_grids.grid_io import GridFile
@@ -155,7 +155,7 @@ def make_grid(original_model_name, bin, input_dir, grid_dir):
     ages = 10**log10ages
 
     # Create the GridFile ready to take outputs
-    out_grid = GridFile(out_filename, mode="w", overwrite=True)
+    out_grid = GridFile(out_filename)
 
     # A dictionary with Boolean values for each axis, where True
     # indicates that the attribute should be interpolated in
@@ -178,16 +178,14 @@ def make_grid(original_model_name, bin, input_dir, grid_dir):
     # Write datasets specific to BPASS
     out_grid.write_dataset(
         "star_fraction",
-        stellar_fraction,
+        stellar_fraction * Msun,
         "Two-dimensional remaining stellar fraction grid, [age, Z]",
-        units="Msun",
         log_on_read=False,
     )
     out_grid.write_dataset(
         "remnant_fraction",
-        remnant_fraction,
+        remnant_fraction * Msun,
         "Two-dimensional remaining remnant fraction grid, [age, Z]",
-        units="Msun",
         log_on_read=False,
     )
 

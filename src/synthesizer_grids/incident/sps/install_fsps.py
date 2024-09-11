@@ -75,7 +75,7 @@ def generate_grid(model):
             spec[ia, imetal] = lnu
 
     # Create the GridFile ready to take outputs
-    out_grid = GridFile(out_filename, mode="a", overwrite=True)
+    out_grid = GridFile(out_filename)
 
     print("metallicities:", metallicities)
 

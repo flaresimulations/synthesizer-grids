@@ -66,7 +66,7 @@ def make_grid(model, imf, input_dir, grid_dir):
     spec = np.zeros((len(ages), len(metallicities), len(lam)))
 
     # Create the GridFile ready to take outputs
-    out_grid = GridFile(out_filename, mode="w", overwrite=True)
+    out_grid = GridFile(out_filename)
 
     # at each point in spec convert the units
     for iZ, Z in enumerate(metallicities):
