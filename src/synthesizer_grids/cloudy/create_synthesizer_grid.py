@@ -3,7 +3,6 @@ This reads in a cloudy grid of models
 
 """
 
-import argparse
 import os
 import shutil
 
@@ -17,6 +16,9 @@ from unyt import eV
 
 # local modules
 from utils import get_grid_properties
+
+from synthesizer_grids.grid_io import GridFile
+from synthesizer_grids.parser import Parser
 
 
 def get_grid_properties_hf(hf, verbose=True):
@@ -107,106 +109,100 @@ def check_cloudy_runs(
         return failed_list
 
 
-def add_spectra(grid_name, grid_dir, cloudy_dir):
+def add_spectra(out_grid, cloudy_dir):
     """
     Open cloudy spectra and add them to the grid.
 
     Arguments:
-        grid_name (str)
-            Name of the grid.
-        grid_dir (str)
-            Parent directory for the grids.
+        out_grid (GridFile)
+            The grid file to add the spectra to.
         cloudy_dir (str)
             Parent directory for the cloudy runs.
     """
 
-    #  the cloudy spectra to save (others can be generated later)
+    # The cloudy spectra to save (others can be generated later)
     spec_names = ["incident", "transmitted", "nebular", "linecont"]
+    hf = None
 
-    # open the new grid
-    with h5py.File(f"{grid_dir}/{grid_name}.hdf5", "a") as hf:
-        # Get the properties of the grid including the dimensions etc.
-        (
-            axes,
-            n_axes,
-            shape,
-            n_models,
-            mesh,
-            model_list,
-            index_list,
-        ) = get_grid_properties_hf(hf)
+    # Get the properties of the grid including the dimensions etc.
+    (
+        axes,
+        n_axes,
+        shape,
+        n_models,
+        mesh,
+        model_list,
+        index_list,
+    ) = get_grid_properties_hf(hf)
 
-        # Determine the cloudy version...
-        cloudy_version = hf.attrs["cloudy_version"]
+    # Determine the cloudy version...
+    cloudy_version = hf.attrs["cloudy_version"]
 
-        # ... and use to select the correct module.
-        if cloudy_version.split(".")[0] == "c23":
-            cloudy = cloudy23
-        elif cloudy_version.split(".")[0] == "c17":
-            cloudy = cloudy17
+    # ... and use to select the correct module.
+    if cloudy_version.split(".")[0] == "c23":
+        cloudy = cloudy23
+    elif cloudy_version.split(".")[0] == "c17":
+        cloudy = cloudy17
 
-        # Read first spectra from the first grid point to get length and
-        # wavelength grid.
-        lam = cloudy.read_wavelength(f"{cloudy_dir}/{grid_name}/1")
+    # Read first spectra from the first grid point to get length and
+    # wavelength grid.
+    lam = cloudy.read_wavelength(f"{cloudy_dir}/{grid_name}/1")
 
-        if "spectra" in hf:
-            del hf["spectra"]
+    # create a group holding the spectra in the grid file
+    spectra = hf.create_group("spectra")
 
-        # create a group holding the spectra in the grid file
-        spectra = hf.create_group("spectra")
+    # save list of spectra as attribute
+    spectra.attrs["spec_names"] = spec_names
 
-        # save list of spectra as attribute
-        spectra.attrs["spec_names"] = spec_names
+    # save the wavelength
+    spectra["wavelength"] = lam
 
-        # save the wavelength
-        spectra["wavelength"] = lam
+    # number of wavelength points
+    nlam = len(lam)
 
-        # number of wavelength points
-        nlam = len(lam)
+    # make spectral grids and set them to zero
+    for spec_name in spec_names:
+        spectra[spec_name] = np.zeros((*shape, nlam))
 
-        # make spectral grids and set them to zero
+    # array for holding the normalisation which is calculated below and
+    # used by lines
+    spectra["normalisation"] = np.ones(shape)
+
+    for i, indices in enumerate(index_list):
+        indices = tuple(indices)
+
+        # define the infile
+        infile = f"{cloudy_dir}/{grid_name}/{i+1}"
+
+        # read the continuum file containing the spectra
+        spec_dict = cloudy.read_continuum(infile, return_dict=True)
+
+        # Calculate the specific ionising photon luminosity and use this to
+        # renormalise the spectrum.
+        if "log10_specific_ionising_luminosity/HI" in hf:
+            # create sed object
+            sed = Sed(lam=lam, lnu=spec_dict["incident"])
+
+            # calculate Q
+            ionising_photon_production_rate = (
+                sed.calculate_ionising_photon_production_rate(
+                    ionisation_energy=13.6 * eV, limit=100
+                )
+            )
+
+            # calculate normalisation
+            normalisation = hf["log10_specific_ionising_luminosity/HI"][
+                indices
+            ] - np.log10(ionising_photon_production_rate)
+
+            # save normalisation for later use (rescaling lines)
+            spectra["normalisation"][indices] = 10**normalisation
+
+        # save the normalised spectrum to the correct grid point
         for spec_name in spec_names:
-            spectra[spec_name] = np.zeros((*shape, nlam))
-
-        # array for holding the normalisation which is calculated below and
-        # used by lines
-        spectra["normalisation"] = np.ones(shape)
-
-        for i, indices in enumerate(index_list):
-            indices = tuple(indices)
-
-            # define the infile
-            infile = f"{cloudy_dir}/{grid_name}/{i+1}"
-
-            # read the continuum file containing the spectra
-            spec_dict = cloudy.read_continuum(infile, return_dict=True)
-
-            # Calculate the specific ionising photon luminosity and use this to
-            # renormalise the spectrum.
-            if "log10_specific_ionising_luminosity/HI" in hf:
-                # create sed object
-                sed = Sed(lam=lam, lnu=spec_dict["incident"])
-
-                # calculate Q
-                ionising_photon_production_rate = (
-                    sed.calculate_ionising_photon_production_rate(
-                        ionisation_energy=13.6 * eV, limit=100
-                    )
-                )
-
-                # calculate normalisation
-                normalisation = hf["log10_specific_ionising_luminosity/HI"][
-                    indices
-                ] - np.log10(ionising_photon_production_rate)
-
-                # save normalisation for later use (rescaling lines)
-                spectra["normalisation"][indices] = 10**normalisation
-
-            # save the normalised spectrum to the correct grid point
-            for spec_name in spec_names:
-                spectra[spec_name][indices] = (
-                    spec_dict[spec_name] * spectra["normalisation"][indices]
-                )
+            spectra[spec_name][indices] = (
+                spec_dict[spec_name] * spectra["normalisation"][indices]
+            )
 
 
 def add_lines(
@@ -358,25 +354,23 @@ def add_lines(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description=("Create synthesizer HDF5 grid " "for a given grid.")
+    # Set up the command line arguments
+    parser = Parser(
+        description="Create Synthesizer HDF5 grid files from cloudy outputs."
     )
 
-    # path to grid directory (i.e. where incident and new grids are stored)
-    parser.add_argument("-grid_dir", type=str, required=True)
-
-    # path to directory where cloudy runs are
+    # Path to directory where cloudy runs are
     parser.add_argument("-cloudy_dir", type=str, required=True)
 
-    # the name of the incident grid
+    # The name of the incident grid
     parser.add_argument("-incident_grid", type=str, required=True)
 
-    # the cloudy parameters, including any grid axes
+    # The cloudy parameters, including any grid axes
     parser.add_argument(
         "-cloudy_params", type=str, required=False, default="c17.03-sps"
     )
 
-    # include spectra
+    # Include spectra
     parser.add_argument(
         "-include_spectra",
         "--include_spectra",
@@ -385,7 +379,7 @@ if __name__ == "__main__":
         required=False,
     )
 
-    # boolean flag as to whether to attempt to replace missing files
+    # Boolean flag as to whether to attempt to replace missing files
     # NOTE: this is not currently used as we should re-run cloudy or figure
     # out what went wrong when there is a failure.
     parser.add_argument(
@@ -412,11 +406,11 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # get arguments
+    # Unpack arguments
     grid_dir = args.grid_dir
     cloudy_dir = args.cloudy_dir
 
-    # construct grid_name from incident grid and parameter file
+    # Construct grid_name from incident grid and parameter file
     grid_name = f"{args.incident_grid}_cloudy-{args.cloudy_params}"
 
     include_spectra = args.include_spectra
@@ -448,6 +442,9 @@ if __name__ == "__main__":
 
     # If no runs have failed, go ahead and add spectra and lines.
     else:
+        # Make the grid file
+        grid_file = GridFile(f"{grid_dir}/{grid_name}.hdf5")
+
         # add spectra
         if include_spectra:
             add_spectra(grid_name, grid_dir, cloudy_dir)
