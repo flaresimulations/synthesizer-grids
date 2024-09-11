@@ -151,7 +151,7 @@ def make_single_alpha_grid(
             spectra[ia, imetal, :] = spec_
 
     # Create the GridFile ready to take outputs
-    out_grid = GridFile(out_filename, mode="a", overwrite=True)
+    out_grid = GridFile(out_filename, mode="w", overwrite=True)
 
     # A dictionary with Boolean values for each axis, where True
     # indicates that the attribute should be interpolated in
@@ -271,7 +271,7 @@ def make_full_grid(original_model_name, input_dir, grid_dir, bs="bin"):
                 spectra[ia, imetal, iae, :] = spec_  # Lsol AA^-1 10^6 Msol^-1
 
     # Create the GridFile ready to take outputs
-    out_grid = GridFile(out_filename, mode="a", overwrite=True)
+    out_grid = GridFile(out_filename, mode="w", overwrite=True)
 
     log_on_read = {
         "ages": True,
