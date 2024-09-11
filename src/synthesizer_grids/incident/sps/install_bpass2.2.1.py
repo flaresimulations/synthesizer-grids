@@ -155,7 +155,7 @@ def make_grid(original_model_name, bin, input_dir, grid_dir):
     ages = 10**log10ages
 
     # Create the GridFile ready to take outputs
-    out_grid = GridFile(out_filename, mode="a", overwrite=True)
+    out_grid = GridFile(out_filename, mode="w", overwrite=True)
 
     # A dictionary with Boolean values for each axis, where True
     # indicates that the attribute should be interpolated in
@@ -181,12 +181,14 @@ def make_grid(original_model_name, bin, input_dir, grid_dir):
         stellar_fraction,
         "Two-dimensional remaining stellar fraction grid, [age, Z]",
         units="Msun",
+        log_on_read=False,
     )
     out_grid.write_dataset(
         "remnant_fraction",
         remnant_fraction,
         "Two-dimensional remaining remnant fraction grid, [age, Z]",
         units="Msun",
+        log_on_read=False,
     )
 
     # Include the specific ionising photon luminosity
