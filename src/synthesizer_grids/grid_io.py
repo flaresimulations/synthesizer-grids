@@ -437,11 +437,6 @@ class GridFile:
                 log_on_read=log_on_read[axis_key],
             )
 
-        # Create soft links for the alternative naming
-        # No need for logic, if alt_axes is empty there will be no loop
-        for alt, key in zip(alt_axes, axes.keys()):
-            self.copy_dataset(alt_key="axes/" + alt, key="axes/" + key)
-
         # Write out the wavelength array
         self.write_dataset(
             "spectra/wavelength",
