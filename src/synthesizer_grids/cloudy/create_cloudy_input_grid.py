@@ -75,7 +75,7 @@ if __name__ == "__main__":
 
     # The cloudy reference parameter set
     parser.add_argument(
-        "-cloudy_params", type=str, required=True, default="c17.03-sps-default"
+        "-cloudy_params", type=str, required=True, default="c23.01-sps"
     )
 
     # A second cloudy parameter set which supersedes the above
