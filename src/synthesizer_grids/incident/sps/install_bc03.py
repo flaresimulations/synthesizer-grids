@@ -20,6 +20,7 @@ from synthesizer_grids.parser import Parser
 
 
 def decompress_gz_recursively(directory):
+    """Decompress all .gz files in a directory and its subdirectories."""
     for root, dirs, files in os.walk(directory):
         for file in files:
             if file.endswith(".gz"):
@@ -31,6 +32,7 @@ def decompress_gz_recursively(directory):
 
 
 def extract_and_decompress_tgz(file_path, extract_path):
+    """Extract and decompress a .tgz file."""
     with tarfile.open(file_path, "r:gz") as tar:
         tar.extractall(path=extract_path)
 
@@ -38,6 +40,7 @@ def extract_and_decompress_tgz(file_path, extract_path):
 
 
 def download_data(input_dir):
+    """Download BC03 data and extract it."""
     # Define base path
     save_path = "bc03.models.padova_2000_chabrier_imf.tar.gz"
 
@@ -252,7 +255,7 @@ def make_grid(input_dir, grid_dir, synthesizer_model_name):
     spec *= lam / nu  # erg s^-1 Hz^-1 Msol^-1
 
     # Create the GridFile ready to take outputs
-    out_grid = GridFile(out_filename, mode="w", overwrite=True)
+    out_grid = GridFile(out_filename)
 
     # A dictionary with Boolean values for each axis, where True
     # indicates that the attribute should be interpolated in
@@ -314,7 +317,7 @@ if __name__ == "__main__":
         "alpha": False,
     }
 
-    # create synthesizer style model name
+    # Create synthesizer style model name
     synthesizer_model_name = get_model_filename(model)
     print(synthesizer_model_name)
 

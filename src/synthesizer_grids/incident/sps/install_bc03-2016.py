@@ -322,7 +322,7 @@ def make_grid(variant, imf_type, input_dir, out_filename):
     spec *= lam / nu  # erg s^-1 Hz^-1 Msol^-1
 
     # Create the GridFile ready to take outputs
-    out_grid = GridFile(out_filename, mode="w", overwrite=True)
+    out_grid = GridFile(out_filename)
 
     # A dictionary with Boolean values for each axis, where True
     # indicates that the attribute should be interpolated in
