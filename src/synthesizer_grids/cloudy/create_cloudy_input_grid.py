@@ -5,7 +5,6 @@ of cloudy parameters. Also creates a machine specific script.
 
 from pathlib import Path
 
-import h5py
 import numpy as np
 import yaml
 from synthesizer.abundances import (
@@ -20,7 +19,7 @@ from utils import apollo_submission_script, get_grid_properties
 from synthesizer_grids.parser import Parser
 
 
-def load_grid_params(param_file="c17.03-sps", param_dir="params"):
+def load_grid_params(param_file="c23.01-sps", param_dir="params"):
     """
     Read parameters from a yaml parameter file
 
@@ -193,104 +192,6 @@ if __name__ == "__main__":
         model_list,
         index_list,
     ) = get_grid_properties(axes, grid_params, verbose=True)
-
-    # Create new synthesizer grid to contain the new grid
-    # Open the new grid
-    with h5py.File(f"{args.grid_dir}/{new_grid_name}.hdf5", "w") as hf:
-        # open the original incident model grid
-        with h5py.File(
-            f"{args.grid_dir}/{args.incident_grid}.hdf5", "r"
-        ) as hf_incident:
-            # print out datasets
-            if verbose:
-                hf_incident.visit(print)
-
-            # copy top-level attributes
-            for k, v in hf_incident.attrs.items():
-                # If v is None then convert to string None for saving in the
-                # HDF5 file.
-                if v is None:
-                    v = "None"
-
-                hf.attrs[k] = v
-                if verbose:
-                    print(k, v)
-
-            # Add attribute with the original incident grid axes
-            hf.attrs["incident_axes"] = hf_incident.attrs["axes"]
-
-            # We want to copy over log10_specific_ionising_luminosity from the
-            # incident grid to allow us to normalise the cloudy outputs.
-            # However, the axes of the incident grid may be different from the
-            # cloudy grid due to additional parameters, in which we need to
-            # extend the axes of log10_specific_ionising_luminosity.
-
-            # If there are no additional axes simply copy over the incident
-            # log10_specific_ionising_luminosity
-            if len(axes) == len(hf.attrs["incident_axes"]):
-                hf_incident.copy("log10_specific_ionising_luminosity", hf)
-
-            # Else we need to expand the axis
-            else:
-                # this is amount by which we need to expand
-                expansion = int(
-                    np.product(shape)
-                    / np.product(
-                        hf_incident[
-                            "log10_specific_ionising_luminosity/HI"
-                        ].shape
-                    )
-                )
-
-                # Loop over ions
-                for ion in hf_incident[
-                    "log10_specific_ionising_luminosity"
-                ].keys():
-                    # Get the incident log10_specific_ionising_luminosity array
-                    log10_specific_ionising_luminosity_incident = hf_incident[
-                        f"log10_specific_ionising_luminosity/{ion}"
-                    ][()]
-
-                    # Create new array with repeated elements
-                    log10_specific_ionising_luminosity = np.repeat(
-                        log10_specific_ionising_luminosity_incident,
-                        expansion,
-                        axis=-1,
-                    )
-
-                    # Reshape array to match new shape and save
-                    hf[f"log10_specific_ionising_luminosity/{ion}"] = (
-                        np.reshape(log10_specific_ionising_luminosity, shape)
-                    )
-
-        # Add attribute with full grid axes
-        hf.attrs["axes"] = axes
-
-        # Add the bin centres for the grid bins
-        for axis in axes:
-            hf[f"axes/{axis}"] = grid_params[axis]
-
-        # Add other parameters as attributes
-        for k, v in params.items():
-            # If v is None then convert to string None for saving in the
-            # HDF5 file.
-            if v is None:
-                v = "None"
-
-            # if the parameter is a dictionary (e.g. as used for abundances)
-            if isinstance(v, dict):
-                for k2, v2 in v.items():
-                    hf.attrs[k + "_" + k2] = v2
-            else:
-                hf.attrs[k] = v
-
-        if verbose:
-            print("-" * 50)
-            print("---- attributes")
-            for k, v in hf.attrs.items():
-                print(k, v)
-            print("---- groups and datasets")
-            hf.visit(print)
 
     # Loop over all models
     for i, (grid_params_tuple, grid_index_tuple) in enumerate(
