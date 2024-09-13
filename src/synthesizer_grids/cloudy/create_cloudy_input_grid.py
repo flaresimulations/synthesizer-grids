@@ -166,6 +166,11 @@ if __name__ == "__main__":
     if fixed_params["ionisation_parameter_model"] == "ref":
         # get the indices of the reference grid point (this is used by the
         # reference model)
+        print(
+            "grid point to get:",
+            type(fixed_params["reference_ages"]),
+            type(fixed_params["reference_metallicities"]),
+        )
         incident_ref_grid_point = incident_grid.get_grid_point(
             [fixed_params["reference_" + k] for k in incident_grid.axes]
         )
