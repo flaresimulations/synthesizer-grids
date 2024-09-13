@@ -228,7 +228,7 @@ if __name__ == "__main__":
 
         # Create abundance object
         abundances = Abundances(
-            metallicities=float(params_["metallicities"]),
+            metallicity=float(params_["metallicities"]),
             reference=params_["reference_abundance"],
             alpha=params_["alpha"],
             abundances=params_["abundance_scalings"],
