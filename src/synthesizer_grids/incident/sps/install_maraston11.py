@@ -104,7 +104,7 @@ def make_grid(model, imf, variant, output_dir, grid_dir):
             spec[ia, imetal] = lnu
 
     # Create the GridFile ready to take outputs
-    out_grid = GridFile(out_filename, mode="w", overwrite=True)
+    out_grid = GridFile(out_filename)
 
     # A dictionary with Boolean values for each axis, where True
     # indicates that the attribute should be interpolated in

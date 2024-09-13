@@ -193,7 +193,7 @@ def make_grid(input_dir, grid_dir, ver, fcov, model):
     spec *= (lam**2) / light_speed  # now in erg s^-1 Hz^-1 Msol^-1
 
     # Create the grid file
-    out_grid = GridFile(out_filename, mode="a", overwrite=True)
+    out_grid = GridFile(out_filename)
 
     # A dictionary with Boolean values for each axis, where True
     # indicates that the attribute should be interpolated in
