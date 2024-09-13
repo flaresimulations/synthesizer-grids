@@ -220,15 +220,15 @@ if __name__ == "__main__":
         # Join the fixed and current iteration of the grid parameters
         params_ = fixed_params | grid_params_
 
-        # Set cloudy metallicity parameter to the stellar metallicity
-        if "metallicity" in grid_params_.keys():
-            params_["metallicity"] = grid_params_["metallicity"]
-        elif "log10metallicity" in grid_params_.keys():
-            params_["metallicity"] = 10 ** grid_params_["log10metallicity"]
+        # Set cloudy metallicities parameter to the stellar metallicities
+        if "metallicities" in grid_params_.keys():
+            params_["metallicities"] = grid_params_["metallicities"]
+        elif "log10metallicities" in grid_params_.keys():
+            params_["metallicities"] = 10 ** grid_params_["log10metallicities"]
 
         # Create abundance object
         abundances = Abundances(
-            metallicity=float(params_["metallicity"]),
+            metallicities=float(params_["metallicities"]),
             reference=params_["reference_abundance"],
             alpha=params_["alpha"],
             abundances=params_["abundance_scalings"],
