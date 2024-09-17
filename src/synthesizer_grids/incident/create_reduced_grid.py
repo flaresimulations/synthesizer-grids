@@ -82,9 +82,12 @@ if __name__ == "__main__":
     new_grid_name = args.original_grid
 
     if args.new_ages:
-        new_grid_name += f"-new_ages:{args.new_ages}"
+        new_grid_name += f"-new_ages:{'{:.0e}'.format(args.new_ages)}"
+
+        # currently args.new_ages = 100000000.0
+        # but I want this to become a string with #1e8 instead
     elif args.max_age:
-        new_grid_name += f"-max_age:{args.max_age}"
+        new_grid_name += f"-max_age:{'{:.0e}'.format(args.max_age)}"
 
     if args.metallicities:
         new_grid_name += f"-metallicities:{args.metallicities}"
