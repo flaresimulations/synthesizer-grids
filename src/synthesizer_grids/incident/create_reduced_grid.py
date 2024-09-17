@@ -38,15 +38,15 @@ if __name__ == "__main__":
         type=float,
         required=False,
         default=None,
-        help="log10 of the max age",
+        help="max age in years",
     )
 
     parser.add_argument(
-        "-ages",
+        "-new_ages",
         type=str,
         required=False,
         default=None,
-        help="log10 of the specific set of ages, e.g. -ages=6.,7.,8.",
+        help="set of ages in years, e.g. -ages=6.,7.,8.",
     )
 
     parser.add_argument(
@@ -66,11 +66,11 @@ if __name__ == "__main__":
         read_lines=False,
     )
 
-    print(args.ages)
+    print(args.new_ages)
 
-    if args.ages:
-        ages = np.array(list(map(float, args.ages.split(","))))
-        print(ages)
+    if args.new_ages:
+        new_ages = np.array(list(map(float, args.ages.split(","))))
+        print(new_ages)
 
     if args.metallicities:
         metallicities = np.array(
@@ -81,8 +81,8 @@ if __name__ == "__main__":
     # get name of new grid
     new_grid_name = args.original_grid
 
-    if args.ages:
-        new_grid_name += f"-ages:{args.ages}"
+    if args.new_ages:
+        new_grid_name += f"-new_ages:{args.new_ages}"
     elif args.max_age:
         new_grid_name += f"-max_age:{args.max_age}"
 
@@ -90,18 +90,18 @@ if __name__ == "__main__":
         new_grid_name += f"-metallicities:{args.metallicities}"
 
     # create an indices array
-    all_age_indices = np.indices(original_grid.log10age.shape)[0]
-    all_metallicity_indices = np.indices(original_grid.metallicity.shape)[0]
+    all_age_indices = np.indices(original_grid.ages.shape)[0]
+    all_metallicity_indices = np.indices(original_grid.metallicities.shape)[0]
 
     # maximum index for the age
-    if args.ages:
+    if args.new_ages:
         indices = []
-        for age in ages:
+        for age in new_ages:
             print(age)
-            indices.append(np.where(original_grid.log10age == age)[0][0])
+            indices.append(np.where(original_grid.ages == age)[0][0])
         age_indices = np.array(indices)
     elif args.max_age:
-        age_indices = all_age_indices[original_grid.log10age <= args.max_age]
+        age_indices = all_age_indices[original_grid.ages <= args.max_age]
     else:
         age_indices = all_age_indices
 
@@ -111,7 +111,7 @@ if __name__ == "__main__":
         metallicity_indices = []
         for metallicity in metallicities:
             metallicity_indices.append(
-                np.where(original_grid.metallicity == metallicity)[0][0]
+                np.where(original_grid.metallicities == metallicity)[0][0]
             )
         metallicity_indices = np.array(metallicity_indices)
     else:
@@ -143,10 +143,10 @@ if __name__ == "__main__":
                 hf.attrs[k] = v
 
             # copy axes, modifying the age axis
-            hf["axes/metallicity"] = hf_original["axes/metallicity"][
+            hf["axes/metallicities"] = hf_original["axes/metallicities"][
                 metallicity_indices
             ]
-            hf["axes/log10age"] = hf_original["axes/log10age"][age_indices]
+            hf["axes/ages"] = hf_original["axes/ages"][age_indices]
 
             # copy log10_specific_ionising_lum
             for ion in hf_original[
@@ -173,4 +173,3 @@ if __name__ == "__main__":
             print(k, v)
         print("---- groups and datasets")
         hf.visititems(print)
-        # print(hf["axes/log10age"][:])
