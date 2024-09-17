@@ -8,6 +8,7 @@ import shutil
 
 import h5py
 import numpy as np
+import yaml
 
 # synthesizer modules
 from synthesizer.photoionisation import cloudy17, cloudy23
@@ -19,6 +20,157 @@ from utils import get_grid_properties
 
 from synthesizer_grids.grid_io import GridFile
 from synthesizer_grids.parser import Parser
+
+
+def create_empty_grid(
+    grid_dir, incident_grid_name, new_grid_name, grid_params
+):
+    # open original incident model grid
+
+    # incident_grid = Grid(
+    #    args.incident_grid_name + ".hdf5", grid_dir=grid_dir, read_lines=False
+    # )
+
+    # Set a list of the axes
+    # axes = list(incident_grid.axes) + list(grid_params.keys())
+
+    # make new grid file
+
+    # out_grid = GridFile(new_grid_name)
+
+    # out_grid.write_grid_common(
+    # model={},
+    # wavelength={},
+    # axes=axes,
+    # spectra={})
+
+    """
+
+
+
+    # copy top-level attributes
+
+    with h5py.File(
+        f"{grid_dir}/{incident_grid_name}.hdf5", "r"
+    ) as hf_incident:
+        # copy top-level attributes
+        for k, v in hf_incident.attrs.items():
+            # If v is None then convert to string None for saving in the
+            # HDF5 file.
+            if v is None:
+                v = "None"
+            hf.attrs[k] = v
+
+    # add attribute with the original incident grid axes
+
+    hf.attrs["incident_axes"] = hf_incident.attrs["axes"]
+
+    # we want to copy over log10_specific_ionising_luminosity from the
+    # incident grid to allow us to normalise the cloudy outputs.
+    # However, the axes of the incident grid may be different from the
+    # cloudy grid due to additional parameters, in which we need to
+    # extend the axes of log10_specific_ionising_luminosity.
+
+    # if there are no additional axes simply copy over the incident
+    # log10_specific_ionising_luminosity
+
+    if len(axes) == len(hf.attrs["incident_axes"]):
+        hf_incident.copy("log10_specific_ionising_luminosity", hf)
+
+    # else we need to expand the axis
+
+    else:
+        # this is amount by which we need to expand
+        expansion = int(
+            np.product(shape)
+            / np.product(
+                hf_incident["log10_specific_ionising_luminosity/HI"].shape
+            )
+        )
+
+    # loop over ions
+
+    for ion in hf_incident["log10_specific_ionising_luminosity"].keys():
+        # get the incident log10_specific_ionising_luminosity array
+        log10_specific_ionising_luminosity_incident = hf_incident[
+            f"log10_specific_ionising_luminosity/{ion}"
+        ][()]
+        # create new array with repeated elements
+        log10_specific_ionising_luminosity = np.repeat(
+            log10_specific_ionising_luminosity_incident,
+            expansion,
+            axis=-1,
+        )
+        # reshape array to match new shape and save
+        hf[f"log10_specific_ionising_luminosity/{ion}"] = np.reshape(
+            log10_specific_ionising_luminosity, shape
+        )
+
+    # add attribute with full grid axes
+
+    hf.attrs["axes"] = axes
+
+    # add the bin centres for the grid bins
+
+    for axis in axes:
+        hf[f"axes/{axis}"] = grid_params[axis]
+
+    # add other parameters as attributes
+
+    for k, v in params.items():
+        # If v is None then convert to string None for saving in the
+        # HDF5 file.
+        if v is None:
+            v = "None"
+        # if the parameter is a dictionary (e.g. as used for abundances)
+        if isinstance(v, dict):
+            for k2, v2 in v.items():
+                hf.attrs[k + "_" + k2] = v2
+        else:
+            hf.attrs[k] = v
+
+    """
+
+
+def load_grid_params(param_file="c23.01-sps", param_dir="params"):
+    """
+    Read parameters from a yaml parameter file
+
+    Arguments:
+        param_file (str)
+            filename of the parameter file
+        param_dir (str)
+            directory containing the parameter file
+
+    Returns:
+        fixed_params (dict)
+            dictionary of parameters that are fixed
+        grid_params (dict)
+            dictionary of parameters that vary on the grid
+    """
+
+    # open parameter file
+    with open(f"{param_dir}/{param_file}.yaml", "r") as stream:
+        try:
+            params = yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+
+    grid_params = {}
+    fixed_params = {}
+
+    # Loop over parameters
+    for k, v in params.items():
+        # If parameter is a list store it in the grid_parameters dictionary
+        # and convert to a numpy array
+        if isinstance(v, list):
+            grid_params[k] = np.array(list(map(float, v)))
+
+        # Otherwise store it in fixed_params dictionary
+        else:
+            fixed_params[k] = v
+
+    return fixed_params, grid_params
 
 
 def get_grid_properties_hf(hf, verbose=True):
@@ -370,6 +522,13 @@ if __name__ == "__main__":
         "-cloudy_params", type=str, required=False, default="c17.03-sps"
     )
 
+    # A second cloudy parameter set which supersedes the above
+    parser.add_argument(
+        "-cloudy_params_addition",
+        type=str,
+        required=False,
+    )
+
     # Parse arguments
     args = parser.parse_args()
 
@@ -421,8 +580,20 @@ if __name__ == "__main__":
 
     include_spectra = args.include_spectra
 
+    # Load the cloudy parameters you are going to run
+    fixed_params, grid_params = load_grid_params(args.cloudy_params)
+
+    # If an additional parameter set is provided supersede the default
+    # parameters with these.
+    if args.cloudy_params_addition:
+        additional_fixed_params, additional_grid_params = load_grid_params(
+            args.cloudy_params_addition
+        )
+        fixed_params = fixed_params | additional_fixed_params
+        grid_params = grid_params | additional_grid_params
+
     # Create empty synthesizer grid
-    # create_empty_grid(grid_dir, incident_grid_name, grid_name, cloudy_params)
+    create_empty_grid(grid_dir, incident_grid_name, grid_name, grid_params)
 
     # Check cloudy runs and potentially replace them by the nearest grid point
     # if they fail.
