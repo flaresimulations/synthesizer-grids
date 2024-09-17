@@ -20,109 +20,6 @@ from utils import get_grid_properties
 from synthesizer_grids.grid_io import GridFile
 from synthesizer_grids.parser import Parser
 
-""""
-
-def create_empty_grid(grid_dir, incident_grid_name, new_grid_name):
-    # out_grid = GridFile(new_grid_name)
-
-    # out_grid.write_grid_common(
-    #      ,
-    #    axes={}
-    # )
-
-    with h5py.File(f"{grid_dir}/{new_grid_name}.hdf5", "w") as hf:
-        # open the original incident model grid
-
-        incident_grid = Grid(
-            args.incident_grid + ".hdf5",
-            grid_dir=f"{args.grid_dir}",
-            read_lines=False,
-        )
-
-        axes = list(incident_grid.axes) + list(grid_params.keys())
-
-        with h5py.File(
-            f"{grid_dir}/{incident_grid_name}.hdf5", "r"
-        ) as hf_incident:
-            # copy top-level attributes
-            for k, v in hf_incident.attrs.items():
-                # If v is None then convert to string None for saving in the
-                # HDF5 file.
-                if v is None:
-                    v = "None"
-
-                hf.attrs[k] = v
-
-            # add attribute with the original incident grid axes
-            hf.attrs["incident_axes"] = hf_incident.attrs["axes"]
-
-            # we want to copy over log10_specific_ionising_luminosity from the
-            # incident grid to allow us to normalise the cloudy outputs.
-            # However, the axes of the incident grid may be different from the
-            # cloudy grid due to additional parameters, in which we need to
-            # extend the axes of log10_specific_ionising_luminosity.
-
-            # if there are no additional axes simply copy over the incident
-            # log10_specific_ionising_luminosity
-            if len(axes) == len(hf.attrs["incident_axes"]):
-                hf_incident.copy("log10_specific_ionising_luminosity", hf)
-
-            # else we need to expand the axis
-            else:
-                # this is amount by which we need to expand
-                expansion = int(
-                    np.product(shape)
-                    / np.product(
-                        hf_incident[
-                            "log10_specific_ionising_luminosity/HI"
-                        ].shape
-                    )
-                )
-
-                # loop over ions
-                for ion in hf_incident[
-                    "log10_specific_ionising_luminosity"
-                ].keys():
-                    # get the incident log10_specific_ionising_luminosity array
-                    log10_specific_ionising_luminosity_incident = hf_incident[
-                        f"log10_specific_ionising_luminosity/{ion}"
-                    ][()]
-
-                    # create new array with repeated elements
-                    log10_specific_ionising_luminosity = np.repeat(
-                        log10_specific_ionising_luminosity_incident,
-                        expansion,
-                        axis=-1,
-                    )
-
-                    # reshape array to match new shape and save
-                    hf[f"log10_specific_ionising_luminosity/{ion}"] = (
-                        np.reshape(log10_specific_ionising_luminosity, shape)
-                    )
-
-        # add attribute with full grid axes
-        hf.attrs["axes"] = axes
-
-        # add the bin centres for the grid bins
-        for axis in axes:
-            hf[f"axes/{axis}"] = grid_params[axis]
-
-        # add other parameters as attributes
-        for k, v in params.items():
-            # If v is None then convert to string None for saving in the
-            # HDF5 file.
-            if v is None:
-                v = "None"
-
-            # if the parameter is a dictionary (e.g. as used for abundances)
-            if isinstance(v, dict):
-                for k2, v2 in v.items():
-                    hf.attrs[k + "_" + k2] = v2
-            else:
-                hf.attrs[k] = v
-
-"""
-
 
 def get_grid_properties_hf(hf, verbose=True):
     """
@@ -473,6 +370,11 @@ if __name__ == "__main__":
         "-cloudy_params", type=str, required=False, default="c17.03-sps"
     )
 
+    # Parse arguments
+    args = parser.parse_args()
+
+    # fixed_params, grid_params = load_grid_params(args.cloudy_params)
+
     # Include spectra
     parser.add_argument(
         "-include_spectra",
@@ -520,7 +422,7 @@ if __name__ == "__main__":
     include_spectra = args.include_spectra
 
     # Create empty synthesizer grid
-    # create_empty_grid(grid_dir, incident_grid_name, grid_name)
+    # create_empty_grid(grid_dir, incident_grid_name, grid_name, cloudy_params)
 
     # Check cloudy runs and potentially replace them by the nearest grid point
     # if they fail.
