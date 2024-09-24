@@ -179,7 +179,13 @@ if __name__ == "__main__":
 
         # add these to the parameter file
         for k, i in zip(incident_grid.axes, incident_ref_grid_point):
-            fixed_params["reference_" + k + "_index"] = i
+            for k in incident_grid.axes:
+                if k == "metallicities":
+                    k = "metallicity"
+                if k == "ages":
+                    k = "age"
+
+                fixed_params["reference_" + k + "_index"] = i
 
     # Combine all parameters
     params = fixed_params | grid_params
