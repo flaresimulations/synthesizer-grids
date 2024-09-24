@@ -9,6 +9,7 @@ import shutil
 import h5py
 import numpy as np
 import yaml
+from synthesizer.grid import Grid
 
 # synthesizer modules
 from synthesizer.photoionisation import cloudy17, cloudy23
@@ -23,59 +24,65 @@ from synthesizer_grids.parser import Parser
 
 
 def create_empty_grid(
-    grid_dir, incident_grid_name, new_grid_name, grid_params
+    grid_dir, incident_grid_name, new_grid_name, params, grid_params
 ):
     # open original incident model grid
 
-    # incident_grid = Grid(
-    #    args.incident_grid_name + ".hdf5", grid_dir=grid_dir, read_lines=False
-    # )
+    incident_grid = Grid(
+        grid_name=incident_grid_name, grid_dir=grid_dir, read_lines=False
+    )
 
     # Set a list of the axes
-    # axes = list(incident_grid.axes) + list(grid_params.keys())
+    axes = list(incident_grid.axes) + list(grid_params.keys())
 
     # make new grid file
 
-    # out_grid = GridFile(new_grid_name)
-
-    # out_grid.write_grid_common(
-    # model={},
-    # wavelength={},
-    # axes=axes,
-    # spectra={})
-
-    """
-
-
+    out_grid = GridFile(new_grid_name)
+    print("NEW GRID CREATED:", new_grid_name)
 
     # copy top-level attributes
 
-    with h5py.File(
-        f"{grid_dir}/{incident_grid_name}.hdf5", "r"
-    ) as hf_incident:
-        # copy top-level attributes
-        for k, v in hf_incident.attrs.items():
-            # If v is None then convert to string None for saving in the
-            # HDF5 file.
-            if v is None:
-                v = "None"
-            hf.attrs[k] = v
+    incident_attributes = incident_grid.__dict__.keys()
+
+    print(incident_attributes)
+
+    for name in incident_attributes:
+        # If v is None then convert to string None for saving in the
+        # HDF5 file.
+        print(name)
+        out_grid.write_attribute(group="/", attr_key=name)
 
     # add attribute with the original incident grid axes
 
-    hf.attrs["incident_axes"] = hf_incident.attrs["axes"]
+    out_grid.write_attribute("incident_axes", incident_attributes["axes"])
 
-    # we want to copy over log10_specific_ionising_luminosity from the
+    axes = list(incident_grid.axes) + list(grid_params.keys())
+
+    # get properties of the grid
+    (
+        n_axes,
+        shape,
+        n_models,
+        mesh,
+        model_list,
+        index_list,
+    ) = get_grid_properties(axes, grid_params, verbose=True)
+
+    # We want to copy over log10_specific_ionising_luminosity from the
     # incident grid to allow us to normalise the cloudy outputs.
     # However, the axes of the incident grid may be different from the
     # cloudy grid due to additional parameters, in which we need to
     # extend the axes of log10_specific_ionising_luminosity.
 
-    # if there are no additional axes simply copy over the incident
-    # log10_specific_ionising_luminosity
+    # If there are no additional axes simply copy over the incident
+    # log10_specific_ionising_luminosity .
 
-    if len(axes) == len(hf.attrs["incident_axes"]):
-        hf_incident.copy("log10_specific_ionising_luminosity", hf)
+    if len(out_grid.axes) == len(incident_attributes["axes"]):
+        # hf_incident.copy("log10_specific_ionising_luminosity", hf)
+        out_grid.write_attribute(
+            "log10_specific_ionising_luminosity",
+            incident_attributes["log10_specific_ionising_luminosity"],
+        )
 
     # else we need to expand the axis
 
@@ -84,15 +91,19 @@ def create_empty_grid(
         expansion = int(
             np.product(shape)
             / np.product(
-                hf_incident["log10_specific_ionising_luminosity/HI"].shape
+                incident_attributes[
+                    "log10_specific_ionising_luminosity/HI"
+                ].shape
             )
         )
 
     # loop over ions
 
-    for ion in hf_incident["log10_specific_ionising_luminosity"].keys():
+    for ion in incident_attributes[
+        "log10_specific_ionising_luminosity"
+    ].keys():
         # get the incident log10_specific_ionising_luminosity array
-        log10_specific_ionising_luminosity_incident = hf_incident[
+        log10_specific_ionising_luminosity_incident = incident_attributes[
             f"log10_specific_ionising_luminosity/{ion}"
         ][()]
         # create new array with repeated elements
@@ -101,19 +112,20 @@ def create_empty_grid(
             expansion,
             axis=-1,
         )
-        # reshape array to match new shape and save
-        hf[f"log10_specific_ionising_luminosity/{ion}"] = np.reshape(
-            log10_specific_ionising_luminosity, shape
+
+        out_grid.write_attribute(
+            f"log10_specific_ionising_luminosity/{ion}",
+            np.reshape(log10_specific_ionising_luminosity, shape),
         )
 
     # add attribute with full grid axes
 
-    hf.attrs["axes"] = axes
+    out_grid.write_attribute("axes", axes)
 
     # add the bin centres for the grid bins
 
-    for axis in axes:
-        hf[f"axes/{axis}"] = grid_params[axis]
+    for axis in out_grid.axes:
+        out_grid.write_attribute(f"axes/{axis}", grid_params[axis])
 
     # add other parameters as attributes
 
@@ -125,11 +137,9 @@ def create_empty_grid(
         # if the parameter is a dictionary (e.g. as used for abundances)
         if isinstance(v, dict):
             for k2, v2 in v.items():
-                hf.attrs[k + "_" + k2] = v2
+                out_grid.write_attribute(k + "_" + k2, v2)
         else:
-            hf.attrs[k] = v
-
-    """
+            out_grid.write_attribute(k, v)
 
 
 def load_grid_params(param_file="c23.01-sps", param_dir="params"):
@@ -220,6 +230,7 @@ def check_cloudy_runs(
             model_list,
             index_list,
         ) = get_grid_properties_hf(hf)
+
         # list of failed models
         failed_list = []
         for i, grid_params_ in enumerate(model_list):
@@ -532,8 +543,6 @@ if __name__ == "__main__":
     # Parse arguments
     args = parser.parse_args()
 
-    # fixed_params, grid_params = load_grid_params(args.cloudy_params)
-
     # Include spectra
     parser.add_argument(
         "-include_spectra",
@@ -584,16 +593,23 @@ if __name__ == "__main__":
     fixed_params, grid_params = load_grid_params(args.cloudy_params)
 
     # If an additional parameter set is provided supersede the default
-    # parameters with these.
+    # parameters with these and adjust the new grid name.
     if args.cloudy_params_addition:
+        grid_name = (
+            grid_name + f"-{args.cloudy_params_addition.split('/')[-1]}"
+        )
         additional_fixed_params, additional_grid_params = load_grid_params(
             args.cloudy_params_addition
         )
         fixed_params = fixed_params | additional_fixed_params
         grid_params = grid_params | additional_grid_params
 
+    params = fixed_params | grid_params
+
     # Create empty synthesizer grid
-    create_empty_grid(grid_dir, incident_grid_name, grid_name, grid_params)
+    create_empty_grid(
+        grid_dir, incident_grid_name, grid_name, params, grid_params
+    )
 
     # Check cloudy runs and potentially replace them by the nearest grid point
     # if they fail.
