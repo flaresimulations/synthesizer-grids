@@ -4,7 +4,7 @@ Create a synthesizer incident grid for the agnsed model
 import sys
 import numpy as np
 import yaml
-from unyt import Angstrom, erg, s, Hz, Msun
+from unyt import Angstrom, erg, s, Hz, Msun, c
 from synthesizer_grids.parser import Parser
 from synthesizer_grids.grid_io import GridFile
 
@@ -22,7 +22,7 @@ from relagn import relagn
 if __name__ == "__main__":
 
     """
-    Create incident AGN spectra assuming a broken power-law model.
+    Create incident AGN spectra assuming the AGNSED model.
 
     $L_{\nu} = \nu^{\alpha_i}
 
@@ -108,6 +108,8 @@ if __name__ == "__main__":
     # initialise default model, to get wavelength grid
     dagn = relagn()
     lam = dagn.wave_grid[::-1] * Angstrom
+    nu = c / lam
+    nu_hz = nu.to('Hz').value
 
     # create empty spectra grid
     spec = np.zeros((*axes_shape, len(lam)))
@@ -149,6 +151,43 @@ if __name__ == "__main__":
                     lnu = dagn.get_totSED(rel=False)  # non-relativistic
 
                     spec[i1, i2, i3] = lnu[::-1]
+
+    # Normalise the spectra using the isotropic spectra (i.e.
+    # cosine_inclination=0.5)
+
+    # If only a grid containing isoptropic spectra this simply means 
+    # normalising every spectra to unit
+    if isotropic:
+
+        # loop over each axis
+        for i1, mass_ in enumerate(axes_values["mass"]):
+            for i2, accretion_rate_eddington_ in enumerate(
+                axes_values["accretion_rate_eddington"]):
+
+                # determine the boloe
+                bolometric_luminosity = -np.trapezoid(spec[i1, i2], nu_hz)
+                spec[i1, i2] /= bolometric_luminosity
+       
+    # otherwise identify the index correspinding and divide all by this
+    else:
+
+        # find the index corresponding to cosine_inclination=0.5
+        isotropic_index = np.where(cosine_inclination == 0.5)[0]
+
+        # loop over each axis
+        for i1, mass_ in enumerate(axes_values["mass"]):
+            for i2, accretion_rate_eddington_ in enumerate(
+                axes_values["accretion_rate_eddington"]):
+
+                # determine the boloe
+                bolometric_luminosity = -np.trapz(spec[
+                    i1, i2, isotropic_index], nu_hz)
+
+                for i3, cosine_inclination_ in enumerate(
+                    axes_values["cosine_inclination"]):
+
+                    spec[i1, i2, i3] /= bolometric_luminosity
+
 
     # Create the GridFile ready to take outputs
     out_grid = GridFile(out_filename, mode="w", overwrite=True)
