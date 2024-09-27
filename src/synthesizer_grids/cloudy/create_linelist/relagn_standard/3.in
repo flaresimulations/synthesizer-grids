@@ -1,0 +1,14 @@
+table SED "1.sed" 
+abundances "solar_GASS10.abn"
+metals 0.01
+ionization parameter -1
+cosmic rays, background
+hden 7.0 log constant density
+set temperature floor 100 linear
+stop temperature 500K
+stop efrac -2
+save overview  "3.ovr" last
+save last abundances "3.abundances"
+save last continuum "3.cont" units Angstroms no clobber
+# print line vacuum
+save last lines, array "3.lines" units Angstroms no clobber
