@@ -230,10 +230,6 @@ if __name__ == "__main__":
         # Get a tuple of the incident grid point
         incident_grid_point = tuple(grid_index_[k] for k in incident_grid.axes)
 
-        print('incident grid point:', incident_grid_point)
-        print('incident ref grid point:', incident_ref_grid_point)
-        print(len(incident_grid.log10_specific_ionising_lum["HI"]))
-
         # Join the fixed and current iteration of the grid parameters
         params_ = fixed_params | grid_params_
 
