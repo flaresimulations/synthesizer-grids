@@ -14,7 +14,7 @@ from synthesizer.grid import Grid
 # synthesizer modules
 from synthesizer.photoionisation import cloudy17, cloudy23
 from synthesizer.sed import Sed
-from unyt import dimensionless, eV, yr
+from unyt import dimensionless, eV, yr, Angstrom, erg, s, Hz
 
 # local modules
 from utils import get_grid_properties
@@ -76,10 +76,16 @@ def create_empty_grid(
         if len(axes) == len(incident_grid.axes):
             # hf_incident.copy("log10_specific_ionising_luminosity", hf)
             out_grid.write_dataset(
-                "log10_specific_ionising_luminosity",
-                hf_incident["log10_specific_ionising_luminosity"]
-                * dimensionless,
-                description="The specific ionising photon luminosity",
+                key="log10_specific_ionising_luminosity/HI",
+                data=hf_incident["log10_specific_ionising_luminosity"]["HI"] * dimensionless,
+                description="The specific ionising photon luminosity for HI",
+                log_on_read=False,
+            )
+
+            out_grid.write_dataset(
+                key="log10_specific_ionising_luminosity/HeII",
+                data=hf_incident["log10_specific_ionising_luminosity"]["HeII"] * dimensionless,
+                description="The specific ionising photon luminosity for HeII",
                 log_on_read=False,
             )
 
@@ -94,19 +100,19 @@ def create_empty_grid(
                 )
             )
 
-        # loop over ions
+            # loop over ions
 
-        for ion in hf_incident["log10_specific_ionising_luminosity"].keys():
-            # get the incident log10_specific_ionising_luminosity array
-            log10_specific_ionising_luminosity_incident = hf_incident[
-                f"log10_specific_ionising_luminosity/{ion}"
-            ][()]
-            # create new array with repeated elements
-            log10_specific_ionising_luminosity = np.repeat(
-                log10_specific_ionising_luminosity_incident,
-                expansion,
-                axis=-1,
-            )
+            for ion in hf_incident["log10_specific_ionising_luminosity"].keys():
+                # get the incident log10_specific_ionising_luminosity array
+                log10_specific_ionising_luminosity_incident = hf_incident[
+                    f"log10_specific_ionising_luminosity/{ion}"
+                ][()]
+                # create new array with repeated elements
+                log10_specific_ionising_luminosity = np.repeat(
+                    log10_specific_ionising_luminosity_incident,
+                    expansion,
+                    axis=-1,
+                )
 
             out_grid.write_dataset(
                 f"log10_specific_ionising_luminosity/{ion}",
@@ -374,7 +380,7 @@ def add_spectra(grid_name, grid_dir, cloudy_dir):
             # renormalise the spectrum.
             if "log10_specific_ionising_luminosity/HI" in hf:
                 # create sed object
-                sed = Sed(lam=lam, lnu=spec_dict["incident"])
+                sed = Sed(lam=lam*Angstrom, lnu=spec_dict["incident"] * erg / s / Hz)
 
                 # calculate Q
                 ionising_photon_production_rate = (
