@@ -164,28 +164,33 @@ if __name__ == "__main__":
     # If the ionisation_parameter_model is the reference model (i.e. not fixed)
     # save the grid point for the reference values
     if fixed_params["ionisation_parameter_model"] == "ref":
-        # get the indices of the reference grid point (this is used by the
-        # reference model)
+        # Initialize an empty list to store reference values
+        reference_values = []
 
+        # Iterate over the axes of the incident grid
         for k in incident_grid.axes:
+            # Adjust the name of k as needed
             if k == "metallicities":
                 k = "metallicity"
-            if k == "ages":
+            elif k == "ages":
                 k = "age"
 
-            incident_ref_grid_point = incident_grid.get_grid_point(
-                [fixed_params["reference_" + k]]
-            )
+            # Append the corresponding reference value from fixed_params
+            reference_values.append(fixed_params["reference_" + k])
 
-        # add these to the parameter file
+        # Get the reference grid point using the adjusted reference values
+        incident_ref_grid_point = incident_grid.get_grid_point(reference_values)
+
+        # Add the reference grid point indices to fixed_params
         for k, i in zip(incident_grid.axes, incident_ref_grid_point):
-            for k in incident_grid.axes:
-                if k == "metallicities":
-                    k = "metallicity"
-                if k == "ages":
-                    k = "age"
+            # Adjust the axis names again before saving the index
+            if k == "metallicities":
+                k = "metallicity"
+            elif k == "ages":
+                k = "age"
 
-                fixed_params["reference_" + k + "_index"] = i
+            # Save the index to the fixed_params dictionary
+            fixed_params["reference_" + k + "_index"] = i
 
     # Combine all parameters
     params = fixed_params | grid_params
@@ -225,6 +230,10 @@ if __name__ == "__main__":
         # Get a tuple of the incident grid point
         incident_grid_point = tuple(grid_index_[k] for k in incident_grid.axes)
 
+        print('incident grid point:', incident_grid_point)
+        print('incident ref grid point:', incident_ref_grid_point)
+        print(len(incident_grid.log10_specific_ionising_lum["HI"]))
+
         # Join the fixed and current iteration of the grid parameters
         params_ = fixed_params | grid_params_
 
@@ -257,6 +266,9 @@ if __name__ == "__main__":
                     incident_ref_grid_point
                 ]
             )
+
+            # here incident_grid_point = (0,0)
+            # incident ref_grid_point = (0,)
 
             # For spherical geometry the effective log10U is this
             if params_["geometry"] == "spherical":
