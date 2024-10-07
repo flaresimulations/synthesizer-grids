@@ -26,8 +26,8 @@ ionisation_parameter: [0.01, 0.1]  # value of ionisation
 hydrogen_density: [1.0e+8, 1.0e+9]  
 
 # STOPPING CRITERIA
-stop_column_density: [21, 22, 23, 24, 25]  # stopping column density
-
+stop_T: 500  # stopping temperature
+stop_efrac: -2  # limiting ratio of electron to H densities
 
 # MISC COMMANDS
 CMB:  # include CMB heating
