@@ -41,7 +41,7 @@ from synthesizer.photoionisation import Ions
 from synthesizer.sed import Sed
 from synthesizer.utils.util_funcs import has_units
 from tqdm import tqdm
-from unyt import dimensionless, unyt_array, erg, s
+from unyt import dimensionless, erg, s, unyt_array
 
 from synthesizer_grids._version import __version__ as grids_version
 
@@ -583,8 +583,9 @@ class GridFile:
             sed = Sed(lam, lnu)
 
             # Store the results at the correct indices
-            bolometric_luminosities[indices] = (
-                np.log10(sed.bolometric_luminosity.to('erg/s').value))
+            bolometric_luminosities[indices] = np.log10(
+                sed.bolometric_luminosity.to("erg/s").value
+            )
 
         # Loop over the iopns and write out their arrays
         self.write_dataset(
