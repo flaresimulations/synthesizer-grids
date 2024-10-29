@@ -14,7 +14,7 @@ from synthesizer.grid import Grid
 # synthesizer modules
 from synthesizer.photoionisation import cloudy17, cloudy23
 from synthesizer.sed import Sed
-from unyt import dimensionless, eV, yr, Angstrom, erg, s, Hz
+from unyt import Angstrom, Hz, dimensionless, erg, eV, s, yr
 
 # local modules
 from utils import get_grid_properties
@@ -33,10 +33,8 @@ def create_empty_grid(
         read_lines=False,
     )
 
-    # make new grid file
-
+    # make the new grid
     out_grid = GridFile(f"{grid_dir}/{new_grid_name}.hdf5")
-    print("NEW GRID BEING CREATED:", new_grid_name)
 
     # open the original incident model grid
     with h5py.File(
@@ -74,17 +72,18 @@ def create_empty_grid(
         # log10_specific_ionising_luminosity .
 
         if len(axes) == len(incident_grid.axes):
-            # hf_incident.copy("log10_specific_ionising_luminosity", hf)
             out_grid.write_dataset(
                 key="log10_specific_ionising_luminosity/HI",
-                data=hf_incident["log10_specific_ionising_luminosity"]["HI"] * dimensionless,
+                data=hf_incident["log10_specific_ionising_luminosity"]["HI"]
+                * dimensionless,
                 description="The specific ionising photon luminosity for HI",
                 log_on_read=False,
             )
 
             out_grid.write_dataset(
                 key="log10_specific_ionising_luminosity/HeII",
-                data=hf_incident["log10_specific_ionising_luminosity"]["HeII"] * dimensionless,
+                data=hf_incident["log10_specific_ionising_luminosity"]["HeII"]
+                * dimensionless,
                 description="The specific ionising photon luminosity for HeII",
                 log_on_read=False,
             )
@@ -102,7 +101,9 @@ def create_empty_grid(
 
             # loop over ions
 
-            for ion in hf_incident["log10_specific_ionising_luminosity"].keys():
+            for ion in hf_incident[
+                "log10_specific_ionising_luminosity"
+            ].keys():
                 # get the incident log10_specific_ionising_luminosity array
                 log10_specific_ionising_luminosity_incident = hf_incident[
                     f"log10_specific_ionising_luminosity/{ion}"
@@ -114,21 +115,19 @@ def create_empty_grid(
                     axis=-1,
                 )
 
-            out_grid.write_dataset(
-                f"log10_specific_ionising_luminosity/{ion}",
-                np.reshape(log10_specific_ionising_luminosity, shape)
-                * dimensionless,
-                description="The specific ionising photon luminosity",
-                log_on_read=False,
-            )
+                out_grid.write_dataset(
+                    f"log10_specific_ionising_luminosity/{ion}",
+                    np.reshape(log10_specific_ionising_luminosity, shape)
+                    * dimensionless,
+                    description="The specific ionising photon luminosity",
+                    log_on_read=False,
+                )
 
         # add attribute with full grid axes
 
         out_grid.write_attribute(group="/", attr_key="axes", data=axes)
 
         # add the bin centres for the grid bins
-        print("params:", params)  # cloudy params
-        print("grid params:", grid_params)  # grid params
 
         for axis in axes:
             # add units to axes
@@ -215,15 +214,8 @@ def get_grid_properties_hf(hf, verbose=True):
     grid.
     """
 
-    print("INSIDE GET GRID...")
-
     axes = hf.attrs["axes"]  # list of axes in the correct order
 
-    for axis in axes:
-        print("axis:", axis)
-        print(hf[f"axes/{axis}"])
-
-    print("axes:", axes)
     axes_values = {
         axis: hf[f"axes/{axis}"][:] for axis in axes
     }  # dictionary of axis grid points
@@ -322,7 +314,6 @@ def add_spectra(grid_name, grid_dir, cloudy_dir):
 
     # open the new grid
     with h5py.File(f"{grid_dir}/{grid_name}.hdf5", "a") as hf:
-            
         # Get the properties of the grid including the dimensions etc.
         (
             axes,
@@ -380,7 +371,10 @@ def add_spectra(grid_name, grid_dir, cloudy_dir):
             # renormalise the spectrum.
             if "log10_specific_ionising_luminosity/HI" in hf:
                 # create sed object
-                sed = Sed(lam=lam*Angstrom, lnu=spec_dict["incident"] * erg / s / Hz)
+                sed = Sed(
+                    lam=lam * Angstrom,
+                    lnu=spec_dict["incident"] * erg / s / Hz,
+                )
 
                 # calculate Q
                 ionising_photon_production_rate = (
@@ -613,11 +607,15 @@ if __name__ == "__main__":
         required=False,
     )
 
+    # verbosity flag
+    parser.add_argument("-verbose", type=bool, required=False, default=True)
+
     args = parser.parse_args()
 
     # Unpack arguments
     grid_dir = args.grid_dir
     cloudy_dir = args.cloudy_dir
+    verbose = args.verbose
 
     # Construct grid_name from incident grid and parameter file
     grid_name = f"{args.incident_grid}_cloudy-{args.cloudy_params}"
