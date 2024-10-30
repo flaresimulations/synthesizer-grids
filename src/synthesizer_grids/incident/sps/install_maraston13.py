@@ -6,7 +6,7 @@ import os
 
 import numpy as np
 from synthesizer.conversions import llam_to_lnu
-from unyt import Angstrom, dimensionless, erg, s, yr
+from unyt import Angstrom, Hz, dimensionless, erg, s, yr
 
 from synthesizer_grids.grid_io import GridFile
 from synthesizer_grids.parser import Parser
@@ -95,7 +95,7 @@ def make_grid(model, imf, input_dir, grid_dir):
             "metallicities": metallicities * dimensionless,
         },
         wavelength=lam,
-        spectra={"incident": spec},
+        spectra={"incident": spec * erg / s / Hz},
         log_on_read=log_on_read,
         alt_axes=("log10ages", "metallicities"),
     )
