@@ -551,19 +551,19 @@ if __name__ == "__main__":
     )
 
     # Path to directory where cloudy runs are
-    parser.add_argument("-cloudy_dir", type=str, required=True)
+    parser.add_argument("--cloudy_dir", type=str, required=True)
 
     # The name of the incident grid
-    parser.add_argument("-incident_grid", type=str, required=True)
+    parser.add_argument("--incident_grid", type=str, required=True)
 
     # The cloudy parameters, including any grid axes
     parser.add_argument(
-        "-cloudy_params", type=str, required=False, default="c17.03-sps"
+        "--cloudy_params", type=str, required=False, default="c17.03-sps"
     )
 
     # A second cloudy parameter set which supersedes the above
     parser.add_argument(
-        "-cloudy_params_addition",
+        "--cloudy_params_addition",
         type=str,
         required=False,
     )
@@ -573,7 +573,6 @@ if __name__ == "__main__":
 
     # Include spectra
     parser.add_argument(
-        "-include_spectra",
         "--include_spectra",
         type=bool,
         default=True,
@@ -583,13 +582,10 @@ if __name__ == "__main__":
     # Boolean flag as to whether to attempt to replace missing files
     # NOTE: this is not currently used as we should re-run cloudy or figure
     # out what went wrong when there is a failure.
-    parser.add_argument(
-        "-replace", "--replace", type=bool, default=False, required=False
-    )
+    parser.add_argument("--replace", type=bool, default=False, required=False)
 
     # Define the line calculation method.
     parser.add_argument(
-        "-line_calc_method",
         "--line_calc_method",
         type=str,
         default="lines",
@@ -598,7 +594,6 @@ if __name__ == "__main__":
 
     # Define the line calculation method.
     parser.add_argument(
-        "-machine",
         "--machine",
         type=str,
         default=None,
@@ -606,7 +601,7 @@ if __name__ == "__main__":
     )
 
     # verbosity flag
-    parser.add_argument("-verbose", type=bool, required=False, default=True)
+    parser.add_argument("--verbose", type=bool, required=False, default=True)
 
     args = parser.parse_args()
 

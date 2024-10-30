@@ -64,32 +64,32 @@ if __name__ == "__main__":
     parser = Parser(description="Run a grid of incident cloudy models")
 
     # Machine (for submission script generation)
-    parser.add_argument("-machine", type=str, required=True)
+    parser.add_argument("--machine", type=str, required=True)
 
     # Path to directory where cloudy runs are
-    parser.add_argument("-cloudy_dir", type=str, required=True)
+    parser.add_argument("--cloudy_dir", type=str, required=True)
 
     # The name of the incident grid
-    parser.add_argument("-incident_grid", type=str, required=True)
+    parser.add_argument("--incident_grid", type=str, required=True)
 
     # The cloudy reference parameter set
     parser.add_argument(
-        "-cloudy_params", type=str, required=True, default="c23.01-sps"
+        "--cloudy_params", type=str, required=True, default="c23.01-sps"
     )
 
     # A second cloudy parameter set which supersedes the above
     parser.add_argument(
-        "-cloudy_params_addition",
+        "--cloudy_params_addition",
         type=str,
         required=False,
     )
 
     # Path to cloudy directory (not the executable; this is assumed to
     # {cloudy}/{cloudy_version}/source/cloudy.exe)
-    parser.add_argument("-cloudy_path", type=str, required=False)
+    parser.add_argument("--cloudy_path", type=str, required=False)
 
     # Verbosity flag
-    parser.add_argument("-verbose", type=bool, required=False, default=True)
+    parser.add_argument("--verbose", type=bool, required=False, default=True)
 
     # Parse arguments
     args = parser.parse_args()
