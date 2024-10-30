@@ -230,7 +230,17 @@ if __name__ == "__main__":
         # Get a tuple of the incident grid point
         incident_grid_point = tuple(grid_index_[k] for k in incident_grid.axes)
 
-        # Join the fixed and current iteration of the grid parameters
+        if np.isnan(
+            incident_grid.log10_specific_ionising_lum["HI"][incident_grid_point]
+        ):
+            raise ValueError(
+                f"There is an issue with the Cloudy input file {i}.in since"
+                f"Q(H) = NaN. This occurs at the incident grid point"
+                f"{incident_grid_point} and will cause that Cloudy run to fail."
+            )
+
+        # join the fixed and current iteration of the grid parameters
+
         params_ = fixed_params | grid_params_
 
         # Set cloudy metallicities parameter to the stellar metallicities
