@@ -243,8 +243,7 @@ if __name__ == "__main__":
                 f"fail."
             )
 
-        # join the fixed and current iteration of the grid parameters
-
+        # Join the fixed and current iteration of the grid parameters
         params_ = fixed_params | grid_params_
 
         # Set cloudy metallicities parameter to the stellar metallicities
@@ -276,9 +275,6 @@ if __name__ == "__main__":
                     incident_ref_grid_point
                 ]
             )
-
-            # here incident_grid_point = (0,0)
-            # incident ref_grid_point = (0,)
 
             # For spherical geometry the effective log10U is this
             if params_["geometry"] == "spherical":
