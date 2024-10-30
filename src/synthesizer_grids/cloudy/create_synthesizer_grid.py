@@ -141,8 +141,6 @@ def create_empty_grid(
                 # Multiply values with the corresponding unit
                 values_with_units = grid_params[axis] * axes_units[axis]
 
-                print(axis, values_with_units)
-
             out_grid.write_dataset(
                 key=f"axes/{axis}",
                 data=values_with_units,
