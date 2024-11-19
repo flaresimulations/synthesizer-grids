@@ -4,7 +4,7 @@ Create a synthesizer incident grid for the agnsed model
 import sys
 import numpy as np
 import yaml
-from unyt import Angstrom, erg, s, Hz, Msun, c
+from unyt import Angstrom, erg, s, Hz, Msun, c, dimensionless
 from synthesizer_grids.parser import Parser
 from synthesizer_grids.grid_io import GridFile
 
@@ -42,8 +42,8 @@ if __name__ == "__main__":
 
     axes_units = {
         "mass": Msun,
-        "accretion_rate_eddington": None,
-        "cosine_inclination": None,
+        "accretion_rate_eddington": dimensionless,
+        "cosine_inclination": dimensionless,
         }
 
     # Set up the command line arguments
@@ -113,8 +113,6 @@ if __name__ == "__main__":
 
     # create empty spectra grid
     spec = np.zeros((*axes_shape, len(lam)))
-
-    print(spec.shape)
 
     for i1, mass_ in enumerate(axes_values["mass"]):
         for i2, accretion_rate_eddington_ in enumerate(
@@ -190,7 +188,14 @@ if __name__ == "__main__":
 
 
     # Create the GridFile ready to take outputs
-    out_grid = GridFile(out_filename, mode="w", overwrite=True)
+    out_grid = GridFile(out_filename)
+
+
+    log_on_read = {'mass': True, 'accretion_rate_eddington': True}
+
+    if not isotropic:
+        log_on_read['cosine_inclination'] = False
+
 
     # Write everything out thats common to all models
     out_grid.write_grid_common(
@@ -198,6 +203,7 @@ if __name__ == "__main__":
         axes=axes,
         descriptions=axes_descriptions,
         wavelength=lam,
+        log_on_read=log_on_read,
         spectra={"incident": spec * erg / s / Hz},
     )
 

@@ -3,7 +3,7 @@ Create a synthesizer incident grid for a broken power-law SED.
 """
 import yaml
 import numpy as np
-from unyt import c, Angstrom, erg, s, Hz
+from unyt import c, Angstrom, erg, s, Hz, dimensionless
 from synthesizer_grids.parser import Parser
 from synthesizer_grids.grid_io import GridFile
 
@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
     # In this case the incident axes values are just the indices
     # but we also convert lists to arrays
-    axes_values = [np.array(index) for index in indices]
+    axes_values = [np.array(index) * dimensionless for index in indices]
 
     # axes dictionary, save as part of output
     axes = dict(zip(axes_names, axes_values))
@@ -146,7 +146,10 @@ if __name__ == "__main__":
                 spec[i] = broken_power_law(x, edges[::-1], indices_[::-1])
 
     # Create the GridFile ready to take outputs
-    out_grid = GridFile(out_filename, mode="w", overwrite=True)
+    out_grid = GridFile(out_filename)
+
+    # Define which axes are logged
+    log_on_read = {'alpha1': False, 'alpha2': False, 'alpha3': False}
 
     # Write everything out thats common to all models
     out_grid.write_grid_common(
@@ -154,6 +157,7 @@ if __name__ == "__main__":
         axes=axes,
         descriptions=axes_descriptions,
         wavelength=lam,
+        log_on_read=log_on_read,
         spectra={"incident": spec * erg / s / Hz},
     )
 
