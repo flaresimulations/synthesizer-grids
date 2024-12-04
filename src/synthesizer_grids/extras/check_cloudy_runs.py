@@ -1,50 +1,74 @@
-
 import os
+
 import matplotlib
-matplotlib.use('Agg')
+
+matplotlib.use("Agg")
+import re
+from collections import namedtuple
+from typing import Dict
+
 import matplotlib.pyplot as plt
 import numpy as np
-import yaml
-import re
+from numpy.typing import NDArray
+from synthesizer.grid import Grid
+from synthesizer_grids.cloudy.utils import (
+    get_cloudy_params,
+    get_grid_properties,
+)
+from synthesizer_grids.parser import Parser
 from tqdm import tqdm
 
-from synthesizer_grids.parser import Parser
-from synthesizer.grid import Grid
 
-from utils import get_cloudy_params, get_grid_properties
-
-# TODO: add doc strings for these functions
-
-def read_model_output_tail(model_num, folder_loc, tail_len=5):
+def read_model_output_tail(
+    model_num: int, folder_loc: str, tail_len: int = 5
+) -> str:
     """
     Reads in the tail strings of '.out' inside 'folder_name'
-    
+
     Parameters:
-        model_num: the number assigned to the cloudy model run
-        folder_loc: A string containing the directory with cloudy outputs
-        tail_len: Number of tail strings to read in
-    
+        model_num (int): the number assigned to the cloudy model run
+        folder_loc (str): A string containing the directory with cloudy outputs
+        tail_len (int): Number of tail strings to read in
+
     Returns:
         A string with the last 'tail_len' lines of output, returns 0 if file not found
     """
 
     try:
-        with open(F'{folder_loc}/{model_num}.out', 'r') as f:
+        with open(f"{folder_loc}/{model_num}.out", "r") as f:
             tail = f.readlines()[-tail_len:]
-        tail = ''.join(tail)
+        tail = "".join(tail)
         # Remove all newline (\n) and square brackets
-        tail = re.sub(r'[\n]|\[|\]', '', tail)
+        tail = re.sub(r"[\n]|\[|\]", "", tail)
     except FileNotFoundError:
         tail = None
 
     return tail
 
+
 def check_run(
-    args, grid_params, grid_params_unit, colourmap=matplotlib.cm.viridis
-):
+    args: namedtuple,
+    grid_params: Dict,
+    grid_params_unit: Dict,
+    colourmap: matplotlib = matplotlib.cm.viridis,
+) -> None:
+    """
+    Reads in the cloudy runs and checks the output for failed runs
+
+    Parameters:
+        args (NamedSpace):
+            parser arguments passed on to this job
+        grid_params (Dict):
+            cloudy parameters
+        grid_params_unit (Dict):
+            cloudy parameter units
+        colourmap (matplotlib):
+            matplotlib colourmap to use
+    """
 
     # Get properties of the grid
-    (   n_axes,
+    (
+        n_axes,
         shape,
         n_models,
         mesh,
@@ -55,25 +79,27 @@ def check_run(
     # Define dictionary to store summary statistics
     run_space = np.zeros(n_models, dtype=int)
     run_key = {
-                0: 'Success',
-                1: 'DNR',         # Did not run (could be because of scheduling)
-                2: 'Unphysical',  # Problem with parameter space or negative     population 
-                3: 'Converge',    # Did not converge
-                4: 'Abort',       # Cloudy aborted
-                5: 'Wrong',       # Something went wrong, like hitting some default limit before convergence, such as the number of zones 
-                6: 'Empty',       # Cloudy problem with parameter space
-                7: 'DNF'          # Did not finish in time 
-               }
+        0: "Success",
+        1: "DNR",  # Did not run (could be because of scheduling)
+        2: "Unphysical",  # Problem with parameter space or negative population
+        3: "Converge",  # Did not converge
+        4: "Abort",  # Cloudy aborted
+        5: "Wrong",  # Something went wrong, like hitting some default limit
+        # before convergence, such as the number of zones
+        6: "Empty",  # Cloudy problem with parameter space
+        7: "DNF",  # Did not finish in time
+    }
 
     # Accounting array
     outcome_array = np.zeros(len(run_key))
 
-    print(F"\nReading model outcomes for all models in {args.cloudy_dir}")
+    print(f"\nReading model outcomes for all models in {args.cloudy_dir}")
 
     for ii in tqdm(range(n_models)):
-
         # Get the tail of the cloudy output file
-        tail = read_model_output_tail(model_num=ii+1, folder_loc=args.cloudy_dir)
+        tail = read_model_output_tail(
+            model_num=ii + 1, folder_loc=args.cloudy_dir
+        )
 
         if "Cloudy exited OK" in tail:
             run_space[ii] = 0
@@ -81,49 +107,60 @@ def check_run(
         elif tail is None:
             run_space[ii] = 1
             outcome_array[1] += 1
-        elif 'unphysical' in tail or 'negative population' in tail:
+        elif "unphysical" in tail or "negative population" in tail:
             run_space[ii] = 2
             outcome_array[2] += 1
-        elif 'did not converge' in tail:
+        elif "did not converge" in tail:
             run_space[ii] = 3
             outcome_array[3] += 1
-        elif 'ABORT' in tail:        
+        elif "ABORT" in tail:
             run_space[ii] = 4
             outcome_array[4] += 1
-        elif 'something went wrong' in tail:
+        elif "something went wrong" in tail:
             run_space[ii] = 5
             outcome_array[5] += 1
-        elif tail == '':
+        elif tail == "":
             run_space[ii] = 6
             outcome_array[6] += 1
         elif "Cloudy exited OK" not in tail:
             run_space[ii] = 7
             outcome_array[7] += 1
 
-    print(F"\n{n_models} models in total in this sample")
-    print(F"Breakdown of the EXIT codes:\n")
+    print(f"\n{n_models} models in total in this sample")
+    print(f"Breakdown of the EXIT codes:\n")
     for ii in range(len(run_key)):
         outcome_percent = np.round(100 * outcome_array[ii] / n_models, 2)
-        print(F"\t{outcome_percent}% \t|\t{ii}: {run_key[ii]} ")
+        print(f"\t{outcome_percent}% \t|\t{ii}: {run_key[ii]} ")
 
     if outcome_array[0] != n_models:
-        print(F'{int(n_models - outcome_array[0])} runs were not successful\n')
-        print(F"Saving to run dictionary to {args.cloudy_dir}/run_space_outcome.npz file\n")   
-        np.savez(F'{args.cloudy_dir}/run_space_outcome', data=run_space)
-        print('Creating parameter space vs run outcome visualisation\n')   
-        plot_run_space(args, grid_params, n_models, model_list, grid_params_unit, run_space, run_key, colourmap=colourmap)
+        print(f"{int(n_models - outcome_array[0])} runs were not successful\n")
+        print(
+            f"Saving to run dictionary to {args.cloudy_dir}/run_space_outcome.npz file\n"
+        )
+        np.savez(f"{args.cloudy_dir}/run_space_outcome", data=run_space)
+        print("Creating parameter space vs run outcome visualisation\n")
+        plot_run_space(
+            args,
+            grid_params,
+            model_list,
+            grid_params_unit,
+            run_space,
+            run_key,
+            colourmap=colourmap,
+        )
     else:
-        print ("All models ran successfully!")
+        print("All models ran successfully!")
 
-
-
-# def plot_run_space(parameters, N_sample, run_space, run_key, colormap=matplotlib.cm.viridis, output_dir='./',
-#                    file_type='png', show_plot=True):
 
 def plot_run_space(
-    args, parameters, n_models, model_list, param_unit, run_space, run_key, colourmap
-    ):
-
+    args: namedtuple,
+    parameters: Dict,
+    model_list: NDArray,
+    param_unit: Dict,
+    run_space: NDArray,
+    run_key: Dict,
+    colourmap: matplotlib,
+) -> None:
     # How many parameters
     N = len(parameters.keys())
 
@@ -131,12 +168,14 @@ def plot_run_space(
     p_ranges = {}
     p_labels = {}
     for key, value in parameters.items():
-        p_ranges[key] = [np.min(np.log10(value))-0.2, np.max(np.log10(value))+0.2]
+        p_ranges[key] = [
+            np.min(np.log10(value)) - 0.2,
+            np.max(np.log10(value)) + 0.2,
+        ]
         if param_unit[key] is None:
-            p_labels[key] = F'{key}'
-        else: 
-            p_labels[key] = F'{key}/{param_unit[key]}'
-
+            p_labels[key] = f"{key}"
+        else:
+            p_labels[key] = f"{key}/{param_unit[key]}"
 
     # some plot settings
     marker_size = 20
@@ -144,7 +183,7 @@ def plot_run_space(
     label_size = 11
 
     # Some run space manipulation for separate plotting
-    success = (run_space == 0)
+    success = run_space == 0
 
     run_ticks = np.array(list(run_key.keys()))
     run_labels = np.array(list(run_key.values()))
@@ -154,113 +193,165 @@ def plot_run_space(
 
     # choose a colourmap
     c_m = colourmap
-    norm = matplotlib.colors.BoundaryNorm(np.arange(len(run_ticks)+1), c_m.N)
+    norm = matplotlib.colors.BoundaryNorm(np.arange(len(run_ticks) + 1), c_m.N)
 
     for ii, key_ii in enumerate(parameters.keys()):
         for jj, key_jj in enumerate(parameters.keys()):
-
             # empty diagonals
             if ii == jj:
-                ax_array[ii, jj].axis('off')
+                ax_array[ii, jj].axis("off")
 
             # successful runs in the upper triangle
             elif jj > ii:
-
-                ax = ax_array[ii, jj].scatter(x=np.log10(model_list)[:, jj][success],
-                                            y=np.log10(model_list)[:, ii][success],
-                                            c=run_space[success],
-                                            s=marker_size,
-                                            alpha=1,
-                                            edgecolors='none',
-                                            cmap=c_m,
-                                            norm=norm
-                                            )
+                ax_array[ii, jj].scatter(
+                    x=np.log10(model_list)[:, jj][success],
+                    y=np.log10(model_list)[:, ii][success],
+                    c=run_space[success],
+                    s=marker_size,
+                    alpha=1,
+                    edgecolors="none",
+                    cmap=c_m,
+                    norm=norm,
+                )
 
                 ax_array[ii, jj].set_ylim(p_ranges[key_ii])
                 ax_array[ii, jj].set_xlim(p_ranges[key_jj])
 
-                ax_array[ii, jj].grid(True, ls='dashed')
-                ax_array[ii, jj].tick_params(axis='x', which='major', labelsize=tick_label_size, top=True, bottom=False)
-                ax_array[ii, jj].tick_params(axis='y', which='major', labelsize=tick_label_size, right=True, left=False)
+                ax_array[ii, jj].grid(True, ls="dashed")
+                ax_array[ii, jj].tick_params(
+                    axis="x",
+                    which="major",
+                    labelsize=tick_label_size,
+                    top=True,
+                    bottom=False,
+                )
+                ax_array[ii, jj].tick_params(
+                    axis="y",
+                    which="major",
+                    labelsize=tick_label_size,
+                    right=True,
+                    left=False,
+                )
 
-                if jj == N-1:
-                    ax_array[ii, jj].set_ylabel(ylabel=r'log$_{{10}}$'+F'({p_labels[key_ii]})', size=label_size, labelpad=10)
-                    ax_array[ii, jj].yaxis.set_label_position('right')
-                    ax_array[ii, jj].yaxis.set_tick_params(right='on', left='off')
-                    ax_array[ii, jj].yaxis.set_ticks_position('right')
+                if jj == N - 1:
+                    ax_array[ii, jj].set_ylabel(
+                        ylabel=r"log$_{{10}}$" + f"({p_labels[key_ii]})",
+                        size=label_size,
+                        labelpad=10,
+                    )
+                    ax_array[ii, jj].yaxis.set_label_position("right")
+                    ax_array[ii, jj].yaxis.set_tick_params(
+                        right="on", left="off"
+                    )
+                    ax_array[ii, jj].yaxis.set_ticks_position("right")
                 if ii == 0:
-                    ax_array[ii, jj].set_xlabel(xlabel=r'log$_{{10}}$'+F'({p_labels[key_jj]})', size=label_size, labelpad=10)
-                    ax_array[ii, jj].xaxis.set_label_position('top')
-                    ax_array[ii, jj].xaxis.set_tick_params(top='on', bottom='off')
-                    ax_array[ii, jj].xaxis.set_ticks_position('top')
-                if jj < N-1:
+                    ax_array[ii, jj].set_xlabel(
+                        xlabel=r"log$_{{10}}$" + f"({p_labels[key_jj]})",
+                        size=label_size,
+                        labelpad=10,
+                    )
+                    ax_array[ii, jj].xaxis.set_label_position("top")
+                    ax_array[ii, jj].xaxis.set_tick_params(
+                        top="on", bottom="off"
+                    )
+                    ax_array[ii, jj].xaxis.set_ticks_position("top")
+                if jj < N - 1:
                     ax_array[ii, jj].set_yticklabels([])
                 if ii > 0:
                     ax_array[ii, jj].set_xticklabels([])
 
-                for label in (ax_array[ii, jj].get_xticklabels() + ax_array[ii, jj].get_yticklabels()):
+                for label in (
+                    ax_array[ii, jj].get_xticklabels()
+                    + ax_array[ii, jj].get_yticklabels()
+                ):
                     label.set_fontsize(13)
 
             # plotting the failed runs in the lower triangle
             elif jj < ii:
-
-                ax = ax_array[ii, jj].scatter(x=np.log10(model_list)[:, jj][~success],
-                                            y=np.log10(model_list)[:, ii][~success],
-                                            c=run_space[~success],
-                                            s=marker_size,
-                                            alpha=1,
-                                            edgecolors='none',
-                                            cmap=c_m,
-                                            norm=norm
-                                            )
+                ax_array[ii, jj].scatter(
+                    x=np.log10(model_list)[:, jj][~success],
+                    y=np.log10(model_list)[:, ii][~success],
+                    c=run_space[~success],
+                    s=marker_size,
+                    alpha=1,
+                    edgecolors="none",
+                    cmap=c_m,
+                    norm=norm,
+                )
 
                 ax_array[ii, jj].set_ylim(p_ranges[key_ii])
                 ax_array[ii, jj].set_xlim(p_ranges[key_jj])
 
-                ax_array[ii, jj].grid(True, ls='dashed')
-                ax_array[ii, jj].tick_params(axis='x', which='major', labelsize=tick_label_size, top=False)
-                ax_array[ii, jj].tick_params(axis='y', which='major', labelsize=tick_label_size, right=False)
+                ax_array[ii, jj].grid(True, ls="dashed")
+                ax_array[ii, jj].tick_params(
+                    axis="x",
+                    which="major",
+                    labelsize=tick_label_size,
+                    top=False,
+                )
+                ax_array[ii, jj].tick_params(
+                    axis="y",
+                    which="major",
+                    labelsize=tick_label_size,
+                    right=False,
+                )
 
-                if ii == N-1:
-                    ax_array[ii, jj].set_xlabel(xlabel=r'log$_{{10}}$'+F'({p_labels[key_jj]})', size=label_size, labelpad=10)
+                if ii == N - 1:
+                    ax_array[ii, jj].set_xlabel(
+                        xlabel=r"log$_{{10}}$" + f"({p_labels[key_jj]})",
+                        size=label_size,
+                        labelpad=10,
+                    )
                     ax_array[ii, jj].xaxis.set_label_position("bottom")
-                    ax_array[ii, jj].xaxis.set_tick_params(top='off')
+                    ax_array[ii, jj].xaxis.set_tick_params(top="off")
                 if jj == 0:
-                    ax_array[ii, jj].set_ylabel(ylabel=r'log$_{{10}}$'+F'({p_labels[key_ii]})', size=label_size, labelpad=10)
+                    ax_array[ii, jj].set_ylabel(
+                        ylabel=r"log$_{{10}}$" + f"({p_labels[key_ii]})",
+                        size=label_size,
+                        labelpad=10,
+                    )
                     ax_array[ii, jj].yaxis.set_label_position("left")
-                    ax_array[ii, jj].yaxis.set_tick_params(right='off')
+                    ax_array[ii, jj].yaxis.set_tick_params(right="off")
                 if jj > 0:
                     ax_array[ii, jj].set_yticklabels([])
-                if ii != N-1:
+                if ii != N - 1:
                     ax_array[ii, jj].set_xticklabels([])
 
-                for label in (ax_array[ii, jj].get_xticklabels() + ax_array[ii, jj].get_yticklabels()):
+                for label in (
+                    ax_array[ii, jj].get_xticklabels()
+                    + ax_array[ii, jj].get_yticklabels()
+                ):
                     label.set_fontsize(13)
 
     # make good use of space
-    f.subplots_adjust(hspace=0, wspace=0, left=0.13, bottom=0.10, right=0.9, top=0.98)
+    f.subplots_adjust(
+        hspace=0, wspace=0, left=0.13, bottom=0.10, right=0.9, top=0.98
+    )
 
     # make space for colorbar
     cbaxes = f.add_axes([0.98, 0.25, 0.02, 0.5])
-    f.colorbar(matplotlib.cm.ScalarMappable(norm=norm, cmap=c_m), cax=cbaxes, orientation='vertical')
-    cbaxes.set_yticks(run_ticks+0.5)
+    f.colorbar(
+        matplotlib.cm.ScalarMappable(norm=norm, cmap=c_m),
+        cax=cbaxes,
+        orientation="vertical",
+    )
+    cbaxes.set_yticks(run_ticks + 0.5)
     cbaxes.set_yticklabels(run_labels, fontsize=10)
 
     # build file name and save figure
-    file_name = 'outcome_vs_p-space.png'
+    file_name = "outcome_vs_p-space.png"
     output_path = os.path.join(args.cloudy_dir, file_name)
-    f.savefig(output_path, bbox_inches='tight', dpi=300)
+    f.savefig(output_path, bbox_inches="tight", dpi=300)
 
-    print(F'Saved plot to: {output_path}')
+    print(f"Saved plot to: {output_path}")
 
     plt.close()
 
 
-
-
 if __name__ == "__main__":
-
-    parser = Parser(description="Check the parameter space of cloudy models for success/falure")
+    parser = Parser(
+        description="Check the parameter space of cloudy models for success/falure"
+    )
 
     # The name of the incident grid
     parser.add_argument("--incident_grid", type=str, required=True)
@@ -269,7 +360,7 @@ if __name__ == "__main__":
     parser.add_argument("--cloudy_dir", type=str, required=True)
 
     # The cloudy parameters, including any grid axes
-    # This is the parameter file within the cloudy 
+    # This is the parameter file within the cloudy
     # run directory
     parser.add_argument(
         "--cloudy_params", type=str, required=False, default="params"
@@ -299,10 +390,10 @@ if __name__ == "__main__":
     fixed_params, grid_params = get_cloudy_params(
         args.cloudy_params, param_dir=args.cloudy_dir
     )
-   
+
     if verbose:
         print("axes:", grid_params)
-    
+
     # If the ionisation_parameter_model is the reference model (i.e. not fixed)
     # save the grid point for the reference values
     if fixed_params["ionisation_parameter_model"] == "ref":
@@ -342,17 +433,17 @@ if __name__ == "__main__":
     # Add the parameter file as a parameter
     params["parameter_file"] = args.cloudy_params
 
-    print (grid_params)
-
     grid_params_unit = {}
     for key in grid_params.keys():
         if "age" in key:
-            grid_params_unit[key] = 'yr'
+            grid_params_unit[key] = "yr"
         elif "hydrogen_density" in key:
-            grid_params_unit[key] = 'cm-3'
+            grid_params_unit[key] = "cm-3"
         elif "column_density" in key:
-            grid_params_unit[key] = 'cm-2$'
+            grid_params_unit[key] = "cm-2$"
         else:
             grid_params_unit[key] = None
 
-    check_run(args, grid_params, grid_params_unit, colourmap=matplotlib.cm.viridis)
+    check_run(
+        args, grid_params, grid_params_unit, colourmap=matplotlib.cm.viridis
+    )
