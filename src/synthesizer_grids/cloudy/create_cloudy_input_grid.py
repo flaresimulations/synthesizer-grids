@@ -89,7 +89,7 @@ if __name__ == "__main__":
 
     # If an additional parameter set append this to the new grid name
     if args.cloudy_params_addition:
-        # ignore the directory part
+        # Ignore the directory part
         cloudy_params_addition_name = args.cloudy_params_addition.split("/")[
             -1
         ]

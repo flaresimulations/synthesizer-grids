@@ -1,3 +1,7 @@
+"""
+Check the cloudy runs for failed/successful models
+"""
+
 import os
 
 import matplotlib
