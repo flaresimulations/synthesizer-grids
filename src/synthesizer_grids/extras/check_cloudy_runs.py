@@ -11,12 +11,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
 from synthesizer.grid import Grid
+from tqdm import tqdm
+
 from synthesizer_grids.cloudy.utils import (
     get_cloudy_params,
     get_grid_properties,
 )
 from synthesizer_grids.parser import Parser
-from tqdm import tqdm
 
 
 def read_model_output_tail(
@@ -31,7 +32,8 @@ def read_model_output_tail(
         tail_len (int): Number of tail strings to read in
 
     Returns:
-        A string with the last 'tail_len' lines of output, returns 0 if file not found
+        A string with the last 'tail_len' lines of output, returns 0 if
+        file not found
     """
 
     try:
@@ -127,7 +129,7 @@ def check_run(
             outcome_array[7] += 1
 
     print(f"\n{n_models} models in total in this sample")
-    print(f"Breakdown of the EXIT codes:\n")
+    print("Breakdown of the EXIT codes:\n")
     for ii in range(len(run_key)):
         outcome_percent = np.round(100 * outcome_array[ii] / n_models, 2)
         print(f"\t{outcome_percent}% \t|\t{ii}: {run_key[ii]} ")
@@ -135,7 +137,8 @@ def check_run(
     if outcome_array[0] != n_models:
         print(f"{int(n_models - outcome_array[0])} runs were not successful\n")
         print(
-            f"Saving to run dictionary to {args.cloudy_dir}/run_space_outcome.npz file\n"
+            f"Saving to run dictionary to {args.cloudy_dir}/"
+            "run_space_outcome.npz file\n"
         )
         np.savez(f"{args.cloudy_dir}/run_space_outcome", data=run_space)
         print("Creating parameter space vs run outcome visualisation\n")
@@ -349,7 +352,8 @@ def plot_run_space(
 
 if __name__ == "__main__":
     parser = Parser(
-        description="Check the parameter space of cloudy models for success/falure"
+        description="Check the parameter space of cloudy models"
+        "for success/falure"
     )
 
     # The name of the incident grid
