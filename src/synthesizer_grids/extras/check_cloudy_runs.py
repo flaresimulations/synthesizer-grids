@@ -80,14 +80,14 @@ def check_run(
     run_space = np.zeros(n_models, dtype=int)
     run_key = {
         0: "Success",
-        1: "DNR",  # Did not run (could be because of scheduling)
-        2: "Unphysical",  # Problem with parameter space or negative population
-        3: "Converge",  # Did not converge
-        4: "Abort",  # Cloudy aborted
-        5: "Wrong",  # Something went wrong, like hitting some default limit
+        1: "DNR",  # did not run (could be because of scheduling)
+        2: "Unphysical",  # problem with parameter space or negative population
+        3: "Converge",  # did not converge
+        4: "Abort",  # cloudy aborted
+        5: "Wrong",  # something went wrong, like hitting some default limit
         # before convergence, such as the number of zones
-        6: "Empty",  # Cloudy input file issue
-        7: "DNF",  # Did not finish in time
+        6: "Empty",  # cloudy input file issue
+        7: "DNF",  # did not finish in time
     }
 
     # Accounting array
@@ -164,7 +164,7 @@ def plot_run_space(
     # How many parameters
     N = len(parameters.keys())
 
-    # set up parameter ranges and labels
+    # Set up parameter ranges and labels
     p_ranges = {}
     p_labels = {}
     for key, value in parameters.items():
@@ -177,7 +177,7 @@ def plot_run_space(
         else:
             p_labels[key] = f"{key}/{param_unit[key]}"
 
-    # some plot settings
+    # Some plot settings
     marker_size = 20
     tick_label_size = 8
     label_size = 11
@@ -188,20 +188,20 @@ def plot_run_space(
     run_ticks = np.array(list(run_key.keys()))
     run_labels = np.array(list(run_key.values()))
 
-    # set up main plot
+    # Set up main plot
     f, ax_array = plt.subplots(N, N, figsize=(12, 12))
 
-    # choose a colourmap
+    # Choose a colourmap
     c_m = colourmap
     norm = matplotlib.colors.BoundaryNorm(np.arange(len(run_ticks) + 1), c_m.N)
 
     for ii, key_ii in enumerate(parameters.keys()):
         for jj, key_jj in enumerate(parameters.keys()):
-            # empty diagonals
+            # Empty diagonals
             if ii == jj:
                 ax_array[ii, jj].axis("off")
 
-            # successful runs in the upper triangle
+            # Successful runs in the upper triangle
             elif jj > ii:
                 ax_array[ii, jj].scatter(
                     x=np.log10(model_list)[:, jj][success],
@@ -266,7 +266,7 @@ def plot_run_space(
                 ):
                     label.set_fontsize(13)
 
-            # plotting the failed runs in the lower triangle
+            # Plotting the failed runs in the lower triangle
             elif jj < ii:
                 ax_array[ii, jj].scatter(
                     x=np.log10(model_list)[:, jj][~success],
@@ -323,12 +323,11 @@ def plot_run_space(
                 ):
                     label.set_fontsize(13)
 
-    # make good use of space
     f.subplots_adjust(
         hspace=0, wspace=0, left=0.13, bottom=0.10, right=0.9, top=0.98
     )
 
-    # make space for colorbar
+    # Make space for colorbar
     cbaxes = f.add_axes([0.98, 0.25, 0.02, 0.5])
     f.colorbar(
         matplotlib.cm.ScalarMappable(norm=norm, cmap=c_m),
@@ -338,7 +337,7 @@ def plot_run_space(
     cbaxes.set_yticks(run_ticks + 0.5)
     cbaxes.set_yticklabels(run_labels, fontsize=10)
 
-    # build file name and save figure
+    # Build file name and save figure
     file_name = "outcome_vs_p-space.png"
     output_path = os.path.join(args.cloudy_dir, file_name)
     f.savefig(output_path, bbox_inches="tight", dpi=300)
@@ -369,7 +368,7 @@ if __name__ == "__main__":
     # Parse arguments
     args = parser.parse_args()
 
-    # verbosity flag
+    # Verbosity flag
     parser.add_argument("--verbose", type=bool, required=False, default=False)
 
     args = parser.parse_args()
