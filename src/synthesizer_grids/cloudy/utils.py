@@ -1,4 +1,46 @@
 import numpy as np
+import yaml
+
+
+def get_cloudy_params(param_file="c23.01-sps", param_dir="params"):
+    """
+    Read cloudy parameters from a yaml parameter file
+
+    Arguments:
+        param_file (str)
+            filename of the parameter file
+        param_dir (str)
+            directory containing the parameter file
+
+    Returns:
+        fixed_params (dict)
+            dictionary of parameters that are fixed
+        grid_params (dict)
+            dictionary of parameters that vary on the grid
+    """
+
+    # open paramter file
+    with open(f"{param_dir}/{param_file}.yaml", "r") as stream:
+        try:
+            params = yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+
+    grid_params = {}
+    fixed_params = {}
+
+    # Loop over parameters
+    for k, v in params.items():
+        # If parameter is a list store it in the grid_parameters dictionary
+        # and convert to a numpy array
+        if isinstance(v, list):
+            grid_params[k] = list(map(float, v))
+
+        # Otherwise store it in fixed_params dictionary
+        else:
+            fixed_params[k] = v
+
+    return fixed_params, grid_params
 
 
 def get_grid_properties(axes, axes_values, verbose=True):
