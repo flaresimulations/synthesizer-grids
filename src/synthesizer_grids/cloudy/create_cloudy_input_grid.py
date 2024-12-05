@@ -14,10 +14,13 @@ from synthesizer.grid import Grid
 from synthesizer.photoionisation import cloudy17, cloudy23
 
 # local modules
-from utils import apollo_submission_script, get_grid_properties, get_cloudy_params
+from utils import (
+    apollo_submission_script,
+    get_cloudy_params,
+    get_grid_properties,
+)
 
 from synthesizer_grids.parser import Parser
-
 
 if __name__ == "__main__":
     parser = Parser(description="Run a grid of incident cloudy models")
