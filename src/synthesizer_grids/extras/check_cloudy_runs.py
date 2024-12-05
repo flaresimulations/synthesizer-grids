@@ -86,7 +86,7 @@ def check_run(
         4: "Abort",  # Cloudy aborted
         5: "Wrong",  # Something went wrong, like hitting some default limit
         # before convergence, such as the number of zones
-        6: "Empty",  # Cloudy problem with parameter space
+        6: "Empty",  # Cloudy input file issue
         7: "DNF",  # Did not finish in time
     }
 
