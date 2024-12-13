@@ -199,9 +199,9 @@ if __name__ == "__main__":
             ]
         ):
             raise ValueError(
-                f"There is an issue with the Cloudy input file {i}.in since"
-                f"Q(H) = NaN. This occurs at the incident grid point"
-                f"{incident_grid_point} and will cause that Cloudy run to"
+                f"There is an issue with the Cloudy input file {i}.in since "
+                f"Q(H) = NaN. This occurs at the incident grid point "
+                f"{incident_grid_point} and will cause that Cloudy run to "
                 f"fail."
             )
 

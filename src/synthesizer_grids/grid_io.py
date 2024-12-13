@@ -39,7 +39,7 @@ import numpy as np
 from synthesizer._version import __version__ as synthesizer_version
 from synthesizer.photoionisation import Ions
 from synthesizer.sed import Sed
-from synthesizer.utils.util_funcs import has_units
+from synthesizer.units import has_units
 from tqdm import tqdm
 from unyt import dimensionless, unyt_array
 
