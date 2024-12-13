@@ -139,10 +139,12 @@ if __name__ == "__main__":
             # Append the corresponding reference value from fixed_params
             reference_values.append(fixed_params["reference_" + k])
 
+        # Make dictionary to allow unpacking when getting the reference
+        # grid point
+        ref_dict = dict(zip(incident_grid.axes, reference_values))
+
         # Get the reference grid point using the adjusted reference values
-        incident_ref_grid_point = incident_grid.get_grid_point(
-            reference_values
-        )
+        incident_ref_grid_point = incident_grid.get_grid_point(**ref_dict)
 
         # Add the reference grid point indices to fixed_params
         for k, i in zip(incident_grid.axes, incident_ref_grid_point):
@@ -153,13 +155,21 @@ if __name__ == "__main__":
                 k = "age"
 
             # Save the index to the fixed_params dictionary
-            fixed_params["reference_" + k + "_index"] = i
+            fixed_params["reference_" + k + "_index"] = int(i)
 
     # Combine all parameters
     params = fixed_params | grid_params
 
     # Add the parameter file as a parameter
     params["parameter_file"] = args.cloudy_params
+
+    print("params:", params)
+
+    for key, value in params.items():
+        try:
+            yaml.safe_dump({key: value})
+        except yaml.representer.RepresenterError as e:
+            print(f"Error with key {key}: {e}")
 
     # Save all parameters
     yaml.safe_dump(params, open(f"{output_dir}/params.yaml", "w"))
@@ -184,8 +194,12 @@ if __name__ == "__main__":
         # Get a dictionary of the parameter grid point
         grid_index_ = dict(zip(axes, grid_index_tuple))
 
+        print("grid_index_ :", grid_index_)
+
         # Get a dictionary of just the incident parameters
         incident_params_ = {k: grid_params_[k] for k in incident_grid.axes}
+
+        print("incident_params_ :", incident_params_)
 
         # Get a dictionary of the incident parameter grid point
         incident_index_ = {k: grid_index_[k] for k in incident_grid.axes}
