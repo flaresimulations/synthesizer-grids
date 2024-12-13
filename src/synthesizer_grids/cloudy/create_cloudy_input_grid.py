@@ -186,12 +186,8 @@ if __name__ == "__main__":
         # Get a dictionary of the parameter grid point
         grid_index_ = dict(zip(axes, grid_index_tuple))
 
-        print("grid_index_ :", grid_index_)
-
         # Get a dictionary of just the incident parameters
         incident_params_ = {k: grid_params_[k] for k in incident_grid.axes}
-
-        print("incident_params_ :", incident_params_)
 
         # Get a dictionary of the incident parameter grid point
         incident_index_ = {k: grid_index_[k] for k in incident_grid.axes}
