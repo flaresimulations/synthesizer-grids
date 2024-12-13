@@ -163,14 +163,6 @@ if __name__ == "__main__":
     # Add the parameter file as a parameter
     params["parameter_file"] = args.cloudy_params
 
-    print("params:", params)
-
-    for key, value in params.items():
-        try:
-            yaml.safe_dump({key: value})
-        except yaml.representer.RepresenterError as e:
-            print(f"Error with key {key}: {e}")
-
     # Save all parameters
     yaml.safe_dump(params, open(f"{output_dir}/params.yaml", "w"))
 
