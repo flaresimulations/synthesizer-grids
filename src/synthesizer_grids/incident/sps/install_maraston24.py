@@ -39,7 +39,7 @@ def make_grid(model, rotation, model_type, imf, input_dir, grid_dir):
     """
 
     # Define output
-    out_filename = f"{grid_dir}/{sps_name}_{model_type}_{rotation}.hdf5"
+    out_filename = f"{grid_dir}/{sps_name}{model_type}_{imf}_{rotation}.hdf5"
 
     # Array of available metallicities
     metallicities = np.array([0.0003, 0.002, 0.006, 0.014, 0.02])
