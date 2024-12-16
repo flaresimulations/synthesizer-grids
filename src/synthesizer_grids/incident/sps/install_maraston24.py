@@ -13,7 +13,7 @@ from synthesizer_grids.grid_io import GridFile
 from synthesizer_grids.parser import Parser
 
 
-def make_grid(model, rotation, model_type, input_dir, grid_dir):
+def make_grid(model, rotation, model_type, imf, input_dir, grid_dir):
     """Main function to convert Maraston 2024 and
     produce grids used by synthesizer
     Args:
@@ -23,8 +23,10 @@ def make_grid(model, rotation, model_type, input_dir, grid_dir):
             value of stellar rotation for the model,
             "0.00" for no rotation or "0.40" for rotation.
         model_type (string):
-            either "kr" for standard model or "Tenc_kr" for non-corrected
+            either "" for standard model or "Tenc" for non-corrected
             effective temperatures.
+        imf (string):
+            either "kr" for a Kroupa IMF or "ss" for Salpeter.
         input_dir (string):
             directory where the raw Maraston+24 files are read from.
         grid_dir (string):
@@ -53,7 +55,7 @@ def make_grid(model, rotation, model_type, input_dir, grid_dir):
 
     # Open first raw data file to get age
     fn = (
-        f"{input_dir}/sed_ssp_M24_vini{rotation}_{model_type}"
+        f"{input_dir}/sed_ssp_M24_vini{rotation}{model_type}_{imf}"
         f"{metallicity_code[metallicities[0]]}"
     )
 
@@ -78,7 +80,7 @@ def make_grid(model, rotation, model_type, input_dir, grid_dir):
     for imetal, metallicity in enumerate(metallicities):
         for ia, age_Gyr in enumerate(ages_Gyr):
             fn = (
-                f"{input_dir}/sed_ssp_M24_vini{rotation}_{model_type}"
+                f"{input_dir}/sed_ssp_M24_vini{rotation}{model_type}_{imf}"
                 f"{metallicity_code[metallicity]}"
             )
             ages_, _, lam_, llam_ = np.loadtxt(fn).T
@@ -116,7 +118,8 @@ if __name__ == "__main__":
     # Define the model metadata
     sps_name = "maraston24"
     rotations = ["0.00", "0.40"]
-    model_types = ["kr", "Tenc_kr"]
+    model_types = ["", "_Tenc"]
+    imfs = ["kr", "ss"]
     max_stellar_masses = ["", "_300"]
     model = {
         "sps_name": sps_name,
@@ -130,6 +133,10 @@ if __name__ == "__main__":
     if not os.path.exists(input_dir):
         os.mkdir(input_dir)
 
-    for model_type in model_types:
-        for rotation in rotations:
-            make_grid(model, rotation, model_type, input_dir, grid_dir)
+    for imf in imfs:
+        for model_type in model_types:
+            for rotation in rotations:
+                print(imf, model_type, rotation)
+                make_grid(
+                    model, rotation, model_type, imf, input_dir, grid_dir
+                )
