@@ -14,7 +14,7 @@ from synthesizer.grid import Grid
 # synthesizer modules
 from synthesizer.photoionisation import cloudy17, cloudy23
 from synthesizer.sed import Sed
-from unyt import Angstrom, Hz, dimensionless, erg, eV, s, yr
+from unyt import Angstrom, Hz, cm, dimensionless, erg, eV, s, yr
 
 # local modules
 from utils import get_grid_properties
@@ -136,17 +136,24 @@ def create_empty_grid(
             axes_units["ionisation_parameter"] = dimensionless
             axes_units["ages"] = yr
             axes_units["metallicities"] = dimensionless
+            axes_units["hydrogen_density"] = cm ** (-3)
 
             if axis in axes_units:
                 # Multiply values with the corresponding unit
                 values_with_units = grid_params[axis] * axes_units[axis]
 
-            out_grid.write_dataset(
-                key=f"axes/{axis}",
-                data=values_with_units,
-                description="grid axes",
-                log_on_read=False,
-            )
+                out_grid.write_dataset(
+                    key=f"axes/{axis}",
+                    data=values_with_units,
+                    description="grid axes",
+                    log_on_read=False,
+                )
+
+            else:
+                raise ValueError(
+                    f"Unit for axis '{axis}' needs to be added to "
+                    f"create_synthesizer_grid.py"
+                )
 
         # add other parameters as attributes
 

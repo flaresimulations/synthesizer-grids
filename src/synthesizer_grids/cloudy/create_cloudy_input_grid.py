@@ -139,10 +139,12 @@ if __name__ == "__main__":
             # Append the corresponding reference value from fixed_params
             reference_values.append(fixed_params["reference_" + k])
 
+        # Make dictionary to allow unpacking when getting the reference
+        # grid point
+        ref_dict = dict(zip(incident_grid.axes, reference_values))
+
         # Get the reference grid point using the adjusted reference values
-        incident_ref_grid_point = incident_grid.get_grid_point(
-            reference_values
-        )
+        incident_ref_grid_point = incident_grid.get_grid_point(**ref_dict)
 
         # Add the reference grid point indices to fixed_params
         for k, i in zip(incident_grid.axes, incident_ref_grid_point):
@@ -153,7 +155,7 @@ if __name__ == "__main__":
                 k = "age"
 
             # Save the index to the fixed_params dictionary
-            fixed_params["reference_" + k + "_index"] = i
+            fixed_params["reference_" + k + "_index"] = int(i)
 
     # Combine all parameters
     params = fixed_params | grid_params
@@ -199,9 +201,9 @@ if __name__ == "__main__":
             ]
         ):
             raise ValueError(
-                f"There is an issue with the Cloudy input file {i}.in since"
-                f"Q(H) = NaN. This occurs at the incident grid point"
-                f"{incident_grid_point} and will cause that Cloudy run to"
+                f"There is an issue with the Cloudy input file {i}.in since "
+                f"Q(H) = NaN. This occurs at the incident grid point "
+                f"{incident_grid_point} and will cause that Cloudy run to "
                 f"fail."
             )
 
