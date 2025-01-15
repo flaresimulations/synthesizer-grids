@@ -156,7 +156,7 @@ def make_single_alpha_grid(
     # A dictionary with Boolean values for each axis, where True
     # indicates that the attribute should be interpolated in
     # logarithmic space.
-    log_on_read = {"ages": True, "metallicities": False}
+    log_on_read = {"ages": True, "metallicities": True}
 
     # Write everything out thats common to all models
     out_grid.write_grid_common(
