@@ -249,7 +249,8 @@ class GridFile:
         # Include a brief description
         dset.attrs["Description"] = description
 
-        # Write out whether we should log this dataset when read
+        # Write out whether we should log this dataset before using it to
+        # interpolate spectra
         dset.attrs["log_on_read"] = log_on_read
 
         # Handle any other attributes passed as kwargs
@@ -354,6 +355,7 @@ class GridFile:
         alt_axes=(),
         descriptions={},
         model={},
+        weight="initial_masses",
     ):
         """
         Write out the common parts of a Synthesizer grid.
@@ -388,6 +390,11 @@ class GridFile:
                 be overidden here.
             model (dict)
                 A dictionary containing the metadata of the model used.
+            weight (str)
+                The variable to used to normalise the spectra in the grid. For
+                instance, in most SPS models this will initial mass normalised,
+                the Synthesizer property for this is "initial_masses". By
+                default this is set to "initial_masses".
 
         Raises:
             ValueError
@@ -444,6 +451,9 @@ class GridFile:
             "Wavelength of the spectra grid",
             log_on_read=False,
         )
+
+        # Store the weight variable as an attribute
+        self.write_attribute("spectra", "WeightVariable", weight)
 
         # Write out each spectra
         for key, val in spectra.items():
