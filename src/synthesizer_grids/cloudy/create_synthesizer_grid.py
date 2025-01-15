@@ -1,6 +1,12 @@
-"""
-This reads in a cloudy grid of models
+"""A module for reading in cloudy outputs and creating a synthesizer grid.
 
+This module reads in cloudy outputs and creates a synthesizer grid. The
+synthesizer grid is a HDF5 file that contains the spectra and line luminosities
+from cloudy outputs.
+
+Example usage:
+    python create_synthesizer_grid.py --cloudy_dir=cloudy_dir
+    --incident_grid=incident_grid --cloudy_params=cloudy_params
 """
 
 import os
@@ -10,166 +16,193 @@ import h5py
 import numpy as np
 import yaml
 from synthesizer.grid import Grid
-
-# synthesizer modules
 from synthesizer.photoionisation import cloudy17, cloudy23
 from synthesizer.sed import Sed
+from synthesizer.units import has_units
 from unyt import Angstrom, Hz, cm, dimensionless, erg, eV, s, yr
-
-# local modules
-from utils import get_grid_properties
+from utils import get_grid_props_cloudy
 
 from synthesizer_grids.grid_io import GridFile
 from synthesizer_grids.parser import Parser
 
+# Create dictionary of commonly used units for grid axes
+axes_units = {
+    "reference_ionisation_parameter": dimensionless,
+    "ionisation_parameter": dimensionless,
+    "ages": yr,
+    "metallicities": dimensionless,
+    "hydrogen_density": cm ** (-3),
+}
+
 
 def create_empty_grid(
-    grid_dir, incident_grid_name, new_grid_name, params, grid_params
+    grid_dir,
+    incident_grid_name,
+    new_grid_name,
+    params,
+    grid_params,
 ):
-    # open the parent incident grid
+    """
+    Create an empty Synthesizer grid file based on an existing incident grid.
+
+    Args:
+        grid_dir (str):
+            Directory where the grid file will be saved.
+        incident_grid_name (str):
+            Name of the incident grid file we ran through cloudy.
+        new_grid_name (str):
+            Name of the new grid file.
+        params (dict):
+            Dictionary of parameters to be saved in the grid file.
+        grid_params (dict):
+            Dictionary of grid parameters.
+    """
+    # Open the parent incident grid
     incident_grid = Grid(
         incident_grid_name + ".hdf5",
         grid_dir=grid_dir,
         read_lines=False,
     )
 
-    # make the new grid
+    # Make the new grid
     out_grid = GridFile(f"{grid_dir}/{new_grid_name}.hdf5")
 
-    # open the original incident model grid
-    with h5py.File(
-        f"{grid_dir}/{incident_grid_name}.hdf5", "r"
-    ) as hf_incident:
-        # add attribute with the original incident grid axes
-        out_grid.write_attribute(
-            group="/", attr_key="incident_axes", data=hf_incident.attrs["axes"]
+    # Add attribute with the original incident grid axes
+    out_grid.write_attribute(
+        group="/",
+        attr_key="incident_axes",
+        data=incident_grid.axes,
+    )
+
+    # Set a list of the axes including the incident and new grid axes
+    axes = list(incident_grid.axes) + list(grid_params.keys())
+
+    # Add the incident grid parameters to grid_params
+    for axis in incident_grid.axes:
+        grid_params[axis] = getattr(incident_grid, axis)
+
+    # Get properties of the grid
+    (
+        n_axes,
+        shape,
+        n_models,
+        mesh,
+        model_list,
+        index_list,
+    ) = get_grid_props_cloudy(axes, grid_params, verbose=True)
+
+    # We want to copy over log10_specific_ionising_luminosity from the
+    # incident grid to allow us to normalise the cloudy outputs.
+    # However, the axes of the incident grid may be different from the
+    # cloudy grid due to additional parameters, in which case we need to
+    # extend the axes of log10_specific_ionising_luminosity.
+
+    # Compute the amount we may have to expand the axes (if we don't need to
+    # expand this is harmless)
+    expansion = int(
+        np.product(shape)
+        / np.product(
+            incident_grid.log10_specific_ionising_luminosity["HI"].shape
         )
+    )
 
-        # set a list of the axes
-        axes = list(incident_grid.axes) + list(grid_params.keys())
-
-        # add the incident grid parameters to grid_params
-        for axis in incident_grid.axes:
-            grid_params[axis] = getattr(incident_grid, axis)
-
-        # get properties of the grid
-        (
-            n_axes,
-            shape,
-            n_models,
-            mesh,
-            model_list,
-            index_list,
-        ) = get_grid_properties(axes, grid_params, verbose=True)
-
-        # We want to copy over log10_specific_ionising_luminosity from the
-        # incident grid to allow us to normalise the cloudy outputs.
-        # However, the axes of the incident grid may be different from the
-        # cloudy grid due to additional parameters, in which we need to
-        # extend the axes of log10_specific_ionising_luminosity.
-
+    # Loop over ions
+    for ion in incident_grid.log10_specific_ionising_luminosity.keys():
         # If there are no additional axes simply copy over the incident
         # log10_specific_ionising_luminosity .
-
         if len(axes) == len(incident_grid.axes):
             out_grid.write_dataset(
-                key="log10_specific_ionising_luminosity/HI",
-                data=hf_incident["log10_specific_ionising_luminosity"]["HI"]
+                key=f"log10_specific_ionising_luminosity/{ion}",
+                data=incident_grid.log10_specific_ionising_luminosity[ion]
                 * dimensionless,
-                description="The specific ionising photon luminosity for HI",
+                description="The specific ionising photon luminosity for"
+                f" {ion}",
                 log_on_read=False,
             )
+
+        # Otherwise, we need to expand the axis to account for these additional
+        # parameters.
+        else:
+            # Create new array with repeated elements
+            log10_specific_ionising_luminosity = np.repeat(
+                incident_grid.log10_specific_ionising_luminosity[ion]
+                * dimensionless,
+                expansion,
+                axis=-1,
+            )
+            out_grid.write_dataset(
+                f"log10_specific_ionising_luminosity/{ion}",
+                np.reshape(log10_specific_ionising_luminosity, shape)
+                * dimensionless,
+                description="The specific ionising photon luminosity"
+                f" for {ion}",
+                log_on_read=False,
+            )
+
+    # Add attribute with the full grid axes
+    out_grid.write_attribute(group="/", attr_key="axes", data=axes)
+
+    # Now write out the grid axes, we first do the incident grid axes so we
+    # can extract their metadata and then any extras
+    for axis, log_on_read in zip(
+        incident_grid.axes, incident_grid._logged_axes
+    ):
+        # Write out this axis (we can get everything we need from the incident)
+        out_grid.write_dataset(
+            key=f"axes/{axis}",
+            data=getattr(incident_grid, axis),
+            description=f"Grid axes {axis} (taken from incident grid)",
+            log_on_read=log_on_read,
+        )
+
+    # Now write out the new grid axes if there are any
+    for axis in axes:
+        # Skip the one we did above
+        if axis in incident_grid.axes:
+            continue
+
+        # If we have units in the grid_params dictionary already then use
+        # these, otherwise use the axes_units dictionary, if we don't have
+        # units for the axis then raise an error.
+        if has_units(grid_params[axis]):
+            out_grid.write_dataset(
+                key=f"axes/{axis}",
+                data=grid_params[axis],
+                description=f"grid axes {axis} (introduced during cloudy run)",
+                log_on_read=False,
+            )
+
+        # Ok, maybe its just a common axis that we have units for
+        elif axis in axes_units:
+            # Multiply values with the corresponding unit
+            values_with_units = grid_params[axis] * axes_units[axis]
 
             out_grid.write_dataset(
-                key="log10_specific_ionising_luminosity/HeII",
-                data=hf_incident["log10_specific_ionising_luminosity"]["HeII"]
-                * dimensionless,
-                description="The specific ionising photon luminosity for HeII",
+                key=f"axes/{axis}",
+                data=values_with_units,
+                description=f"grid axes {axis} (introduced during cloudy run)",
                 log_on_read=False,
             )
 
-        # else we need to expand the axis
-
         else:
-            # this is amount by which we need to expand
-            expansion = int(
-                np.product(shape)
-                / np.product(
-                    hf_incident["log10_specific_ionising_luminosity/HI"].shape
-                )
+            raise ValueError(
+                f"Unit for axis '{axis}' needs to be added to "
+                f"create_synthesizer_grid.py"
             )
 
-            # loop over ions
+    # Add other parameters as attributes
+    for k, v in params.items():
+        # If v is None then convert to string None for saving in the
+        # HDF5 file.
+        if v is None:
+            v = "None"
 
-            for ion in hf_incident[
-                "log10_specific_ionising_luminosity"
-            ].keys():
-                # get the incident log10_specific_ionising_luminosity array
-                log10_specific_ionising_luminosity_incident = hf_incident[
-                    f"log10_specific_ionising_luminosity/{ion}"
-                ][()]
-                # create new array with repeated elements
-                log10_specific_ionising_luminosity = np.repeat(
-                    log10_specific_ionising_luminosity_incident,
-                    expansion,
-                    axis=-1,
-                )
-
-                out_grid.write_dataset(
-                    f"log10_specific_ionising_luminosity/{ion}",
-                    np.reshape(log10_specific_ionising_luminosity, shape)
-                    * dimensionless,
-                    description="The specific ionising photon luminosity",
-                    log_on_read=False,
-                )
-
-        # add attribute with full grid axes
-
-        out_grid.write_attribute(group="/", attr_key="axes", data=axes)
-
-        # add the bin centres for the grid bins
-
-        for axis in axes:
-            # add units to axes
-            axes_units = {}
-            axes_units["reference_ionisation_parameter"] = dimensionless
-            axes_units["ionisation_parameter"] = dimensionless
-            axes_units["ages"] = yr
-            axes_units["metallicities"] = dimensionless
-            axes_units["hydrogen_density"] = cm ** (-3)
-
-            if axis in axes_units:
-                # Multiply values with the corresponding unit
-                values_with_units = grid_params[axis] * axes_units[axis]
-
-                out_grid.write_dataset(
-                    key=f"axes/{axis}",
-                    data=values_with_units,
-                    description="grid axes",
-                    log_on_read=False,
-                )
-
-            else:
-                raise ValueError(
-                    f"Unit for axis '{axis}' needs to be added to "
-                    f"create_synthesizer_grid.py"
-                )
-
-        # add other parameters as attributes
-
-        for k, v in params.items():
-            # If v is None then convert to string None for saving in the
-            # HDF5 file.
-            if v is None:
-                v = "None"
-            # if the parameter is a dictionary (e.g. as used for abundances)
-            if isinstance(v, dict):
-                for k2, v2 in v.items():
-                    out_grid.write_attribute(
-                        group="/", attr_key=k + "_" + k2, data=v2
-                    )
-            else:
-                out_grid.write_attribute(group="/", attr_key=k, data=v)
+        # If the parameter is a dictionary (e.g. as used for abundances)
+        if isinstance(v, dict):
+            for k2, v2 in v.items():
+                out_grid.write_attribute(group="k", attr_key=k2, data=v2)
+        else:
+            out_grid.write_attribute(group="/", attr_key=k, data=v)
 
 
 def load_grid_params(param_file="c23.01-sps", param_dir="params"):
@@ -225,7 +258,7 @@ def get_grid_properties_hf(hf, verbose=True):
         axis: hf[f"axes/{axis}"][:] for axis in axes
     }  # dictionary of axis grid points
     # Get the properties of the grid including the dimensions etc.
-    return axes, *get_grid_properties(axes, axes_values, verbose=verbose)
+    return axes, *get_grid_props_cloudy(axes, axes_values, verbose=verbose)
 
 
 def check_cloudy_runs(
