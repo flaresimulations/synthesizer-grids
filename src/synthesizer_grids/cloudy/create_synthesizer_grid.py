@@ -56,6 +56,12 @@ def create_empty_grid(
             Dictionary of parameters to be saved in the grid file.
         grid_params (dict):
             Dictionary of grid parameters.
+
+    Returns:
+        out_grid (GridFile):
+            The newly created grid file.
+        incident_grid (GridFile):
+            The incident grid file.
     """
     # Open the parent incident grid
     incident_grid = Grid(
@@ -73,6 +79,9 @@ def create_empty_grid(
         attr_key="incident_axes",
         data=incident_grid.axes,
     )
+
+    # Copy over the model metadata
+    out_grid.write_model_metadata(incident_grid._model_metadata.items())
 
     # Set a list of the axes including the incident and new grid axes
     axes = list(incident_grid.axes) + list(grid_params.keys())
@@ -142,6 +151,13 @@ def create_empty_grid(
     # Add attribute with the full grid axes
     out_grid.write_attribute(group="/", attr_key="axes", data=axes)
 
+    # copy over the weight attribute from the incident grid
+    out_grid.write_attribute(
+        group="/",
+        attr_key="weightvariable",
+        data=incident_grid._weight_var,
+    )
+
     # Now write out the grid axes, we first do the incident grid axes so we
     # can extract their metadata and then any extras
     for axis, log_on_read in zip(
@@ -204,10 +220,17 @@ def create_empty_grid(
         else:
             out_grid.write_attribute(group="/", attr_key=k, data=v)
 
+    return out_grid, incident_grid
+
 
 def load_grid_params(param_file="c23.01-sps", param_dir="params"):
     """
-    Read parameters from a yaml parameter file
+    Read parameters from a yaml parameter file.
+
+    This sorts the parameters into fixed and grid axis parameters. Fixed
+    parameters are singular values that were fed into cloudy. Grid axis
+    parameters are parameters with a range of values which form one of the
+    axes of the eventual grid.
 
     Arguments:
         param_file (str)
@@ -221,8 +244,7 @@ def load_grid_params(param_file="c23.01-sps", param_dir="params"):
         grid_params (dict)
             dictionary of parameters that vary on the grid
     """
-
-    # open parameter file
+    # Open parameter file
     with open(f"{param_dir}/{param_file}.yaml", "r") as stream:
         try:
             params = yaml.safe_load(stream)
@@ -248,20 +270,40 @@ def load_grid_params(param_file="c23.01-sps", param_dir="params"):
 
 def get_grid_properties_hf(hf, verbose=True):
     """
-    A wrapper over get_grid_properties to get the grid properties for a HDF5
-    grid.
+    Get the properties of a grid from an HDF5 file.
+
+    Arguments:
+        hf : h5py.File
+            The HDF5 file containing the grid.
+        verbose : boolean
+            Print out the properties of the grid.
+
+    Returns:
+        axes : list
+            List of axes in the correct order.
+        n_axes : int
+            Number of axes in the grid.
+        shape : tuple
+            Shape of the grid.
+        n_models : int
+            Number of models in the grid.
+        mesh : tuple
+            Mesh of the grid.
+        model_list : list
+            List of model parameters.
+        index_list : list
+            List of model indices.
     """
+    # Unpack the axes
+    axes = hf.attrs["axes"]
+    axes_values = {axis: hf[f"axes/{axis}"][:] for axis in axes}
 
-    axes = hf.attrs["axes"]  # list of axes in the correct order
-
-    axes_values = {
-        axis: hf[f"axes/{axis}"][:] for axis in axes
-    }  # dictionary of axis grid points
     # Get the properties of the grid including the dimensions etc.
     return axes, *get_grid_props_cloudy(axes, axes_values, verbose=verbose)
 
 
 def check_cloudy_runs(
+    out_grid,
     grid_name,
     grid_dir,
     cloudy_dir,
@@ -269,171 +311,208 @@ def check_cloudy_runs(
     files_to_check=["cont"],
 ):
     """
-    Check that all the cloudy runs have run properly
+    Check that all the cloudy runs have run properly.
 
-    Arguments:
-        grid_name : str
+    Args:
+        out_grid (GridFile)
+            The grid file to check.
+        grid_name (str)
             Name of the grid
-        grid_dir : str
+        grid_dir (str)
             Parent directory for the grids.
-        cloudy_dir : str
+        cloudy_dir (str)
             Parent directory for the cloudy runs.
-        replace : boolean
+        replace (boolean)
             If a run has failed simply replace the model with the previous one.
+        files_to_check (list)
+            List of files to check for each model.
+
+    Returns:
+        failed_list : list
+            List of models that have failed.
     """
+    # Get the properties of the grid
+    axes = out_grid.read_attribute("axes")
+    axes_values = {
+        axis: out_grid.read_dataset(f"axes/{axis}") for axis in axes
+    }
+    (
+        axes,
+        n_axes,
+        shape,
+        n_models,
+        mesh,
+        model_list,
+        index_list,
+    ) = get_grid_props_cloudy(axes, axes_values, verbose=True)
 
-    # open the new grid
-    with h5py.File(f"{grid_dir}/{grid_name}.hdf5", "r") as hf:
-        # Get the properties of the grid including the dimensions etc.
-        (
-            axes,
-            n_axes,
-            shape,
-            n_models,
-            mesh,
-            model_list,
-            index_list,
-        ) = get_grid_properties_hf(hf)
+    # List of failed models
+    failed_list = []
+    for i, grid_params_ in enumerate(model_list):
+        infile = f"{cloudy_dir}/{grid_name}/{i+1}"
+        failed = False
 
-        # list of failed models
-        failed_list = []
-        for i, grid_params_ in enumerate(model_list):
-            infile = f"{cloudy_dir}/{grid_name}/{i+1}"
-            failed = False
+        # Check if files exist
+        for ext in files_to_check:
+            if not os.path.isfile(infile + "." + ext):
+                failed = True
 
-            # check if files exist
+        # If they exist also check they have size >0
+        if not failed:
             for ext in files_to_check:
-                if not os.path.isfile(infile + "." + ext):
+                if os.path.getsize(infile + "." + ext) < 1000:
                     failed = True
 
-            # if they exist also check they have size >0
-            if not failed:
+        if failed:
+            print(i + 1, model_list[i])
+            failed_list.append(i + 1)
+
+            """
+            If replace is specified, instead replace the grid point with
+            the previous one. NOTE: this should be a last resort if the
+            cloudy runs of a small number of grid points are consistently
+            failing.
+            """
+            if replace:
                 for ext in files_to_check:
-                    if os.path.getsize(infile + "." + ext) < 1000:
-                        failed = True
+                    shutil.copyfile(
+                        f"{cloudy_dir}/{grid_name}/{i}.{ext}",
+                        infile + f".{ext}",
+                    )
 
-            if failed:
-                print(i + 1, model_list[i])
-                failed_list.append(i + 1)
-
-                """
-                If replace is specified, instead replace the grid point with
-                the previous one. NOTE: this should be a last resort if the
-                cloudy runs of a small number of grid points are consistently
-                failing.
-                """
-                if replace:
-                    for ext in files_to_check:
-                        shutil.copyfile(
-                            f"{cloudy_dir}/{grid_name}/{i}.{ext}",
-                            infile + f".{ext}",
-                        )
-
-        # If the files have been replace set the failed list to empty so the
-        # rest of the code can run.
-        if replace:
-            failed_list = []
-        return failed_list
+    # If the files have been replace set the failed list to empty so the
+    # rest of the code can run.
+    if replace:
+        failed_list = []
+    return failed_list
 
 
-def add_spectra(grid_name, grid_dir, cloudy_dir):
+def add_spectra(
+    out_grid,
+    incident_grid,
+    grid_name,
+    cloudy_dir,
+    spec_names=("incident", "transmitted", "nebular", "linecont"),
+    weight="initial_masses",
+    norm_by_q=True,
+):
     """
     Open cloudy spectra and add them to the grid.
 
-    Arguments:
+    Args:
         out_grid (GridFile)
             The grid file to add the spectra to.
+        incident_grid (GridFile)
+            The incident grid.
         cloudy_dir (str)
             Parent directory for the cloudy runs.
+        spec_names (list)
+            The names of the spectra to save (default is incident, transmitted,
+            nebular and linecont).
+        weight (str)
+            The weight variable by which the spectra have been normalised. For
+            example, most SPS models are per initial stellar mass, so the
+            weight variable would be 'initial_masses', the Synthesizer
+            variable.
+        norm_by_q (bool)
+            If True, the spectra are normalised by the specific ionising
+            photon luminosity calculated from the incident spectrum.
     """
+    # Get the properties of the grid
+    axes = out_grid.read_attribute("axes")
+    axes_values = {
+        axis: out_grid.read_dataset(f"axes/{axis}") for axis in axes
+    }
+    (
+        axes,
+        n_axes,
+        shape,
+        n_models,
+        mesh,
+        model_list,
+        index_list,
+    ) = get_grid_props_cloudy(axes, axes_values, verbose=True)
 
-    # The cloudy spectra to save (others can be generated later)
-    spec_names = ["incident", "transmitted", "nebular", "linecont"]
+    # Determine the cloudy version...
+    cloudy_version = out_grid.read_attribute("cloudy_version")
 
-    # open the new grid
-    with h5py.File(f"{grid_dir}/{grid_name}.hdf5", "a") as hf:
-        # Get the properties of the grid including the dimensions etc.
-        (
-            axes,
-            n_axes,
-            shape,
-            n_models,
-            mesh,
-            model_list,
-            index_list,
-        ) = get_grid_properties_hf(hf)
+    # ... and use to select the correct module.
+    if cloudy_version.split(".")[0] == "c23":
+        cloudy = cloudy23
+    elif cloudy_version.split(".")[0] == "c17":
+        cloudy = cloudy17
 
-        # Determine the cloudy version...
-        cloudy_version = hf.attrs["cloudy_version"]
+    # Read first spectra from the first grid point to get length and
+    # wavelength grid.
+    lam = cloudy.read_wavelength(f"{cloudy_dir}/{grid_name}/1")
 
-        # ... and use to select the correct module.
-        if cloudy_version.split(".")[0] == "c23":
-            cloudy = cloudy23
-        elif cloudy_version.split(".")[0] == "c17":
-            cloudy = cloudy17
+    # Write the spectra names... for some reason (not sure why since .keys()
+    # gives the same result)
+    out_grid.write_attribute(group="/", attr_key="spec_names", data=spec_names)
 
-        # Read first spectra from the first grid point to get length and
-        # wavelength grid.
-        lam = cloudy.read_wavelength(f"{cloudy_dir}/{grid_name}/1")
+    # Number of wavelength points
+    nlam = len(lam)
 
-        # create a group holding the spectra in the grid file
-        spectra = hf.create_group("spectra")
+    # Set up the spectra dictionary
+    spectra = {}
 
-        # save list of spectra as attribute
-        spectra.attrs["spec_names"] = spec_names
+    # Make spectral grids and set them to zero
+    for spec_name in spec_names:
+        spectra[spec_name] = np.zeros((*shape, nlam))
 
-        # save the wavelength
-        spectra["wavelength"] = lam
+    # Array for holding the normalisation which is calculated below and
+    # used by lines
+    spectra["normalisation"] = np.ones(shape)
 
-        # number of wavelength points
-        nlam = len(lam)
+    # Loop over the grid points
+    for i, indices in enumerate(index_list):
+        indices = tuple(indices)
 
-        # make spectral grids and set them to zero
+        # Define the infile (cloudy output file)
+        infile = f"{cloudy_dir}/{grid_name}/{i+1}"
+
+        # Read the continuum file containing the spectra
+        spec_dict = cloudy.read_continuum(infile, return_dict=True)
+
+        # Calculate the specific ionising photon luminosity and use this to
+        # renormalise the spectrum.
+        if norm_by_q:
+            # Create sed object
+            sed = Sed(
+                lam=lam * Angstrom,
+                lnu=spec_dict["incident"] * erg / s / Hz,
+            )
+
+            # Calculate Q
+            ionising_photon_production_rate = (
+                sed.calculate_ionising_photon_production_rate(
+                    ionisation_energy=13.6 * eV, limit=100
+                )
+            )
+
+            # Calculate normalisation
+            normalisation = out_grid.read_dataset(
+                "log10_specific_ionising_luminosity/HI",
+                indices=indices,
+            ) - np.log10(ionising_photon_production_rate)
+
+            # Save normalisation for later use (rescaling lines)
+            spectra["normalisation"][indices] = 10**normalisation
+
+        # Save the normalised spectrum to the correct grid point
         for spec_name in spec_names:
-            spectra[spec_name] = np.zeros((*shape, nlam))
+            spectra[spec_name][indices] = (
+                spec_dict[spec_name] * spectra["normalisation"][indices]
+            )
 
-        # array for holding the normalisation which is calculated below and
-        # used by lines
-        spectra["normalisation"] = np.ones(shape)
+    # Write the spectra out
+    out_grid.write_spectra(
+        spectra,
+        wavelengths=lam,
+        weight=incident_grid._weight_var,  # this is written already
+    )
 
-        for i, indices in enumerate(index_list):
-            indices = tuple(indices)
-
-            # define the infile
-            infile = f"{cloudy_dir}/{grid_name}/{i+1}"
-
-            # read the continuum file containing the spectra
-            spec_dict = cloudy.read_continuum(infile, return_dict=True)
-
-            # Calculate the specific ionising photon luminosity and use this to
-            # renormalise the spectrum.
-            if "log10_specific_ionising_luminosity/HI" in hf:
-                # create sed object
-                sed = Sed(
-                    lam=lam * Angstrom,
-                    lnu=spec_dict["incident"] * erg / s / Hz,
-                )
-
-                # calculate Q
-                ionising_photon_production_rate = (
-                    sed.calculate_ionising_photon_production_rate(
-                        ionisation_energy=13.6 * eV, limit=100
-                    )
-                )
-
-                # calculate normalisation
-                normalisation = hf["log10_specific_ionising_luminosity/HI"][
-                    indices
-                ] - np.log10(ionising_photon_production_rate)
-
-                # save normalisation for later use (rescaling lines)
-                spectra["normalisation"][indices] = 10**normalisation
-
-            # save the normalised spectrum to the correct grid point
-            for spec_name in spec_names:
-                spectra[spec_name][indices] = (
-                    spec_dict[spec_name] * spectra["normalisation"][indices]
-                )
+    return spectra
 
 
 def add_lines(
@@ -608,9 +687,6 @@ if __name__ == "__main__":
         required=False,
     )
 
-    # Parse arguments
-    args = parser.parse_args()
-
     # Include spectra
     parser.add_argument(
         "--include_spectra",
@@ -620,8 +696,6 @@ if __name__ == "__main__":
     )
 
     # Boolean flag as to whether to attempt to replace missing files
-    # NOTE: this is not currently used as we should re-run cloudy or figure
-    # out what went wrong when there is a failure.
     parser.add_argument("--replace", type=bool, default=False, required=False)
 
     # Define the line calculation method.
@@ -644,6 +718,11 @@ if __name__ == "__main__":
     parser.add_argument("--verbose", type=bool, required=False, default=True)
 
     args = parser.parse_args()
+
+    # If the user requested the replace option warn them it actually does
+    # nothing.
+    if args.replace:
+        print("WARNING: The replace option is currently not implemented.")
 
     # Unpack arguments
     grid_dir = args.grid_dir
@@ -673,15 +752,24 @@ if __name__ == "__main__":
 
     params = fixed_params | grid_params
 
-    # Create empty synthesizer grid
-    create_empty_grid(
-        grid_dir, incident_grid_name, grid_name, params, grid_params
+    # Create empty synthesizer grid, this returns a GridFile object we can
+    # add spectra and lines to below
+    out_grid, incident_grid = create_empty_grid(
+        grid_dir,
+        incident_grid_name,
+        grid_name,
+        params,
+        grid_params,
     )
 
     # Check cloudy runs and potentially replace them by the nearest grid point
     # if they fail.
     failed_list = check_cloudy_runs(
-        grid_name, grid_dir, cloudy_dir, replace=args.replace
+        out_grid,
+        grid_name,
+        grid_dir,
+        cloudy_dir,
+        replace=args.replace,
     )
     print("list of failed cloudy runs:", failed_list)
 
@@ -705,9 +793,17 @@ if __name__ == "__main__":
 
     # If no runs have failed, go ahead and add spectra and lines.
     else:
-        # add spectra
+        # Add spectra
         if include_spectra:
-            add_spectra(grid_name, grid_dir, cloudy_dir)
+            add_spectra(
+                out_grid,
+                incident_grid,
+                grid_name,
+                cloudy_dir,
+                spec_names=("incident", "transmitted", "nebular", "linecont"),
+                weight="initial_masses",
+                norm_by_q=True,
+            )
 
         # add lines
         add_lines(
