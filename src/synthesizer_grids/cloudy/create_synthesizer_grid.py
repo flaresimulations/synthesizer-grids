@@ -719,11 +719,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # If the user requested the replace option warn them it actually does
-    # nothing.
-    if args.replace:
-        print("WARNING: The replace option is currently not implemented.")
-
     # Unpack arguments
     grid_dir = args.grid_dir
     cloudy_dir = args.cloudy_dir
