@@ -444,6 +444,28 @@ class GridFile:
                 log_on_read=log_on_read[axis_key],
             )
 
+        # Write out the spectra grids
+        self.write_spectra(spectra, wavelength, weight=weight)
+
+    def write_spectra(self, spectra, wavelength, weight="initial_masses"):
+        """
+        Write out the spectra grids.
+
+        This will write out the spectra grids to the file.
+
+        Args:
+            spectra (dict)
+                A dictionary containing the spectra grids. Each key value pair
+                should be {"spectra_type": spectra_grid}. "spectra_type" will
+                be the key used for the dataset.
+            wavelength (unyt_array)
+                The wavelength array of the spectra grid.
+            weight (str)
+                The variable to used to normalise the spectra in the grid. For
+                instance, in most SPS models this will initial mass normalised,
+                the Synthesizer property for this is "initial_masses". By
+                default this is set to "initial_masses".
+        """
         # Write out the wavelength array
         self.write_dataset(
             "spectra/wavelength",
