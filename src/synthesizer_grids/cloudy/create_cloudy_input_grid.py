@@ -226,8 +226,6 @@ if __name__ == "__main__":
             depletion_scale=params_["depletion_scale"],
         )
 
-        print("DTM ratio:", abundances.dust_to_metal_ratio)
-
         # If reference U model is used
         if params_["ionisation_parameter_model"] == "ref":
             # Calculate the difference between the reference
