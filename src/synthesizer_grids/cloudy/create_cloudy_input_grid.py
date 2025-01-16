@@ -17,7 +17,7 @@ from synthesizer.photoionisation import cloudy17, cloudy23
 from utils import (
     apollo_submission_script,
     get_cloudy_params,
-    get_grid_properties,
+    get_grid_props_cloudy,
 )
 
 from synthesizer_grids.parser import Parser
@@ -174,7 +174,7 @@ if __name__ == "__main__":
         mesh,
         model_list,
         index_list,
-    ) = get_grid_properties(axes, grid_params, verbose=True)
+    ) = get_grid_props_cloudy(axes, grid_params, verbose=True)
 
     # Loop over all models
     for i, (grid_params_tuple, grid_index_tuple) in enumerate(
@@ -225,6 +225,8 @@ if __name__ == "__main__":
             depletion_model=params_["depletion_model"],
             depletion_scale=params_["depletion_scale"],
         )
+
+        print("DTM ratio:", abundances.dust_to_metal_ratio)
 
         # If reference U model is used
         if params_["ionisation_parameter_model"] == "ref":
