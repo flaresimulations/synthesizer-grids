@@ -81,7 +81,7 @@ def create_empty_grid(
     )
 
     # Copy over the model metadata
-    out_grid.write_model_metadata(incident_grid._model_metadata.items())
+    out_grid.write_model_metadata(incident_grid._model_metadata)
 
     # Set a list of the axes including the incident and new grid axes
     axes = list(incident_grid.axes) + list(grid_params.keys())
