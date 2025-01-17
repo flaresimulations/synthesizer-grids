@@ -49,10 +49,9 @@ class Parser(argparse.ArgumentParser):
         # Are we talking?
         self.add_argument(
             "--verbose",
-            type=bool,
-            required=False,
+            action="store_true",
             default=False,
-            description="Are we talking?",
+            help="Are we talking?",
         )
 
         # Now add the cloudy specific arguments or incident grid arguments
@@ -65,108 +64,119 @@ class Parser(argparse.ArgumentParser):
         if with_alpha:
             self._add_alpha_args()
 
-        def _add_incident_args(self):
-            """Add arguments for incident grids."""
-            # Add filepath argument for the input files used to create
-            # SPS incident grids.
-            self.add_argument(
-                "--input-dir",
-                type=str,
-                help="The input file path",
-                required=False,
-            )
+    def _add_incident_args(self):
+        """Add arguments for incident grids."""
+        # Add filepath argument for the input files used to create
+        # SPS incident grids.
+        self.add_argument(
+            "--input-dir",
+            type=str,
+            help="The input file path",
+            required=False,
+        )
 
-            # Add download flag
-            self.add_argument(
-                "--download",
-                "-d",
-                action="store_true",
-                help="Should the data be downloaded?",
-            )
+        # Add download flag
+        self.add_argument(
+            "--download",
+            "-d",
+            action="store_true",
+            help="Should the data be downloaded?",
+        )
 
-        def _add_cloudy_args(self):
-            """Add arguments for cloudy grids."""
-            # Path to directory where cloudy runs are
-            self.add_argument(
-                "--cloudy-dir",
-                type=str,
-                required=True,
-                description="The directory containing each "
-                "of the individual cloudy run outputs.",
-            )
+    def _add_cloudy_args(self):
+        """Add arguments for cloudy grids."""
+        # Path to directory where cloudy runs are
+        self.add_argument(
+            "--cloudy-dir",
+            type=str,
+            required=True,
+            help="The directory containing each "
+            "of the individual cloudy run outputs.",
+        )
 
-            # The name of the incident grid
-            self.add_argument(
-                "--incident-grid",
-                type=str,
-                required=True,
-                description="The name of the incident grid (the grid "
-                "used to generate the cloudy runs).",
-            )
+        # The name of the incident grid
+        self.add_argument(
+            "--incident-grid",
+            type=str,
+            required=True,
+            help="The name of the incident grid (the grid "
+            "used to generate the cloudy runs).",
+        )
 
-            # The name for the new cloudy reprocessed grid (by default this
-            # is the same as the incident grid with a '_cloudy' suffix)
-            self.add_argument(
-                "--cloudy-grid",
-                type=str,
-                required=False,
-                description="The name of the new cloudy reprocessed grid.",
-            )
+        # The name for the new cloudy reprocessed grid (by default this
+        # is the same as the incident grid with a '_cloudy' suffix)
+        self.add_argument(
+            "--cloudy-grid",
+            type=str,
+            required=False,
+            default=None,
+            help="The name of the new cloudy reprocessed grid.",
+        )
 
-            # The cloudy parameters, including any grid axes
-            self.add_argument(
-                "--cloudy-params",
-                type=str,
-                required=False,
-                default="c17.03-sps",
-                description="The path to the cloudy parameter file.",
-            )
+        # The cloudy parameters, including any grid axes
+        self.add_argument(
+            "--cloudy-params",
+            type=str,
+            required=False,
+            default="c17.03-sps",
+            help="The path to the cloudy parameter file.",
+        )
 
-            # A second cloudy parameter set which supersedes the above
-            self.add_argument(
-                "--cloudy_params_addition",
-                type=str,
-                required=False,
-                description="The path to the cloudy 'extra' parameter file.",
-            )
+        # A second cloudy parameter set which supersedes the above
+        self.add_argument(
+            "--cloudy-params-addition",
+            type=str,
+            required=False,
+            help="The path to the cloudy 'extra' parameter file.",
+        )
 
-            # Should we include the spectra in the grid?
-            self.add_argument(
-                "--include_spectra",
-                type=bool,
-                default=True,
-                required=False,
-                description="Should the spectra be included in the grid?",
-            )
+        # Should we include the spectra in the grid?
+        self.add_argument(
+            "--include-spectra",
+            type=bool,
+            default=True,
+            required=False,
+            help="Should the spectra be included in the grid?",
+        )
 
-            # Boolean flag as to whether to attempt to replace missing files
-            self.add_argument(
-                "--replace",
-                type=bool,
-                default=False,
-                required=False,
-                description="Should missing files be replaced?",
-            )
+        # Boolean flag as to whether to attempt to replace missing files
+        self.add_argument(
+            "--replace",
+            type=bool,
+            default=False,
+            required=False,
+            help="Should missing files be replaced?",
+        )
 
-            # Define the line calculation method.
-            self.add_argument(
-                "--line_calc_method",
-                type=str,
-                default="lines",
-                required=False,
-                description="The method used to calculate the line fluxes "
-                "(either 'lines' or 'linelist')",
-            )
+        # Define the line calculation method.
+        self.add_argument(
+            "--line-calc-method",
+            type=str,
+            default="lines",
+            required=False,
+            help="The method used to calculate the line fluxes "
+            "(either 'lines' or 'linelist')",
+        )
 
-            # Define the machine (for rerunning cloudy runs)
-            self.add_argument(
-                "--machine",
-                type=str,
-                default=None,
-                required=False,
-                description="The machine used to run the cloudy runs "
-                "(currently only supports apollo)",
-            )
+        # Define the machine (for rerunning cloudy runs)
+        self.add_argument(
+            "--machine",
+            type=str,
+            default=None,
+            required=False,
+            help="The machine used to run the cloudy runs "
+            "(currently only supports apollo)",
+        )
+
+        # Should we normalise by the specific ionising luminosity?
+        self.add_argument(
+            "--norm-by-Q",
+            "-Q",
+            action="store_true",
+            default=True,
+            help="Should the grid be normalised by the specific "
+            "ionising luminosity?",
+        )
 
     def _add_alpha_args(self):
         """Add arguments for alpha enhancement."""
