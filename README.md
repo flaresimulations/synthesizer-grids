@@ -78,7 +78,7 @@ Next we need to combine the cloudy ouputs to create a new `synthesizer` grid. To
 
 ```bash
 usage: create_synthesizer_grid.py [-h] --grid-dir GRID_DIR [--verbose] --cloudy-dir CLOUDY_DIR --incident-grid INCIDENT_GRID [--cloudy-grid CLOUDY_GRID] [--cloudy-params CLOUDY_PARAMS]
-                                  [--cloudy-params-addition CLOUDY_PARAMS_ADDITION] [--include-spectra INCLUDE_SPECTRA] [--replace REPLACE] [--line-calc-method LINE_CALC_METHOD] [--machine MACHINE] [--norm-by-Q]
+                                  [--cloudy-params-addition CLOUDY_PARAMS_ADDITION] [--include-spectra] [--replace] [--line-calc-method LINE_CALC_METHOD] [--machine MACHINE] [--norm-by-Q]
 
 Create Synthesizer HDF5 grid files from cloudy outputs.
 
@@ -96,8 +96,7 @@ options:
                         The path to the cloudy parameter file.
   --cloudy-params-addition CLOUDY_PARAMS_ADDITION
                         The path to the cloudy 'extra' parameter file.
-  --include-spectra INCLUDE_SPECTRA
-                        Should the spectra be included in the grid?
+  --include-spectra     Should the spectra be included in the grid?
   --replace             Should missing files be replaced?
   --line-calc-method LINE_CALC_METHOD
                         The method used to calculate the line fluxes (either 'lines' or 'linelist')

@@ -135,8 +135,7 @@ class Parser(argparse.ArgumentParser):
         self.add_argument(
             "--include-spectra",
             type=bool,
-            default=True,
-            required=False,
+            action="store_true",
             help="Should the spectra be included in the grid?",
         )
 
