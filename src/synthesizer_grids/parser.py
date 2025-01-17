@@ -51,7 +51,7 @@ class Parser(argparse.ArgumentParser):
             "--verbose",
             type=bool,
             required=False,
-            default=True,
+            default=False,
             description="Are we talking?",
         )
 
