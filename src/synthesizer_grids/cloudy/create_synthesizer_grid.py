@@ -109,10 +109,8 @@ def create_empty_grid(
     # Compute the amount we may have to expand the axes (if we don't need to
     # expand this is harmless)
     expansion = int(
-        np.product(shape)
-        / np.product(
-            incident_grid.log10_specific_ionising_luminosity["HI"].shape
-        )
+        np.prod(shape)
+        / np.prod(incident_grid.log10_specific_ionising_luminosity["HI"].shape)
     )
 
     # Loop over ions
@@ -245,7 +243,7 @@ def load_grid_params(param_file="c23.01-sps", param_dir="params"):
             dictionary of parameters that vary on the grid
     """
     # Open parameter file
-    with open(f"{param_dir}/{param_file}.yaml", "r") as stream:
+    with open(f"{param_file}.yaml", "r") as stream:
         try:
             params = yaml.safe_load(stream)
         except yaml.YAMLError as exc:
@@ -625,6 +623,12 @@ def add_lines(
                     infile, extension="emergent_elin"
                 )
 
+            else:
+                raise ValueError(
+                    f"Unrecognised line type: {line_type} "
+                    "(must be 'lines' or 'linelist')"
+                )
+
             for id_, wavelength_, luminosity_ in zip(
                 id, wavelength, luminosity
             ):
@@ -666,56 +670,9 @@ def add_lines(
 if __name__ == "__main__":
     # Set up the command line arguments
     parser = Parser(
-        description="Create Synthesizer HDF5 grid files from cloudy outputs."
+        description="Create Synthesizer HDF5 grid files from cloudy outputs.",
+        cloudy_args=True,
     )
-
-    # Path to directory where cloudy runs are
-    parser.add_argument("--cloudy_dir", type=str, required=True)
-
-    # The name of the incident grid
-    parser.add_argument("--incident_grid", type=str, required=True)
-
-    # The cloudy parameters, including any grid axes
-    parser.add_argument(
-        "--cloudy_params", type=str, required=False, default="c17.03-sps"
-    )
-
-    # A second cloudy parameter set which supersedes the above
-    parser.add_argument(
-        "--cloudy_params_addition",
-        type=str,
-        required=False,
-    )
-
-    # Include spectra
-    parser.add_argument(
-        "--include_spectra",
-        type=bool,
-        default=True,
-        required=False,
-    )
-
-    # Boolean flag as to whether to attempt to replace missing files
-    parser.add_argument("--replace", type=bool, default=False, required=False)
-
-    # Define the line calculation method.
-    parser.add_argument(
-        "--line_calc_method",
-        type=str,
-        default="lines",
-        required=False,
-    )
-
-    # Define the line calculation method.
-    parser.add_argument(
-        "--machine",
-        type=str,
-        default=None,
-        required=False,
-    )
-
-    # verbosity flag
-    parser.add_argument("--verbose", type=bool, required=False, default=True)
 
     args = parser.parse_args()
 
