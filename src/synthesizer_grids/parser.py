@@ -171,10 +171,10 @@ class Parser(argparse.ArgumentParser):
         self.add_argument(
             "--norm-by-Q",
             "-Q",
-            action="store_true",
             default=True,
+            required=False,
             help="Should the grid be normalised by the specific "
-            "ionising luminosity?",
+            "ionising luminosity? (default is True)",
         )
 
     def _add_alpha_args(self):

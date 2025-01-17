@@ -102,7 +102,7 @@ options:
   --line-calc-method LINE_CALC_METHOD
                         The method used to calculate the line fluxes (either 'lines' or 'linelist')
   --machine MACHINE     The machine used to run the cloudy runs (currently only supports apollo)
-  --norm-by-Q, -Q       Should the grid be normalised by the specific ionising luminosity?
+  --norm-by-Q, -Q       Should the grid be normalised by the specific ionising luminosity? (default is True)
 
 ```
 
