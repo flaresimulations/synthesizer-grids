@@ -42,7 +42,7 @@ class Parser(argparse.ArgumentParser):
         self.add_argument(
             "--grid-dir",
             type=str,
-            help="The grid file path",
+            help="The directory containing (or to contain) the grids.",
             required=True,
         )
 
@@ -110,7 +110,8 @@ class Parser(argparse.ArgumentParser):
             type=str,
             required=False,
             default=None,
-            help="The name of the new cloudy reprocessed grid.",
+            help="The name of the new cloudy reprocessed grid (defaults "
+            "to <incident_grid>_cloudy.hdf5).",
         )
 
         # The cloudy parameters, including any grid axes
@@ -142,9 +143,7 @@ class Parser(argparse.ArgumentParser):
         # Boolean flag as to whether to attempt to replace missing files
         self.add_argument(
             "--replace",
-            type=bool,
-            default=False,
-            required=False,
+            action="store_true",
             help="Should missing files be replaced?",
         )
 
