@@ -5,8 +5,10 @@ synthesizer grid is a HDF5 file that contains the spectra and line luminosities
 from cloudy outputs.
 
 Example usage:
-    python create_synthesizer_grid.py --cloudy_dir=cloudy_dir
-    --incident_grid=incident_grid --cloudy_params=cloudy_params
+    python create_synthesizer_grid.py --grid-dir /path/to/grid
+        --cloudy-dir /path/to/cloudy --incident-grid incident_grid.hdf5
+        --cloudy-params c17.03-sps --include-spectra True --replace
+        --line-calc-method linelist
 """
 
 import os
