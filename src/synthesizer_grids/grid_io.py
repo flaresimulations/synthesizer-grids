@@ -587,6 +587,44 @@ class GridFile:
 
         self._close_file()
 
+    def write_cloudy_metadata(self, params):
+        """
+        Write out the Cloudy metadata.
+
+        Args:
+            params (dict)
+                A dictionary containing the metadata of the Cloudy run.
+        """
+        # Open the file
+        self._open_file()
+
+        # Create the CloudyParams group if it doesn't exist
+        if "CloudyParams" not in self.hdf:
+            self.hdf.create_group("CloudyParams")
+        cloudy_grp = self.hdf["CloudyParams"]
+
+        # Add other parameters as attributes
+        for k, v in params.items():
+            # If v is None then convert to string None for saving in the
+            # HDF5 file.
+            if v is None:
+                v = "None"
+
+            # If the parameter is a dictionary (e.g. as used for abundances)
+            if isinstance(v, dict):
+                print(k, v)
+                # Create group for this key
+                nested_grp = cloudy_grp.create_group(k)
+
+                for k2, v2 in v.items():
+                    nested_grp.attrs[k2] = v2
+
+            else:
+                cloudy_grp.attrs[k] = v
+
+        # Close the file
+        self._close_file()
+
     def get_grid_properties(self, verbose=False):
         """Get the properties of the grid including the dimensions etc."""
         self._open_file()
