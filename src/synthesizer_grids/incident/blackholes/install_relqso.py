@@ -31,7 +31,7 @@ sys.path.append("RELAGN/src/python_version")
 if __name__ == "__main__":
 
     # Import relagn module
-    from relagn import relagn
+    from relagn import relagn # noqa: E402
 
     """
     Create incident AGN spectra assuming the RELQSO model.
