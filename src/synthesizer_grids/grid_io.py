@@ -39,7 +39,7 @@ import numpy as np
 from synthesizer._version import __version__ as synthesizer_version
 from synthesizer.photoionisation import Ions
 from synthesizer.sed import Sed
-from synthesizer.utils.util_funcs import has_units
+from synthesizer.units import has_units
 from tqdm import tqdm
 from unyt import dimensionless, unyt_array
 
@@ -249,7 +249,8 @@ class GridFile:
         # Include a brief description
         dset.attrs["Description"] = description
 
-        # Write out whether we should log this dataset when read
+        # Write out whether we should log this dataset before using it to
+        # interpolate spectra
         dset.attrs["log_on_read"] = log_on_read
 
         # Handle any other attributes passed as kwargs
@@ -354,6 +355,7 @@ class GridFile:
         alt_axes=(),
         descriptions={},
         model={},
+        weight="initial_masses",
     ):
         """
         Write out the common parts of a Synthesizer grid.
@@ -388,6 +390,11 @@ class GridFile:
                 be overidden here.
             model (dict)
                 A dictionary containing the metadata of the model used.
+            weight (str)
+                The variable to used to normalise the spectra in the grid. For
+                instance, in most SPS models this will initial mass normalised,
+                the Synthesizer property for this is "initial_masses". By
+                default this is set to "initial_masses".
 
         Raises:
             ValueError
@@ -437,6 +444,28 @@ class GridFile:
                 log_on_read=log_on_read[axis_key],
             )
 
+        # Write out the spectra grids
+        self.write_spectra(spectra, wavelength, weight=weight)
+
+    def write_spectra(self, spectra, wavelength, weight="initial_masses"):
+        """
+        Write out the spectra grids.
+
+        This will write out the spectra grids to the file.
+
+        Args:
+            spectra (dict)
+                A dictionary containing the spectra grids. Each key value pair
+                should be {"spectra_type": spectra_grid}. "spectra_type" will
+                be the key used for the dataset.
+            wavelength (unyt_array)
+                The wavelength array of the spectra grid.
+            weight (str)
+                The variable to used to normalise the spectra in the grid. For
+                instance, in most SPS models this will initial mass normalised,
+                the Synthesizer property for this is "initial_masses". By
+                default this is set to "initial_masses".
+        """
         # Write out the wavelength array
         self.write_dataset(
             "spectra/wavelength",
@@ -444,6 +473,9 @@ class GridFile:
             "Wavelength of the spectra grid",
             log_on_read=False,
         )
+
+        # Store the weight variable as an attribute
+        self.write_attribute("spectra", "WeightVariable", weight)
 
         # Write out each spectra
         for key, val in spectra.items():
@@ -553,6 +585,44 @@ class GridFile:
         for key, value in model.items():
             grp.attrs[key] = value
 
+        self._close_file()
+
+    def write_cloudy_metadata(self, params):
+        """
+        Write out the Cloudy metadata.
+
+        Args:
+            params (dict)
+                A dictionary containing the metadata of the Cloudy run.
+        """
+        # Open the file
+        self._open_file()
+
+        # Create the CloudyParams group if it doesn't exist
+        if "CloudyParams" not in self.hdf:
+            self.hdf.create_group("CloudyParams")
+        cloudy_grp = self.hdf["CloudyParams"]
+
+        # Add other parameters as attributes
+        for k, v in params.items():
+            # If v is None then convert to string None for saving in the
+            # HDF5 file.
+            if v is None:
+                v = "None"
+
+            # If the parameter is a dictionary (e.g. as used for abundances)
+            if isinstance(v, dict):
+                print(k, v)
+                # Create group for this key
+                nested_grp = cloudy_grp.create_group(k)
+
+                for k2, v2 in v.items():
+                    nested_grp.attrs[k2] = v2
+
+            else:
+                cloudy_grp.attrs[k] = v
+
+        # Close the file
         self._close_file()
 
     def get_grid_properties(self, verbose=False):
