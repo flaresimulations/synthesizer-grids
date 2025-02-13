@@ -3,24 +3,22 @@ Create a grid of cloudy scripts based on a cloudy in-built incident model such
 as a blackbody or AGN.
 """
 
-import numpy as np
 import argparse
 from pathlib import Path
-import yaml
+
 import h5py
+import numpy as np
+import yaml
 
 # synthesiser modules
 from synthesizer.abundances import Abundances
-from synthesizer.grid import Grid
-from synthesizer.photoionisation import cloudy17 as cloudy
-
+from synthesizer.photoionisation import cloudy17, cloudy23
 
 # local modules
-from utils import get_grid_properties, apollo_submission_script
+from utils import apollo_submission_script, get_grid_properties
 
 
 class CloudyIncidentShapeCommands:
-
     """
     A class holding different cloudy incident models. These return the relevant
     shape commands.
@@ -115,16 +113,17 @@ if __name__ == "__main__":
         description="Run a grid of incident cloudy models"
     )
 
-    # machine (for submission script generation)
+    # Machine (for submission script generation)
     parser.add_argument("-machine", type=str, required=True)
 
-    # path to grid directory (i.e. where incident and new grids are stored)
+    # Path to grid directory (i.e. where incident and new grids are stored)
     parser.add_argument("-grid_dir", type=str, required=True)
 
-    # path to directory where cloudy runs are
+    # Path to directory where cloudy runs are
     parser.add_argument("-cloudy_dir", type=str, required=True)
 
-    # the name of the file denoting the cloudy model and the variable parameters
+    # The name of the file denoting the cloudy model and the variable
+    # parameters
     parser.add_argument("-incident_cloudy_model", type=str, required=True)
 
     # the cloudy parameters, including any grid axes
@@ -132,34 +131,43 @@ if __name__ == "__main__":
         "-cloudy_params", type=str, required=False, default="c17.03-sps"
     )
 
-    # path to cloudy directory (not executable; this is assumed to {cloudy}/{cloudy_version}/source/cloudy.ext)
+    # Path to cloudy directory (not executable; this is assumed to
+    # {cloudy}/{cloudy_version}/source/cloudy.ext)
     parser.add_argument("-cloudy_path", type=str, required=True)
 
-    # verbosity flag
+    # Verbosity flag
     parser.add_argument("-verbose", type=bool, required=False, default=True)
 
     args = parser.parse_args()
 
     verbose = args.verbose
 
-    # load the cloudy parameters you are going to run
+    # Load the cloudy parameters you are going to run
     cloudy_fixed_params, cloudy_grid_params = load_grid_params(
         args.cloudy_params
     )
 
-    # load the incident parameters
+    # Load the incident parameters
     incident_fixed_params, incident_grid_params = load_grid_params(
         args.incident_cloudy_model, dir="cloudy_incident_models"
     )
 
     print(incident_fixed_params, incident_grid_params)
 
-    # get name of new grid (concatenation of incident_grid and cloudy parameter file)
+    # set cloudy version
+    if cloudy_fixed_params["cloudy_version"] == "c17.03":
+        cloudy = cloudy17
+    if cloudy_fixed_params["cloudy_version"] == "c23.01":
+        cloudy = cloudy23
+    print(cloudy)
+
+    # get name of new grid (concatenation of incident_grid and cloudy
+    # parameter file)
     new_grid_name = f"{args.incident_cloudy_model}_cloudy-{args.cloudy_params}"
 
     print(new_grid_name)
 
-    # define output directories
+    # Define output directories
     output_dir = f"{args.cloudy_dir}/{new_grid_name}"
 
     # make output directories
@@ -220,7 +228,17 @@ if __name__ == "__main__":
 
         # add other parameters as attributes
         for k, v in params.items():
-            hf.attrs[k] = v
+            # If v is None then convert to string None for saving in the
+            # HDF5 file.
+            if v is None:
+                v = "None"
+
+            # if the parameter is a dictionary (e.g. as used for abundances)
+            if isinstance(v, dict):
+                for k2, v2 in v.items():
+                    hf.attrs[k + "_" + k2] = v2
+            else:
+                hf.attrs[k] = v
 
         if verbose:
             print("-" * 50)
@@ -254,30 +272,26 @@ if __name__ == "__main__":
 
         print(incident_params_)
 
-        #     # get a dictionary of the incident parameter grid point
-        #     incident_index_ = {k:grid_index_[k] for k in incident_grid.axes}
-
-        #     # get a tuple of the incident grid point
-        #     incident_grid_point = tuple(grid_index_[k] for k in incident_grid.axes)
-
-        # Create abundances object
         abundances = Abundances(
             metallicity=float(params_["metallicity"]),
-            dust_to_metal_ratio=params_["dust_to_metal_ratio"],
+            reference=params_["reference_abundance"],
             alpha=params_["alpha"],
-            nitrogen_abundance=params_["nitrogen_abundance"],
-            carbon_abundance=params_["carbon_abundance"],
+            abundances=params_["abundance_scalings"],
+            depletion_model=params_["depletion_model"],
+            depletion_scale=params_["depletion_scale"],
         )
 
-        # For cloudy based grids it makes most sense to assume a fixed ionisation
-        # parameter. This will also simplify the code.
+        # For cloudy based grids it makes most sense to assume a fixed
+        # ionisation parameter. This will also simplify the code.
 
-        # float() is needed if the ionisation parameter is provided as e.g. 1E1 instead of 1e+1
+        # float() is needed if the ionisation parameter is provided as
+        # e.g. 1E1 instead of 1e+1
         params_["ionisation_parameter"] = float(
             params_["ionisation_parameter"]
         )
 
-        # this returns the relevant shape commands, in this case for a tabulated SED
+        # This returns the relevant shape commands, in this case for a
+        # tabulated SED
 
         shape_command_function = getattr(
             CloudyIncidentShapeCommands, incident_params_["model"]

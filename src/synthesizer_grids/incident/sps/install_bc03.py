@@ -2,23 +2,25 @@
 Download BC03 and convert to HDF5 synthesizer grid.
 """
 
-import numpy as np
-import os
-import sys
-import re
-import requests
-import tarfile
 import gzip
+import os
+import re
 import shutil
+import sys
+import tarfile
+
+import numpy as np
+import requests
 from tqdm import tqdm
-from unyt import angstrom, erg, s, Hz
+from unyt import Hz, angstrom, dimensionless, erg, s, yr
+from utils import get_model_filename
 
 from synthesizer_grids.grid_io import GridFile
 from synthesizer_grids.parser import Parser
-from utils import get_model_filename
 
 
 def decompress_gz_recursively(directory):
+    """Decompress all .gz files in a directory and its subdirectories."""
     for root, dirs, files in os.walk(directory):
         for file in files:
             if file.endswith(".gz"):
@@ -30,6 +32,7 @@ def decompress_gz_recursively(directory):
 
 
 def extract_and_decompress_tgz(file_path, extract_path):
+    """Extract and decompress a .tgz file."""
     with tarfile.open(file_path, "r:gz") as tar:
         tar.extractall(path=extract_path)
 
@@ -37,6 +40,7 @@ def extract_and_decompress_tgz(file_path, extract_path):
 
 
 def download_data(input_dir):
+    """Download BC03 data and extract it."""
     # Define base path
     save_path = "bc03.models.padova_2000_chabrier_imf.tar.gz"
 
@@ -89,14 +93,14 @@ def readBC03Array(file, lastLineFloat=None):
     # Read array 'header' (i.e. number of elements)
     arrayCount = int(lastLineFloat[0])  # Length of returned array
     array = np.empty(arrayCount)  # Initialise the array
-    lastLineFloat = lastLineFloat[1: len(lastLineFloat)]
+    lastLineFloat = lastLineFloat[1 : len(lastLineFloat)]
     iA = 0  # Running array index
     while True:  # Read numbers until array is full
         for iL in range(0, len(lastLineFloat)):  # Loop numbers in line
             array[iA] = lastLineFloat[iL]
             iA = iA + 1
             if iA >= arrayCount:  # Array is full so return
-                return array, lastLineFloat[iL + 1:]
+                return array, lastLineFloat[iL + 1 :]
         line = file.readline()  # Went through the line so get the next one
         lineStr = line.split()
         lastLineFloat = [float(x) for x in lineStr]
@@ -158,7 +162,7 @@ def convertBC03(files=None):
             line = file.readline()
             line = file.readline()
             # These last three lines are identical and contain the metallicity
-            (jmetal,) = re.search("Z=([0-9]+\.?[0-9]*)", line).groups()
+            (jmetal,) = re.search(r"Z=([0-9]+\.?[0-9]*)", line).groups()
             metalBins[iFile] = eval(jmetal)
             seds.resize(
                 (len(metalBins), seds.shape[1], seds.shape[2]), refcheck=False
@@ -204,10 +208,7 @@ def convertBC03(files=None):
     )
 
 
-def make_grid(input_dir,
-              grid_dir,
-              synthesizer_model_name):
-
+def make_grid(input_dir, grid_dir, synthesizer_model_name):
     """Main function to convert BC03 grids and
     produce grids used by synthesizer.
 
@@ -221,15 +222,10 @@ def make_grid(input_dir,
     """
 
     # output filename
-    out_filename = (
-        f"{grid_dir}/{synthesizer_model_name}.hdf5"
-    )
+    out_filename = f"{grid_dir}/{synthesizer_model_name}.hdf5"
 
     # Define base path
-    basepath = (
-        f"{input_dir}/bc03/"
-        "models/Padova2000/chabrier/"
-    )
+    basepath = f"{input_dir}/bc03/" "models/Padova2000/chabrier/"
 
     # Define files
     files = [
@@ -247,7 +243,6 @@ def make_grid(input_dir,
 
     ages = out[2]
     ages[0] = 1e5
-    log10ages = np.log10(ages)
 
     lam = out[3]
     nu = 3e8 / (lam * 1e-10)
@@ -260,15 +255,24 @@ def make_grid(input_dir,
     spec *= lam / nu  # erg s^-1 Hz^-1 Msol^-1
 
     # Create the GridFile ready to take outputs
-    out_grid = GridFile(out_filename, mode="w", overwrite=True)
+    out_grid = GridFile(out_filename)
+
+    # A dictionary with Boolean values for each axis, where True
+    # indicates that the attribute should be interpolated in
+    # logarithmic space.
+    log_on_read = {"ages": True, "metallicities": False}
 
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"log10age": log10ages, "metallicity": metallicities},
+        axes={
+            "ages": ages * yr,
+            "metallicities": metallicities * dimensionless,
+        },
         wavelength=lam * angstrom,
         spectra={"incident": spec * erg / s / Hz},
-        alt_axes=("log10ages", "metallicities"),
+        alt_axes=("ages", "metallicities"),
+        log_on_read=log_on_read,
     )
 
     # Include the specific ionising photon luminosity
@@ -293,7 +297,7 @@ if __name__ == "__main__":
 
     # append sps_name to input_dir to define where to store downloaded input
     # files
-    input_dir += f'/{sps_name}'
+    input_dir += f"/{sps_name}"
 
     # create directory to store downloaded output if it doesn't exist
     if not os.path.exists(input_dir):
@@ -313,7 +317,7 @@ if __name__ == "__main__":
         "alpha": False,
     }
 
-    # create synthesizer style model name
+    # Create synthesizer style model name
     synthesizer_model_name = get_model_filename(model)
     print(synthesizer_model_name)
 

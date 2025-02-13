@@ -1,16 +1,17 @@
-import os
-import gdown
 import argparse
+import os
+
+import gdown
 import synthesizer
 
 grid_url = {}
 
-grid_url[
-    "bpass-v2.2.1-bin_chab-300"
-] = "https://drive.google.com/file/d/135XvWyz06DgU0_uMzczB4_Azy4DC7bOH/view?usp=share_link"
-grid_url[
-    "bpass-v2.2.1-bin_chab-300_cloudy-v17.03_log10Uref-2"
-] = "https://drive.google.com/file/d/1iJTi0ciskqsV6kL5ObbRV4orQ0xnKqvI/view?usp=share_link"
+grid_url["bpass-v2.2.1-bin_chab-300"] = (
+    "https://drive.google.com/file/d/135XvWyz06DgU0_uMzczB4_Azy4DC7bOH/view?usp=share_link"
+)
+grid_url["bpass-v2.2.1-bin_chab-300_cloudy-v17.03_log10Uref-2"] = (
+    "https://drive.google.com/file/d/1iJTi0ciskqsV6kL5ObbRV4orQ0xnKqvI/view?usp=share_link"
+)
 
 filepath = os.path.abspath(synthesizer.__file__)
 
@@ -39,7 +40,8 @@ if __name__ == "__main__":
         "--directory",
         type=str,
         default=default_grid_dir,
-        help="grid directory location, defaults to synthesizer install directory",
+        help="grid directory location, defaults to "
+        "synthesizer install directory",
     )
     parser.add_argument("-list_grids", "--list_grids", action="store_true")
     args = parser.parse_args()

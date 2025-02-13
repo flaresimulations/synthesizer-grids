@@ -1,17 +1,19 @@
 """
-Download BC03 and convert to HDF5 synthesizer grid.
+Download M05 and convert to HDF5 synthesizer grid.
 """
-import numpy as np
-import os
-import wget
-from pathlib import Path
-import tarfile
-from unyt import angstrom, erg, s, cm
 
-from synthesizer_grids.parser import Parser
-from synthesizer_grids.grid_io import GridFile
+import os
+import tarfile
+from pathlib import Path
+
+import numpy as np
+import wget
 from synthesizer.conversions import flam_to_fnu
+from unyt import Hz, angstrom, cm, dimensionless, erg, s, yr
 from utils import get_model_filename
+
+from synthesizer_grids.grid_io import GridFile
+from synthesizer_grids.parser import Parser
 
 
 def download_data(input_dir, url):
@@ -41,9 +43,7 @@ def make_grid(model, imf, hr_morphology, input_dir, grid_dir):
     print(synthesizer_model_name)
 
     # Define output
-    out_filename = (
-        f"{grid_dir}/{synthesizer_model_name}.hdf5"
-    )
+    out_filename = f"{grid_dir}/{synthesizer_model_name}.hdf5"
 
     # NOTE THE LOWEST METALLICITY MODEL DOES NOT HAVE YOUNG AGES so don't use
     metallicities = np.array(
@@ -51,7 +51,7 @@ def make_grid(model, imf, hr_morphology, input_dir, grid_dir):
     )  # array of avialable metallicities
 
     # Codes for converting metallicty
-    metallicity_code = {
+    metallicity_codes = {
         0.0001: "10m4",
         0.001: "0001",
         0.01: "001",
@@ -61,13 +61,14 @@ def make_grid(model, imf, hr_morphology, input_dir, grid_dir):
     }
 
     # Open first file to get age
-    fn = f"""{input_dir}/sed.{imf}z{metallicity_code[metallicities[0]]}
-    .{hr_morphology}"""
+    fn = (
+        f"{input_dir}/sed.{imf}z{metallicity_codes[metallicities[0]]}."
+        f"{hr_morphology}"
+    )
     ages_, _, lam_, flam_ = np.loadtxt(fn).T
 
     ages_Gyr = np.sort(np.array(list(set(ages_))))  # Gyr
     ages = ages_Gyr * 1e9  # yr
-    log10ages = np.log10(ages)
 
     lam = lam_[ages_ == ages_[0]] * angstrom
 
@@ -75,8 +76,10 @@ def make_grid(model, imf, hr_morphology, input_dir, grid_dir):
 
     for imetal, metallicity in enumerate(metallicities):
         for ia, age_Gyr in enumerate(ages_Gyr):
-            fn = f"""{input_dir}/sed.{imf}z{metallicity_code[metallicity]}
-            .{hr_morphology}"""
+            fn = (
+                f"{input_dir}/sed.{imf}z{metallicity_codes[metallicity]}."
+                f"{hr_morphology}"
+            )
             print(imetal, ia, fn)
             ages_, _, lam_, flam_ = np.loadtxt(fn).T
 
@@ -85,15 +88,24 @@ def make_grid(model, imf, hr_morphology, input_dir, grid_dir):
             spec[ia, imetal] = fnu
 
     # Create the GridFile ready to take outputs
-    out_grid = GridFile(out_filename, mode="w", overwrite=True)
+    out_grid = GridFile(out_filename)
+
+    # A dictionary with Boolean values for each axis, where True
+    # indicates that the attribute should be interpolated in
+    # logarithmic space.
+    log_on_read = {"ages": True, "metallicities": False}
 
     # Write everything out thats common to all models
     out_grid.write_grid_common(
         model=model,
-        axes={"log10age": log10ages, "metallicity": metallicities},
+        axes={
+            "ages": ages * yr,
+            "metallicities": metallicities * dimensionless,
+        },
         wavelength=lam,
-        spectra={"incident": spec},
-        alt_axes=("log10ages", "metallicities"),
+        spectra={"incident": spec * erg / s / Hz},
+        alt_axes=("ages", "metallicities"),
+        log_on_read=log_on_read,
     )
 
     # Include the specific ionising photon luminosity
@@ -127,7 +139,7 @@ if __name__ == "__main__":
 
     # append sps_name to input_dir to define where to store downloaded input
     # files
-    input_dir += f'/{sps_name}'
+    input_dir += f"/{sps_name}"
 
     # create directory to store downloaded output if it doesn't exist
     if not os.path.exists(input_dir):
@@ -135,13 +147,13 @@ if __name__ == "__main__":
 
     # Define the download URL
     original_data_url = {}
-    original_data_url["ss"] = """http://www.icg.port.ac.uk/~maraston/SSPn/SED/
-    Sed_Mar05_SSP_Salpeter.tar.gz"""
+    original_data_url["ss"] = """
+    http://www.icg.port.ac.uk/~maraston/SSPn/SED/Sed_Mar05_SSP_Salpeter.tar.gz"""
 
     for imf in imfs:
-
         # Download the data if necessary
         if args.download:
+            print(original_data_url[imf])
             download_data(input_dir, original_data_url[imf])
 
         if imf == "ss":

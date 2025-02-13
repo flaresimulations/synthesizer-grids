@@ -1,5 +1,22 @@
 """A module containing I/O helper functions.
 
+This module contains a helper class for reading and writing Synthesizer grids
+to HDF5 files. This is a helper class should be used in grid generation scripts
+to help with the writing of the Synthesizer format.
+
+When intialised, a new file will always be created. This will overwrite any
+existing file with the same name. However, for the use case in these scripts
+that is the desirable behaviour. If this gets in your way raise an issue on the
+GitHub repository.
+
+Any subsequent interactions with the file will be done in append mode.
+
+Common parts of the grid can be written out using the write_grid_common method.
+
+Any non-standard datasets or attributes can be written using the write_dataset
+and write_attribute methods. These can be used to write out model specific
+datasets and attributes.
+
 Example usage:
 
     # Create a grid file
@@ -14,53 +31,55 @@ Example usage:
     )
 
 """
+
 from datetime import date
+
 import h5py
 import numpy as np
-from unyt import unyt_array
-from tqdm import tqdm
-
-from synthesizer.sed import Sed
-from synthesizer.photoionisation import Ions
 from synthesizer._version import __version__ as synthesizer_version
+from synthesizer.photoionisation import Ions
+from synthesizer.sed import Sed
+from synthesizer.units import has_units
+from tqdm import tqdm
+from unyt import dimensionless, unyt_array
 
 from synthesizer_grids._version import __version__ as grids_version
-
-# from synthesizer_grids.create_grids.grid_utils import (
-#     get_grid_properties_from_hdf5,
-# )
 
 
 class GridFile:
     """
     A helper obejct for reading/writing Synthesizer grids from/to HDF5 files.
 
+    A new file will always be created when a GridFile object is created. This
+    will overwrite any existing file with the same name. However, for the use
+    case in these scripts that is the desirable behaviour. If this gets in
+    your way raise an issue on the GitHub repository.
+
     Attributes:
         filepath (string)
             The file path to where the file should be stored.
-        mode (string)
-            The mode with which the file has been opened. Can be either
-            "r" (read), "w" (write), or "r+"/"a" (append).
         hdf (h5py._hl.files.File)
             The HDF5 file helper object from h5py that interfaces with the
             file on disk.
-        overwrite (bool)
-            Should existing keys be overwritten in append mode?
+        mode (string)
+            The mode the file is open in. This can be "r" for read, "w" for
+            write, "r+" for read and write, or "a" for append.
     """
 
     # Define common descriptions
     descriptions = {
         "log10age": "Logged stellar population ages (dex(yr))",
         "log10ages": "Logged stellar population ages (dex(yr))",
-        "age": "Stellar population ages",
-        "ages": "Stellar population ages",
+        "age": "Stellar population ages (yr)",
+        "ages": "Stellar population ages (yr)",
         "log10metallicities": "Logged stellar population metallicity",
         "log10metallicity": "Logged stellar population metallicity",
         "metallicities": "Stellar population metallicity",
         "metallicity": "Stellar population metallicity",
+        "log_on_read": "Boolean, True for interpolated axes",
     }
 
-    def __init__(self, filepath, mode="w", overwrite=False):
+    def __init__(self, filepath):
         """
         Initialise the helper.
 
@@ -70,30 +89,15 @@ class GridFile:
             filepath (str)
                 The file path to where the file should be stored. This should
                 include the file name itself.
-            mode (string)
-                The mode with which the file has been opened. Can be either
-                "r" (read), "w" (write), or "r+"/"a" (append). Defaults to "w".
-            overwrite (bool)
-                Should existing keys be overwritten in append mode?
         """
         # Store the filepath for posterity
         self.filepath = filepath
 
-        # What mode are we using?
-        self.mode = mode
-
         # Setup the HDF5 file attribute
         self.hdf = None
 
-        # Set the overwrite flag
-        self.overwrite = overwrite
-
-        # Tell the user if the mode and overwrite don't make sense
-        if self.overwrite and (self.mode != "r+" and self.mode != "a"):
-            print(
-                "Overwriting is only possible in append mode ('r+'/'a')."
-                f"Mode was: {self.mode}, The overwrite flag will be ignored."
-            )
+        # Set the mode to write by default
+        self.mode = "w"
 
         # Create the file if it doesn't exist
         self._create_file()
@@ -104,14 +108,13 @@ class GridFile:
 
         NOTE: This will overwrite the mode with and append mode.
         """
-        if self.mode != "r+" and self.mode != "a":
-            self.hdf = h5py.File(self.filepath, self.mode)
-            self.hdf.attrs["synthesizer_grids_version"] = grids_version
-            self.hdf.attrs["synthesizer_version"] = synthesizer_version
-            self.hdf.attrs["date_created"] = str(date.today())
-            self.hdf.close()
-            self.hdf = None
-            self.mode = "r+"
+        self.hdf = h5py.File(self.filepath, self.mode)
+        self.hdf.attrs["synthesizer_grids_version"] = grids_version
+        self.hdf.attrs["synthesizer_version"] = synthesizer_version
+        self.hdf.attrs["date_created"] = str(date.today())
+        self.hdf.close()
+        self.hdf = None
+        self.mode = "r+"
 
     def _open_file(self):
         """Open the file if it isn't already open."""
@@ -147,8 +150,8 @@ class GridFile:
 
         Args:
             group (str)
-                The key of the group where key is stored. Must be the full path,
-                i.e. "Group/SubGroup".
+                The key of the group where key is stored. Must be the full
+                path, i.e. "Group/SubGroup".
             attr_key (str)
                 The attribute key.
         """
@@ -156,7 +159,7 @@ class GridFile:
             return False
         return True
 
-    def write_attribute(self, group, attr_key, data, verbose=True):
+    def write_attribute(self, group, attr_key, data):
         """
         Write data into an attribute.
 
@@ -169,29 +172,14 @@ class GridFile:
             data (array-like/str/float/int)
                 The data to write. Shape and dtype will be inferred from this
                 input data.
-            verbose (bool)
-                Are we talking?
         """
         # Open the file
         self._open_file()
 
-        # If we are overwriting we have some extra work to do
-        if (self.mode == "r+" or self.mode == "a") and self.overwrite:
-            # Does the dataset already exist?
-            if self._attr_exists(group, attr_key):
-                # Ok, delete it to prepare for replacement
-                del self.hdf[group].attrs[attr_key]
-
-                if verbose:
-                    print(f"Overwriting hdf[{group}].attrs[{attr_key}]...")
-
         # If the dataset exists already we need to throw an error (safe if
         # we are appending and overwriting as this was handled above)
         if self._attr_exists(group, attr_key):
-            raise ValueError(
-                "Attribute already exists, and can't overwrite "
-                f"(mode={self.mode}, overwrite={self.overwrite})"
-            )
+            raise ValueError(f"{attr_key} already exists in {group}")
 
         # Finally, Write it!
         self.hdf[group].attrs[attr_key] = data
@@ -203,9 +191,9 @@ class GridFile:
         key,
         data,
         description,
-        units="dimensionless",
+        log_on_read,
         verbose=True,
-        **kwargs,
+        **extra_attrs,
     ):
         """
         Write data into a dataset.
@@ -223,49 +211,50 @@ class GridFile:
             units (str)
                 The units of this dataset. Defaults to "dimensionless". These
                 should be in the same format unyt would produce.
+            log_on_read (bool)
+                A dictionary with Boolean values for each axis, where True
+                indicates that the attribute should be interpolated in
+                logarithmic space.
             verbose (bool)
                 Are we talking?
-            kwargs (dict)
+            extra_attrs (dict)
                 Any attributes of the dataset can be passed in the form:
-                attr_key=attr_value (like the units kwarg).
+                attr_key=attr_value.
         """
         # Open the file
         self._open_file()
 
-        # If we are overwriting we have some extra work to do
-        if (self.mode == "r+" or self.mode == "a") and self.overwrite:
-            # Does the dataset already exist?
-            if self._dataset_exists(key):
-                # Ok, delete it to prepare for replacement
-                del self.hdf[key]
-
-                if verbose:
-                    print(f"Overwriting {key}...")
-
         # If the dataset exists already we need to throw an error (safe if
         # we are appending and overwriting as this was handled above)
         if self._dataset_exists(key):
+            raise ValueError(f"{key} already exists")
+
+        # Ensure we have units on the data
+        if not has_units(data):
             raise ValueError(
-                "Dataset already exists, and can't overwrite "
-                f"(mode={self.mode}, overwrite={self.overwrite})"
+                f"Data for {key} has no units. Please provide units."
             )
 
         # Finally, Write it!
         dset = self.hdf.create_dataset(
             key,
-            data=data,
+            data=data.value,
             shape=data.shape,
             dtype=data.dtype,
         )
 
         # Set the units attribute
-        dset.attrs["Units"] = units
+        dset.attrs["Units"] = str(data.units)
 
         # Include a brief description
         dset.attrs["Description"] = description
 
+        # Write out whether we should log this dataset before using it to
+        # interpolate spectra
+        dset.attrs["log_on_read"] = log_on_read
+
         # Handle any other attributes passed as kwargs
-        for dset_attr_key, val in kwargs.items():
+        for dset_attr_key, val in extra_attrs.items():
             dset.attrs[dset_attr_key] = val
 
         self._close_file()
@@ -321,12 +310,9 @@ class GridFile:
         if print_description:
             print(self.hdf[key].attrs["Description"])
 
-        if unit_str != "dimensionless":
-            data = unyt_array(data, unit_str)
-
         self._close_file()
 
-        return data
+        return unyt_array(data, unit_str)
 
     def copy_dataset(self, alt_key, key):
         """
@@ -348,9 +334,15 @@ class GridFile:
         data = self.hdf[key][...]
         des = self.hdf[key].attrs["Description"]
         units = self.hdf[key].attrs["Units"]
+        log_on_read = self.hdf[key].attrs["log_on_read"]
 
         # Write the alternative version
-        self.write_dataset(alt_key, data, des, units=units)
+        self.write_dataset(
+            alt_key,
+            unyt_array(data, units),
+            des,
+            log_on_read=log_on_read,
+        )
 
         self._close_file()
 
@@ -359,9 +351,11 @@ class GridFile:
         axes,
         wavelength,
         spectra,
+        log_on_read,
         alt_axes=(),
         descriptions={},
         model={},
+        weight="initial_masses",
     ):
         """
         Write out the common parts of a Synthesizer grid.
@@ -382,6 +376,10 @@ class GridFile:
                 A dictionary containing the spectra grids. Each key value pair
                 should be {"spectra_type": spectra_grid}. "spectra_type" will
                 be the key used for the dataset.
+            log_on_read (dict)
+                A dictionary with Boolean values for each axis, where True
+                indicates that the attribute should be interpolated in
+                logarithmic space.
             alt_axes (list, string)
                 Alternative names for the axes. These will create soft links
                 within the file. THIS WILL LIKELY BE DEPRECATED IN THE FUTURE.
@@ -392,6 +390,11 @@ class GridFile:
                 be overidden here.
             model (dict)
                 A dictionary containing the metadata of the model used.
+            weight (str)
+                The variable to used to normalise the spectra in the grid. For
+                instance, in most SPS models this will initial mass normalised,
+                the Synthesizer property for this is "initial_masses". By
+                default this is set to "initial_masses".
 
         Raises:
             ValueError
@@ -411,8 +414,9 @@ class GridFile:
                 descriptions[key] = self.descriptions[key]
             else:
                 raise ValueError(
-                    f"No description was provided for non-standard axis ({key})."
-                    "Pass a description to the descriptions kwarg."
+                    "No description was provided for non-standard "
+                    f"axis ({key}). Pass a description to the descriptions "
+                    "kwarg."
                 )
 
         # Handle any alternative axis names that have been given
@@ -426,45 +430,68 @@ class GridFile:
 
         # Write out each axis array
         for axis_key, axis_arr in axes.items():
-            # Handled unitless, logged and linear axes gracefully
-            if "log" in axis_key or not isinstance(axis_arr, unyt_array):
-                units = "dimensionless"
-            else:
-                units = str(axis_arr.units)
+            # Ensure we have units on this axis
+            if not has_units(axis_arr):
+                raise ValueError(
+                    f"Axis {axis_key} has no units. Please provide units."
+                )
 
+            # Write the dataset
             self.write_dataset(
                 "axes/" + axis_key,
-                axis_arr.value
-                if isinstance(axis_arr, unyt_array)
-                else axis_arr,
+                axis_arr,
                 descriptions[axis_key],
-                units=units,
+                log_on_read=log_on_read[axis_key],
             )
 
-        # Create soft links for the alternative naming
-        # No need for logic, if alt_axes is empty there will be no loop
-        for alt, key in zip(alt_axes, axes.keys()):
-            self.copy_dataset(alt_key="axes/" + alt, key="axes/" + key)
+        # Write out the spectra grids
+        self.write_spectra(spectra, wavelength, weight=weight)
 
+    def write_spectra(self, spectra, wavelength, weight="initial_masses"):
+        """
+        Write out the spectra grids.
+
+        This will write out the spectra grids to the file.
+
+        Args:
+            spectra (dict)
+                A dictionary containing the spectra grids. Each key value pair
+                should be {"spectra_type": spectra_grid}. "spectra_type" will
+                be the key used for the dataset.
+            wavelength (unyt_array)
+                The wavelength array of the spectra grid.
+            weight (str)
+                The variable to used to normalise the spectra in the grid. For
+                instance, in most SPS models this will initial mass normalised,
+                the Synthesizer property for this is "initial_masses". By
+                default this is set to "initial_masses".
+        """
         # Write out the wavelength array
         self.write_dataset(
             "spectra/wavelength",
-            wavelength.value
-            if isinstance(wavelength, unyt_array)
-            else wavelength,
+            wavelength,
             "Wavelength of the spectra grid",
-            units=str(wavelength.units),
+            log_on_read=False,
         )
+
+        # Store the weight variable as an attribute
+        self.write_attribute("spectra", "WeightVariable", weight)
 
         # Write out each spectra
         for key, val in spectra.items():
+            # Make sure the spectra has units
+            if not has_units(val):
+                raise ValueError(
+                    f"Spectra {key} has no units. Please provide units."
+                )
+
+            # Write the spectra
             self.write_dataset(
                 "spectra/" + key,
-                val.value if isinstance(val, unyt_array) else val,
-                "Three-dimensional spectra grid, [age, metallicity, wavelength]",
-                units=str(val.units)
-                if isinstance(val, unyt_array)
-                else "dimensionless",
+                val,
+                "Three-dimensional spectra grid,"
+                " [age, metallicity, wavelength]",
+                log_on_read=False,
             )
 
     def add_specific_ionising_lum(self, ions=("HI", "HeII"), limit=100):
@@ -518,8 +545,6 @@ class GridFile:
                 # Get incident spectrum
                 lnu = self.read_dataset("spectra/incident", indices=indices)
 
-                # print(lam.shape, lnu.shape)
-                # print(lam, lnu)
                 # Calculate Q
                 sed = Sed(lam, lnu)
                 ionising_lum = sed.calculate_ionising_photon_production_rate(
@@ -534,9 +559,10 @@ class GridFile:
         for ion in ions:
             self.write_dataset(
                 f"log10_specific_ionising_luminosity/{ion}",
-                out_arrs[ion],
+                out_arrs[ion] * dimensionless,
                 "Two-dimensional {ion} ionising photon "
                 "production rate grid, [age, Z]",
+                log_on_read=False,
             )
 
         self._close_file()
@@ -553,7 +579,6 @@ class GridFile:
         self._open_file()
 
         # Create a group for the model metadata
-        # print(self.hdf)
         grp = self.hdf.create_group("Model")
 
         # Write out model parameters as attributes
@@ -562,10 +587,46 @@ class GridFile:
 
         self._close_file()
 
+    def write_cloudy_metadata(self, params):
+        """
+        Write out the Cloudy metadata.
+
+        Args:
+            params (dict)
+                A dictionary containing the metadata of the Cloudy run.
+        """
+        # Open the file
+        self._open_file()
+
+        # Create the CloudyParams group if it doesn't exist
+        if "CloudyParams" not in self.hdf:
+            self.hdf.create_group("CloudyParams")
+        cloudy_grp = self.hdf["CloudyParams"]
+
+        # Add other parameters as attributes
+        for k, v in params.items():
+            # If v is None then convert to string None for saving in the
+            # HDF5 file.
+            if v is None:
+                v = "None"
+
+            # If the parameter is a dictionary (e.g. as used for abundances)
+            if isinstance(v, dict):
+                print(k, v)
+                # Create group for this key
+                nested_grp = cloudy_grp.create_group(k)
+
+                for k2, v2 in v.items():
+                    nested_grp.attrs[k2] = v2
+
+            else:
+                cloudy_grp.attrs[k] = v
+
+        # Close the file
+        self._close_file()
+
     def get_grid_properties(self, verbose=False):
-        """
-        Get the properties of the grid including the dimensions etc.
-        """
+        """Get the properties of the grid including the dimensions etc."""
         self._open_file()
 
         axes = self.hdf.attrs["axes"]  # list of axes

@@ -1,0 +1,3 @@
+depletion_model: CloudyClassic
+depletion_scale: 1.0
+grains: Orion

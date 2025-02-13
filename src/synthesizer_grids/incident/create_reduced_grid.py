@@ -1,28 +1,29 @@
 """
-Code to make a reduced grid, for example limiting the number of age bins to a
-specific set or a max age.
+Script to make a reduced grid, for example limiting the number of age bins
+to a specific set or a max age.
+
+Example:
+    python create_reduced_grid.py -grid_dir grids \
+        -original_grid bpass-2.2.1-bin_chabrier03-0.1,300.0 -ages=6.,7.,8.
+    python create_reduced_grid.py -grid_dir grids \
+        -original_grid bpass-2.2.1-bin_chabrier03-0.1,300.0 \
+        -ages=6.,7. -metallicities=0.001,0.0
 """
 
-import numpy as np
 import argparse
-from pathlib import Path
-import yaml
+
 import h5py
-
-# synthesiser modules
-from synthesizer.abundances import Abundances
+import numpy as np
 from synthesizer.grid import Grid
-from synthesizer.photoionisation import cloudy17 as cloudy
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Reduce a grid")
 
     parser.add_argument(
-        "-synthesizer_data_dir",
+        "-grid_dir",
         type=str,
         required=True,
-        help="path to synthesizer_data_dir",
+        help="path to grids",
     )
 
     parser.add_argument(
@@ -37,15 +38,23 @@ if __name__ == "__main__":
         type=float,
         required=False,
         default=None,
-        help="log10 of the max age",
+        help="max age in years",
     )
 
     parser.add_argument(
-        "-ages",
+        "-new_ages",
         type=str,
         required=False,
         default=None,
-        help="log10 of the specific set of ages, e.g. -ages=6.,7.,8.",
+        help="set of ages in years, e.g. -ages=6.,7.,8.",
+    )
+
+    parser.add_argument(
+        "-metallicities",
+        type=str,
+        required=False,
+        default=None,
+        help="specific set of metallicities, e.g. -metallicities=0.008,0.01",
     )
 
     args = parser.parse_args()
@@ -53,44 +62,75 @@ if __name__ == "__main__":
     # open the parent incident grid
     original_grid = Grid(
         args.original_grid,
-        grid_dir=f"{args.synthesizer_data_dir}",
+        grid_dir=f"{args.grid_dir}",
         read_lines=False,
     )
 
-    print(args.ages)
+    print(args.new_ages)
 
-    ages = np.array(list(map(float, args.ages.split(","))))
-    print(ages)
+    if args.new_ages:
+        new_ages = np.array(list(map(float, args.ages.split(","))))
+        print(new_ages)
+
+    if args.metallicities:
+        metallicities = np.array(
+            list(map(float, args.metallicities.split(",")))
+        )
+        print(metallicities)
 
     # get name of new grid
-    if args.ages:
-        new_grid_name = f"{args.original_grid}-ages:{args.ages}"
+    new_grid_name = args.original_grid
+
+    if args.new_ages:
+        new_grid_name += f"-new_ages:{'{:.0e}'.format(args.new_ages)}"
+
+        # currently args.new_ages = 100000000.0
+        # but I want this to become a string with #1e8 instead
     elif args.max_age:
-        new_grid_name = f"{args.original_grid}-max_age:{args.max_age}"
+        new_grid_name += f"-max_age:{'{:.0e}'.format(args.max_age)}"
+
+    if args.metallicities:
+        new_grid_name += f"-metallicities:{args.metallicities}"
 
     # create an indices array
-    all_indices = np.indices(original_grid.log10age.shape)[0]
+    all_age_indices = np.indices(original_grid.ages.shape)[0]
+    all_metallicity_indices = np.indices(original_grid.metallicities.shape)[0]
 
     # maximum index for the age
-
-    if args.ages:
+    if args.new_ages:
         indices = []
-        for age in ages:
+        for age in new_ages:
             print(age)
-            indices.append(np.where(original_grid.log10age == age)[0][0])
-        indices = np.array(indices)
+            indices.append(np.where(original_grid.ages == age)[0][0])
+        age_indices = np.array(indices)
     elif args.max_age:
-        indices = all_indices[original_grid.log10age <= args.max_age]
+        age_indices = all_age_indices[original_grid.ages <= args.max_age]
+    else:
+        age_indices = all_age_indices
 
-    print(indices)
+    print(age_indices)
+
+    if args.metallicities:
+        metallicity_indices = []
+        for metallicity in metallicities:
+            metallicity_indices.append(
+                np.where(original_grid.metallicities == metallicity)[0][0]
+            )
+        metallicity_indices = np.array(metallicity_indices)
+    else:
+        metallicity_indices = all_metallicity_indices
+
+    print(metallicity_indices)
+
+    # combined_indices = np.array([age_indices, metallicity_indices])
+    # print(combined_indices.shape)
+    # print(combined_indices)
 
     # open the new grid
-    with h5py.File(
-        f"{args.synthesizer_data_dir}/{new_grid_name}.hdf5", "w"
-    ) as hf:
+    with h5py.File(f"{args.grid_dir}/{new_grid_name}.hdf5", "w") as hf:
         # open the original incident model grid
         with h5py.File(
-            f"{args.synthesizer_data_dir}/{args.original_grid}.hdf5", "r"
+            f"{args.grid_dir}/{args.original_grid}.hdf5", "r"
         ) as hf_original:
             print("-" * 50)
             print(f"ORIGINAL GRID - {args.original_grid}")
@@ -106,22 +146,26 @@ if __name__ == "__main__":
                 hf.attrs[k] = v
 
             # copy axes, modifying the age axis
-            hf["axes/metallicity"] = hf_original["axes/metallicity"][:]
-            hf["axes/log10age"] = hf_original["axes/log10age"][indices]
+            hf["axes/metallicities"] = hf_original["axes/metallicities"][
+                metallicity_indices
+            ]
+            hf["axes/ages"] = hf_original["axes/ages"][age_indices]
 
             # copy log10_specific_ionising_lum
-            for ion in hf_original["log10_specific_ionising_lum"].keys():
-                hf[f"log10_specific_ionising_lum/{ion}"] = hf_original[
-                    "log10_specific_ionising_lum"
-                ][ion][indices, :]
+            for ion in hf_original[
+                "log10_specific_ionising_luminosity"
+            ].keys():
+                a = hf_original["log10_specific_ionising_luminosity"][ion][()]
+                a = a[np.ix_(age_indices, metallicity_indices)]
+                hf[f"log10_specific_ionising_luminosity/{ion}"] = a
 
             # copy wavelength grid
-            hf[f"spectra/wavelength"] = hf_original["spectra/wavelength"][:]
+            hf["spectra/wavelength"] = hf_original["spectra/wavelength"][:]
 
             # copy spectra
-            hf[f"spectra/incident"] = hf_original["spectra/incident"][
-                indices, :
-            ]
+            a = hf_original["spectra/incident"][()]
+            a = a[np.ix_(age_indices, metallicity_indices)]
+            hf["spectra/incident"] = a
 
         # print attributes and datasets of new grid
         print("-" * 50)
@@ -132,4 +176,3 @@ if __name__ == "__main__":
             print(k, v)
         print("---- groups and datasets")
         hf.visititems(print)
-        print(hf["axes/log10age"][:])
