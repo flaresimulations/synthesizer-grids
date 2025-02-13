@@ -1,5 +1,5 @@
 """
-Create a synthesizer incident grid for the agnsed model of Kubota and Done
+Create a synthesizer incident grid for the QSOSED model of Kubota and Done
 (2018) (https://ui.adsabs.harvard.edu/abs/2018MNRAS.480.1247K/abstract).
 
 This uses the relagn module (https://github.com/scotthgn/RELAGN.git). To use
@@ -28,11 +28,9 @@ if __name__ == "__main__":
     from relagn import relagn
 
     """
-    Create incident AGN spectra assuming the AGNSED model.
-
-    $L_{\nu} = \nu^{\alpha_i}
-
+    Create incident AGN spectra assuming the QSOSED model.
     """
+
     axes_names = [
         "mass",
         "accretion_rate_eddington",
@@ -53,7 +51,7 @@ if __name__ == "__main__":
         }
 
     # Set up the command line arguments
-    parser = Parser(description="AGNSED AGN model creation.")
+    parser = Parser(description="QSOSED AGN model creation.")
 
     # parameter file to use
     parser.add_argument("-config_file", type=str, required=True)
@@ -83,7 +81,7 @@ if __name__ == "__main__":
     model = {
         'name': model_name,
         'type': 'agn',
-        'family': 'agnsed',
+        'family': 'qsosed',
     }
 
     # Define the grid filename and path

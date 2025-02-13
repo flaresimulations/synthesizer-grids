@@ -1,5 +1,5 @@
 """
-Create a synthesizer incident grid for the relagn model of Hagen and Done
+Create a synthesizer incident grid for the RELQSO model of Hagen and Done
 (2023) (https://ui.adsabs.harvard.edu/abs/2023MNRAS.525.3455H/abstract).
 
 This uses the relagn module (https://github.com/scotthgn/RELAGN.git). To use
@@ -34,11 +34,9 @@ if __name__ == "__main__":
     from relagn import relagn
 
     """
-    Create incident AGN spectra assuming a broken power-law model.
-
-    $L_{\nu} = \nu^{\alpha_i}
-
+    Create incident AGN spectra assuming the RELQSO model.
     """
+
     axes_names = [
         "mass",
         "accretion_rate_eddington",
@@ -62,7 +60,7 @@ if __name__ == "__main__":
         }
 
     # Set up the command line arguments
-    parser = Parser(description="Broken power-law AGN model creation.")
+    parser = Parser(description="RELQSO AGN model creation.")
 
     # parameter file to use
     parser.add_argument("-config_file", type=str, required=True)
@@ -93,7 +91,7 @@ if __name__ == "__main__":
     model = {
         'name': model_name,
         'type': 'agn',
-        'family': 'relagn',
+        'family': 'relqso',
     }
 
     # Define the grid filename and path
