@@ -17,9 +17,10 @@ from synthesizer_grids.grid_io import GridFile
 # pain.
 sys.path.append("RELAGN/src/python_version")
 
-from relagn import relagn
-
 if __name__ == "__main__":
+
+    # Import relagn module
+    from relagn import relagn
 
     """
     Create incident AGN spectra assuming a broken power-law model.

@@ -17,9 +17,10 @@ from synthesizer_grids.grid_io import GridFile
 # pain.
 sys.path.append("RELAGN/src/python_version")
 
-from relagn import relagn
-
 if __name__ == "__main__":
+
+    # Import relagn module
+    from relagn import relagn
 
     """
     Create incident AGN spectra assuming the AGNSED model.
@@ -135,7 +136,8 @@ if __name__ == "__main__":
 
             else:
                 for i3, cosine_inclination_ in enumerate(
-                    axes_values["cosine_inclination"]):
+                    axes_values["cosine_inclination"]
+                ):
 
                     # spin is assumed to be zero here
                     dagn = relagn(
@@ -153,49 +155,48 @@ if __name__ == "__main__":
     # Normalise the spectra using the isotropic spectra (i.e.
     # cosine_inclination=0.5)
 
-    # If only a grid containing isoptropic spectra this simply means 
+    # If only a grid containing isoptropic spectra this simply means
     # normalising every spectra to unit
     if isotropic:
 
         # loop over each axis
         for i1, mass_ in enumerate(axes_values["mass"]):
             for i2, accretion_rate_eddington_ in enumerate(
-                axes_values["accretion_rate_eddington"]):
+                axes_values["accretion_rate_eddington"]
+            ):
 
                 # determine the boloe
                 bolometric_luminosity = -np.trapezoid(spec[i1, i2], nu_hz)
                 spec[i1, i2] /= bolometric_luminosity
-       
-    # otherwise identify the index correspinding and divide all by this
+
+    # Otherwise identify the index correspinding and divide all by this
     else:
 
-        # find the index corresponding to cosine_inclination=0.5
+        # Find the index corresponding to cosine_inclination=0.5
         isotropic_index = np.where(cosine_inclination == 0.5)[0]
 
-        # loop over each axis
+        # Loop over each axis
         for i1, mass_ in enumerate(axes_values["mass"]):
             for i2, accretion_rate_eddington_ in enumerate(
-                axes_values["accretion_rate_eddington"]):
+                axes_values["accretion_rate_eddington"]
+            ):
 
-                # determine the boloe
+                # Determine the bolometric luminosity
                 bolometric_luminosity = -np.trapz(spec[
                     i1, i2, isotropic_index], nu_hz)
 
                 for i3, cosine_inclination_ in enumerate(
-                    axes_values["cosine_inclination"]):
-
+                    axes_values["cosine_inclination"]
+                ):
                     spec[i1, i2, i3] /= bolometric_luminosity
-
 
     # Create the GridFile ready to take outputs
     out_grid = GridFile(out_filename)
-
 
     log_on_read = {'mass': True, 'accretion_rate_eddington': True}
 
     if not isotropic:
         log_on_read['cosine_inclination'] = False
-
 
     # Write everything out thats common to all models
     out_grid.write_grid_common(
