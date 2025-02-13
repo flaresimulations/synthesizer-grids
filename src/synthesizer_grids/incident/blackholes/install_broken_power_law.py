@@ -108,8 +108,9 @@ if __name__ == "__main__":
     # Define axes descriptions
     axes_descriptions = {}
     for i, axis_name in enumerate(axes_names):
-        axes_descriptions[axis_name] = f'The power-law slope between {edges_lam[i]} \le \lambda/\AA < {edges_lam[i+1]}'
-
+        axes_descriptions[axis_name] = (
+            rf'The power-law slope between {edges_lam[i]} '
+            rf'\le \lambda/\AA < {edges_lam[i+1]}')
 
     # In this case the incident axes values are just the indices
     # but we also convert lists to arrays
