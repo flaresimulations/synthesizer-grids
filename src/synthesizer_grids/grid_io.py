@@ -494,6 +494,9 @@ class GridFile:
                 log_on_read=False,
             )
 
+        # calcualte bolometric luminosity and add
+        self.add_bolometric_luminosity()
+
     def add_specific_ionising_lum(self, ions=("HI", "HeII"), limit=100):
         """
         Calculate the specific ionising photon luminosity for different ions.
