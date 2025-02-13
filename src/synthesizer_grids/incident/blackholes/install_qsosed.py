@@ -12,19 +12,21 @@ This also requires that xspec (https://heasarc.gsfc.nasa.gov/xanadu/xspec/) is
 installed.
 """
 
-import numpy as np
-from synthesizer_grids.parser import Parser
-from synthesizer_grids.grid_io import GridFile
 import sys
-from unyt import c, Angstrom, erg, s, Hz, dimensionless
+
+import numpy as np
 import yaml
+from unyt import Angstrom, Hz, Msun, c, dimensionless, erg, s
+
+from synthesizer_grids.grid_io import GridFile
+from synthesizer_grids.parser import Parser
 
 sys.path.append("RELAGN/src/python_version")
 
 if __name__ == "__main__":
 
     # Import relagn module
-    from relagn import relagn # noqa: E402
+    from relagn import relagn  # noqa: E402
 
     """
     Create incident AGN spectra assuming the QSOSED model.
