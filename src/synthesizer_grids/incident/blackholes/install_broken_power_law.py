@@ -1,12 +1,12 @@
 """
 Create a synthesizer incident grid for a broken power-law SED.
 """
-import yaml
+
 import numpy as np
-from unyt import c, Angstrom, erg, s, Hz, dimensionless
 from synthesizer_grids.parser import Parser
 from synthesizer_grids.grid_io import GridFile
-
+from unyt import c, Angstrom, erg, s, Hz, dimensionless
+import yaml
 
 def broken_power_law(x, edges, indices, normalisations=False, normalise=True):
     """

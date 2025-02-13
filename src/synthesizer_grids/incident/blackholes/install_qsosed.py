@@ -12,13 +12,12 @@ This also requires that xspec (https://heasarc.gsfc.nasa.gov/xanadu/xspec/) is
 installed.
 """
 
-import sys
 import numpy as np
-import yaml
-from unyt import Angstrom, erg, s, Hz, Msun, c, dimensionless
 from synthesizer_grids.parser import Parser
 from synthesizer_grids.grid_io import GridFile
-
+import sys
+from unyt import c, Angstrom, erg, s, Hz, dimensionless
+import yaml
 
 sys.path.append("RELAGN/src/python_version")
 
