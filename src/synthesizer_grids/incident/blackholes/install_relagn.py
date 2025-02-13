@@ -1,6 +1,17 @@
 """
-Create a synthesizer incident grid for the agnsed model
+Create a synthesizer incident grid for the relagn model of Hagen and Done
+(2023) (https://ui.adsabs.harvard.edu/abs/2023MNRAS.525.3455H/abstract).
+
+This uses the relagn module (https://github.com/scotthgn/RELAGN.git). To use
+this we first need to download it by cloning the github
+repo, i.e.:
+git clone https://github.com/scotthgn/RELAGN.git
+Since it doesn't have an __init__.py we need to add the path to our python
+path.
+This also requires that xspec (https://heasarc.gsfc.nasa.gov/xanadu/xspec/) is
+installed.
 """
+
 import sys
 import numpy as np
 import yaml

@@ -1,6 +1,17 @@
 """
-Create a synthesizer incident grid for the agnsed model
+Create a synthesizer incident grid for the agnsed model of Kubota and Done
+(2018) (https://ui.adsabs.harvard.edu/abs/2018MNRAS.480.1247K/abstract).
+
+This uses the relagn module (https://github.com/scotthgn/RELAGN.git). To use
+this we first need to download it by cloning the github
+repo, i.e.:
+git clone https://github.com/scotthgn/RELAGN.git
+Since it doesn't have an __init__.py we need to add the path to our python
+path.
+This also requires that xspec (https://heasarc.gsfc.nasa.gov/xanadu/xspec/) is
+installed.
 """
+
 import sys
 import numpy as np
 import yaml
@@ -8,13 +19,7 @@ from unyt import Angstrom, erg, s, Hz, Msun, c, dimensionless
 from synthesizer_grids.parser import Parser
 from synthesizer_grids.grid_io import GridFile
 
-# To use the relagn module we first need to download it by cloning the github
-# repo:
-# git clone https://github.com/scotthgn/RELAGN.git
-# Since it doesn't have an __init__.py we need to add the path to our python
-# path.
-# Note: relagn also requires that xspec is installed which is even more of a
-# pain.
+
 sys.path.append("RELAGN/src/python_version")
 
 if __name__ == "__main__":
