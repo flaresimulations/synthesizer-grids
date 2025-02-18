@@ -364,8 +364,8 @@ if __name__ == "__main__":
 
         slurm_job_script = f"""#!/bin/bash
 #SBATCH --job-name=run_cloudy      # Job name
-#SBATCH --output=output_%A_%a.out  # Standard output log (%A = job ID, %a = task ID)
-#SBATCH --error=error_%A_%a.err    # Error log
+#SBATCH --output=output/%A_%a.out  # Standard output log (%A = job ID, %a = task ID)
+#SBATCH --error=error/%A_%a.err    # Error log
 #SBATCH --array=1-{int(photoionisation_n_models)}               # Job array range
 #SBATCH --ntasks=1                 # Number of tasks per job
 #SBATCH --cpus-per-task=1          # CPU cores per task
