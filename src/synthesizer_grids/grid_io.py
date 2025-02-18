@@ -536,7 +536,7 @@ class GridFile:
         # Get wavelength grid
         lam = self.read_dataset("spectra/wavelength")
 
-        # Loop over grid points and calculate Q and store it
+        # Loop over grid points, calculate the ionising luminosity and store it
         for indices in tqdm(index_list):
             indices = tuple(indices)
 
@@ -607,7 +607,7 @@ class GridFile:
         # Get wavelength grid
         lam = self.read_dataset("spectra/wavelength")
 
-        # Loop over grid points and calculate Q and store it
+        # Loop over grid points calculate bolometric luminosity and store it
         for indices in tqdm(index_list):
             indices = tuple(indices)
 
