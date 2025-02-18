@@ -79,7 +79,7 @@ class GridFile:
         "log_on_read": "Boolean, True for interpolated axes",
     }
 
-    def __init__(self, filepath):
+    def __init__(self, filepath, mode="w"):
         """
         Initialise the helper.
 
@@ -97,7 +97,7 @@ class GridFile:
         self.hdf = None
 
         # Set the mode to write by default
-        self.mode = "w"
+        self.mode = mode
 
         # Create the file if it doesn't exist
         self._create_file()
@@ -675,7 +675,7 @@ class GridFile:
             print("index list:")
             print(index_list)
 
-        return n_axes, shape, n_models, mesh, model_list, index_list
+        return axes, axes_values, n_axes, shape, n_models, mesh, model_list, index_list
 
 
 def read_params(param_file):
