@@ -9,6 +9,8 @@ python create_cloudy_input_grid.py --incident_grid_name=bpass-2.2.1-bin_chabrier
 
 python create_cloudy_input_grid.py --incident_grid_name=bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6,7,8 --grid-dir=/its/home/sw376/astrodata/synthesizer/grids --cloudy_output_dir=//its/home/sw376/astrodata/synthesizer/cloudy --cloudy_params=c23.01-sps --cloudy_params_additional=test_suite/ionisation_parameter
 
+python create_cloudy_input_grid.py --incident_grid_name=bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6,7,8 --grid-dir=/its/home/sw376/astrodata/synthesizer/grids --cloudy_output_dir=//its/home/sw376/astrodata/synthesizer/cloudy --cloudy_params=c23.01-sps --cloudy_params_addition=test_suite/ionisation_parameter --machine=artemis --cloudy_path=/its/home/sw376/flare/software/cloudy
+
 """
 
 from pathlib import Path
@@ -365,7 +367,7 @@ if __name__ == "__main__":
         slurm_job_script = f"""#!/bin/bash
 #SBATCH --job-name=run_cloudy      # Job name
 #SBATCH --output=output/%A_%a.out  # Standard output log (%A = job ID, %a = task ID)
-#SBATCH --error=error/%A_%a.err    # Error log
+#SBATCH --error=output/%A_%a.err    # Error log
 #SBATCH --array=1-{int(photoionisation_n_models)}               # Job array range
 #SBATCH --ntasks=1                 # Number of tasks per job
 #SBATCH --cpus-per-task=1          # CPU cores per task
