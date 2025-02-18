@@ -7,6 +7,8 @@ individual photoionisation model.
 
 python create_cloudy_input_grid.py --incident_grid_name=bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6,7,8 --grid-dir=/Users/sw376/Dropbox/Research/data/synthesizer/grids --cloudy_output_dir=/Users/sw376/Dropbox/Research/data/synthesizer/cloudy --cloudy_params=c23.01-sps
 
+python create_cloudy_input_grid.py --incident_grid_name=bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6,7,8 --grid-dir=/its/home/sw376/astrodata/synthesizer/grids --cloudy_output_dir=//its/home/sw376/astrodata/synthesizer/cloudy --cloudy_params=c23.01-sps --cloudy_params_additional=test_suite/ionisation_parameter
+
 """
 
 from pathlib import Path
@@ -360,8 +362,7 @@ if __name__ == "__main__":
         else:
             partition = 'long'
 
-        slurm_job_script = f"""
-#!/bin/bash
+        slurm_job_script = f"""#!/bin/bash
 #SBATCH --job-name=run_cloudy      # Job name
 #SBATCH --output=output_%A_%a.out  # Standard output log (%A = job ID, %a = task ID)
 #SBATCH --error=error_%A_%a.err    # Error log
@@ -372,7 +373,7 @@ if __name__ == "__main__":
 #SBATCH --partition={partition}          # Partition/queue name
 
 # Run command
-python run_cloudy.py --grid_name={new_grid_name} --cloudy_output_dir={output_directory} --cloudy_path={cloudy_path} --index=${{SLURM_ARRAY_TASK_ID}}
+python run_cloudy.py --grid_name={new_grid_name} --cloudy_output_dir={cloudy_output_dir} --cloudy_path={cloudy_path} --index=${{SLURM_ARRAY_TASK_ID}}
 """
 
         open(f"{new_grid_name}.slurm", "w").write(slurm_job_script)
