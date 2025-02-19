@@ -4,56 +4,52 @@ of cloudy parameters. Also creates a machine specific script.
 
 Creates a folder for every incident grid point and then input files for every
 individual photoionisation model.
-
-python create_cloudy_input_grid.py --incident_grid_name=bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6,7,8 --grid-dir=/Users/sw376/Dropbox/Research/data/synthesizer/grids --cloudy_output_dir=/Users/sw376/Dropbox/Research/data/synthesizer/cloudy --cloudy_params=c23.01-sps --machine=artemis --cloudy_path=/its/home/sw376/flare/software/cloudy
-
-python create_cloudy_input_grid.py --incident_grid_name=bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6,7,8 --grid-dir=/Users/sw376/Dropbox/Research/data/synthesizer/grids --cloudy_output_dir=/Users/sw376/Dropbox/Research/data/synthesizer/cloudy --cloudy_params=c23.01-sps --machine=artemis --cloudy_path=/its/home/sw376/flare/software/cloudy --cloudy_params_addition=test_suite/ionisation_parameter
-
-python create_cloudy_input_grid.py --incident_grid_name=bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6,7,8 --grid-dir=/its/home/sw376/astrodata/synthesizer/grids --cloudy_output_dir=//its/home/sw376/astrodata/synthesizer/cloudy --cloudy_params=c23.01-sps --cloudy_params_additional=test_suite/ionisation_parameter
-
-python create_cloudy_input_grid.py --incident_grid_name=bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6,7,8 --grid-dir=/its/home/sw376/astrodata/synthesizer/grids --cloudy_output_dir=//its/home/sw376/astrodata/synthesizer/cloudy --cloudy_params=c23.01-sps --cloudy_params_addition=test_suite/ionisation_parameter --machine=artemis --cloudy_path=/its/home/sw376/flare/software/cloudy
-
-python create_cloudy_input_grid.py --incident_grid_name=bpass-2.2.1-bin_chabrier03-0.1,300.
-
 """
 
-from pathlib import Path
 import shutil
+from pathlib import Path
+
 import numpy as np
 import yaml
 from synthesizer.abundances import (
     Abundances,
 )
+from synthesizer.exceptions import InconsistentParameter
 from synthesizer.grid import Grid
 from synthesizer.photoionisation import cloudy17, cloudy23
-
-# local modules
 from utils import (
-    apollo_submission_script,
-    get_grid_props_cloudy,
     get_cloudy_params,
-    # get_grid_properties,
+    get_grid_props_cloudy,
 )
-
 from synthesizer_grids.parser import Parser
-# from synthesizer_grids.grid_io import GridFile
-
-
-
-
-
-
 
 
 def create_cloudy_input(
         incident_index,
         photoionisation_index,
-        parameters, 
-        delta_log10_specific_ionising_luminosity, 
+        parameters,
         output_directory,
+        delta_log10_specific_ionising_luminosity,
         ):
+    """
+    Function that creates a cloudy input script for a single photoionisation
+    model.
     
-    print(parameters["reference_ionisation_parameter"])
+    Args:
+        incident_index (int):
+            The index of the incident grid point. 
+        photoionisation_index (str):
+            The index of the photoionisation grid point.
+        parameters (dict):
+            Dictionary of parameters.
+        delta_log10_specific_ionising_luminosity (float):
+            The difference between the reference specific ionising luminosity
+            and that at the current grid point. For the reference model this
+            is used to scale the ionisation parameter and ionising luminosity 
+            of the source.
+        output_directory (str):
+            The output directory.
+    """
 
     # Create synthesizer.Abundance object
     abundances = Abundances(
@@ -94,23 +90,21 @@ def create_cloudy_input(
                 + delta_log10_specific_ionising_luminosity
             )
 
+        # If the geometry is not recognised raise an exception
         else:
-            # TODO: turn this into an exception
-            print(
+            raise InconsistentParameter(
                 f"""ERROR: do not understand geometry choice:
-                {parameters['geometry']}"""
-            )
+                {parameters['geometry']}""")
 
     # If fixed ionisation parameter model is used:
     elif parameters["ionisation_parameter_model"] == "fixed":
         ionisation_parameter = parameters["ionisation_parameter"]
 
+    # If the model is not regnoised raise an exception
     else:
-        # TODO: turn this into an exception
-        print(
-            f"""ERROR: do not understand U model choice:
-            {parameters['ionisation_parameter_model']}"""
-        )
+        raise InconsistentParameter(
+                f"""ERROR: do not understand U model choice:
+            {parameters['ionisation_parameter_model']}""")
 
     # Set ionisation_parameter to provide cloudy
     parameters["ionisation_parameter"] = ionisation_parameter
@@ -124,11 +118,14 @@ def create_cloudy_input(
             parameters_to_save[key] = value
 
     # Output dictionary of all parameters as a YAML file
-    with open(f"{output_directory}/{incident_index}/{photoionisation_index}.yaml", "w") as file:
+
+    yaml_filename = f"{output_directory}/{incident_index}/" + \
+        f"{photoionisation_index}.yaml"
+    with open(yaml_filename, "w") as file:
         yaml.dump(parameters_to_save, file, default_flow_style=False)
 
     # Include shape command to read SED
-    shape_commands = [f'table SED "input.sed" \n']
+    shape_commands = ['table SED "input.sed" \n']
 
     # Create cloudy input file
     cloudy.create_cloudy_input(
@@ -140,10 +137,6 @@ def create_cloudy_input(
     )
 
 
-
-
-
-
 if __name__ == "__main__":
     parser = Parser(description="Run a grid of incident cloudy models")
 
@@ -152,15 +145,15 @@ if __name__ == "__main__":
 
     # The path to the incident grid
     # parser.add_argument("--incident_grid_dir", type=str, required=True)
-    
+
     # Path to directory where cloudy runs are stored and run
     parser.add_argument("--cloudy_output_dir", type=str, required=True)
 
     # The cloudy reference parameter set
     parser.add_argument(
-        "--cloudy_params", 
-        type=str, 
-        required=True, 
+        "--cloudy_params",
+        type=str,
+        required=True,
         default="c23.01-sps"
     )
 
@@ -179,7 +172,6 @@ if __name__ == "__main__":
     # Machine (for submission script generation)
     parser.add_argument("--machine", type=str, required=False)
 
-    
     # Parse arguments
     args = parser.parse_args()
 
@@ -197,9 +189,8 @@ if __name__ == "__main__":
     print(cloudy_params)
     print(cloudy_params_addition)
 
-
     # Open the incident grid using synthesizer
-    # this is necessary 
+    # this is necessary
     incident_grid = Grid(
         incident_grid_name,
         grid_dir=incident_grid_dir,
@@ -237,7 +228,7 @@ if __name__ == "__main__":
     if len(variable_photoionisation_params) > 0:
         # doesn't matter about the ordering of these
         photoionisation_axes = list(variable_photoionisation_params.keys())
-        
+
         # get properties of the photoionsation grid
         (
             photoionisation_n_axes,
@@ -254,7 +245,6 @@ if __name__ == "__main__":
     # Else, we still need to record the number of photoionisation models since this is saved in the YAML file
     else:
         photoionisation_n_models = 1
-
 
     # Get name of new grid (concatenation of incident_grid and cloudy
     # parameter file)
@@ -275,7 +265,7 @@ if __name__ == "__main__":
 
     # make output directories
     Path(output_directory).mkdir(parents=True, exist_ok=True)
-    
+
     # Loop over all incident models, extract the spectral energy distribtions,
     # convert to the cloudy format, and save in the cloudy folder.
     lam = incident_grid.lam
@@ -287,13 +277,18 @@ if __name__ == "__main__":
         cloudy = cloudy23
 
     # Save all the parameters for use later
-    parameters_to_save = fixed_photoionisation_params | variable_photoionisation_params | incident_axes_values
-    parameters_to_save = parameters_to_save | {'incident_n_models': int(incident_n_models), 'photoionisation_n_models': int(photoionisation_n_models)}
+    parameters_to_save = (
+        fixed_photoionisation_params |
+        variable_photoionisation_params |
+        incident_axes_values)
+    parameters_to_save = (
+        parameters_to_save |
+        {'incident_n_models': int(incident_n_models),
+         'photoionisation_n_models': int(photoionisation_n_models)})
 
     # Convert numpy arrays to lists for use in YAML file
     for key, value in parameters_to_save.items():
         if type(value) is np.ndarray:
-            print(key)
             parameters_to_save[key] = value.tolist()
 
     # Save parameters_to_save dictionary to a YAML file
@@ -301,9 +296,10 @@ if __name__ == "__main__":
         yaml.dump(parameters_to_save, file, default_flow_style=False)
 
     # If the ionisation_parameter_model is the reference model (i.e. not fixed)
-    # save the value of the ionising photon luminosity at the reference grid point.
+    # save the value of the ionising photon luminosity at the reference grid
+    # point.
     if fixed_photoionisation_params["ionisation_parameter_model"] == "ref":
-        
+
         # Initialize an empty list to store reference values
         reference_values = []
 
@@ -314,7 +310,7 @@ if __name__ == "__main__":
             #  included. This will happen for grids with additional axes.
 
             # Append the corresponding reference value from fixed_params
-            reference_values.append(fixed_photoionisation_params["reference_" + k])
+            reference_values.append(fixed_photoionisation_params["reference_"+k])
 
         # Make dictionary to allow unpacking when getting the reference
         # grid point
@@ -323,9 +319,15 @@ if __name__ == "__main__":
         # Get the reference grid point using the adjusted reference values
         incident_ref_grid_point = incident_grid.get_grid_point(**ref_dict)
 
-        # Get the reference ionising photon luminosity 
-        reference_log10_specific_ionising_lum = incident_grid.log10_specific_ionising_lum["HI"][incident_ref_grid_point]
+        # Get the reference ionising photon luminosity
+        reference_log10_specific_ionising_lum = (
+            incident_grid.log10_specific_ionising_lum["HI"][
+                incident_ref_grid_point])
 
+    # reference_log10_specific_ionising_lum is used an an argument to
+    # create_cloudy_input so it's necessary to set it to something here.
+    else:
+        reference_log10_specific_ionising_lum = None
 
     for incident_index, (incident_params_tuple, incident_index_tuple) in enumerate(zip(
         incident_model_list, incident_index_list[:1])):
@@ -336,13 +338,17 @@ if __name__ == "__main__":
         # print(incident_parameters)
 
         # Create a directory for each incident grid point
-        Path(f"{output_directory}/{incident_index}").mkdir(parents=True, exist_ok=True)
+        Path(f"{output_directory}/{incident_index}").mkdir(
+            parents=True,
+            exist_ok=True)
 
         # Extract incident SED from the grid.
         lnu = incident_grid.spectra['incident'][tuple(incident_index_tuple)]
 
-        # Save incident SED
-        np.save(f"{output_directory}/{incident_index}/input.ssed", np.array([lam, lnu]))
+        # Save incident SED as a numpy array
+        np.save(
+            f"{output_directory}/{incident_index}/input",
+            np.array([lam, lnu]))
 
         # Convert incided SED to cloudy format and save
         shape_commands = cloudy23.ShapeCommands.table_sed(
@@ -352,72 +358,79 @@ if __name__ == "__main__":
             output_dir=f"{output_directory}/{incident_index}")
 
         # Copy linelist to this folder
-        shutil.copyfile('linelist.dat', f'{output_directory}/{incident_index}/linelist.dat')
+        shutil.copyfile(
+            'linelist.dat',
+            f'{output_directory}/{incident_index}/linelist.dat')
 
         # If the reference ionionisation parameter model is used we want
         # to calculate the difference between the specific ionising photon
         # luminosity for this grid point and the reference grid point
         if fixed_photoionisation_params["ionisation_parameter_model"] == "ref":
-            delta_log10_specific_ionising_luminosity = (incident_grid.log10_specific_ionising_lum["HI"][tuple(incident_index_tuple)] - reference_log10_specific_ionising_lum)
-
+            delta_log10_specific_ionising_luminosity = (
+                incident_grid.log10_specific_ionising_lum["HI"][
+                    tuple(incident_index_tuple)]
+                - reference_log10_specific_ionising_lum)
 
         # Create cloudy input file for every photoionisation grid point
 
-        # If we have photoionisation parameters that vary we need to loop over all of the models
+        # If we have photoionisation parameters that vary we need to loop over
+        # all of the models
         if len(variable_photoionisation_params) > 0:
 
-            for photoionisation_index, (photoionisation_params_tuple, photoionisation_index_tuple) in enumerate(zip(
-            photoionisation_model_list, photoionisation_index_list)):
-                
-                # Get a dictionary of the photoionisation parameters that are varying
-                # for this grid point
+            for photoionisation_index, (
+                photoionisation_params_tuple, photoionisation_index_tuple
+            ) in enumerate(
+                zip(photoionisation_model_list, photoionisation_index_list)
+            ):
+
+                # Get a dictionary of the photoionisation parameters that are 
+                # varying for this grid point
                 variable_photoionisation_parameters = dict(
                     zip(photoionisation_axes, photoionisation_params_tuple))
 
                 # Create dictionary of all photoionisation parameters
-                photoionisation_parameters = (variable_photoionisation_parameters 
-                                            | fixed_photoionisation_params)
+                photoionisation_parameters = (
+                    fixed_photoionisation_params |
+                    variable_photoionisation_parameters)
 
                 # Create dictionary of all parameters
-                parameters = incident_parameters | photoionisation_parameters 
+                parameters = incident_parameters | photoionisation_parameters
 
                 # Create cloudy input model
                 create_cloudy_input(
                     incident_index,
                     photoionisation_index,
                     parameters,
-                    delta_log10_specific_ionising_luminosity, 
+                    delta_log10_specific_ionising_luminosity,
                     output_directory,
                     )
 
-        # Else, if there is only one photoionisation model there is no need to loop.
+        # Else, if there is only one photoionisation model there is no need to 
+        # loop.
         else:
-
             photoionisation_index = 0
-            parameters = incident_parameters | fixed_photoionisation_params 
+            parameters = incident_parameters | fixed_photoionisation_params
 
             create_cloudy_input(
                 incident_index,
                 photoionisation_index,
                 parameters,
-                delta_log10_specific_ionising_luminosity, 
+                delta_log10_specific_ionising_luminosity,
                 output_directory,
                 )
-
-
 
     if machine == 'artemis':
 
         # determine the partition to use:
-        
+
         # short = 2 hours
         if photoionisation_n_models < 5:
             partition = 'short'
-        
+
         # general = 8 hours
         elif photoionisation_n_models < 33:
             partition = 'general'
-        
+
         # long = 8 days
         else:
             partition = 'long'
