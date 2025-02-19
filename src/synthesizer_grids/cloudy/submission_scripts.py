@@ -17,7 +17,7 @@ def create_slurm_job_script(
 
     slurm_job_script = f"""#!/bin/bash
 #SBATCH --job-name=run_cloudy      # Job name
-#SBATCH --output=output/%A_%a.out  # Standard output log 
+#SBATCH --output=output/%A_%a.out  # Standard output log
 #SBATCH --error=output/%A_%a.err   # Error log
 #SBATCH --array=1-{number_of_models}  # Job array range
 #SBATCH --ntasks=1                 # Number of tasks per job
@@ -45,7 +45,6 @@ def artemis(
 
     """
     Submission script generator for artemis
-    
     """
 
     # determine the partition to use:
