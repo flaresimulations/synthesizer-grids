@@ -53,9 +53,8 @@ def create_cloudy_input(
         output_directory,
         ):
     
-    
-    
-    
+    print(parameters["reference_ionisation_parameter"])
+
     # Create synthesizer.Abundance object
     abundances = Abundances(
         metallicity=float(parameters["metallicity"]),
@@ -329,7 +328,7 @@ if __name__ == "__main__":
 
 
     for incident_index, (incident_params_tuple, incident_index_tuple) in enumerate(zip(
-        incident_model_list, incident_index_list)):
+        incident_model_list, incident_index_list[:1])):
 
         # get dictionary of incident parameters
         incident_parameters = dict(zip(incident_axes, incident_params_tuple))
