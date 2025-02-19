@@ -10,6 +10,7 @@ import shutil
 from pathlib import Path
 
 import numpy as np
+import submission_scripts
 import yaml
 from synthesizer.abundances import (
     Abundances,
@@ -21,6 +22,7 @@ from utils import (
     get_cloudy_params,
     get_grid_props_cloudy,
 )
+
 from synthesizer_grids.parser import Parser
 
 
@@ -34,10 +36,10 @@ def create_cloudy_input(
     """
     Function that creates a cloudy input script for a single photoionisation
     model.
-    
+
     Args:
         incident_index (int):
-            The index of the incident grid point. 
+            The index of the incident grid point.
         photoionisation_index (str):
             The index of the photoionisation grid point.
         parameters (dict):
@@ -45,7 +47,7 @@ def create_cloudy_input(
         delta_log10_specific_ionising_luminosity (float):
             The difference between the reference specific ionising luminosity
             and that at the current grid point. For the reference model this
-            is used to scale the ionisation parameter and ionising luminosity 
+            is used to scale the ionisation parameter and ionising luminosity
             of the source.
         output_directory (str):
             The output directory.
@@ -208,7 +210,10 @@ if __name__ == "__main__":
         incident_mesh,
         incident_model_list,
         incident_index_list,
-    ) = get_grid_props_cloudy(incident_axes, incident_axes_values, verbose=True)
+    ) = get_grid_props_cloudy(
+        incident_axes,
+        incident_axes_values,
+        verbose=True)
 
     # Load the cloudy parameters you are going to run
     fixed_photoionisation_params, variable_photoionisation_params = (
@@ -217,14 +222,17 @@ if __name__ == "__main__":
     # If an additional parameter set is provided supersede the default
     # parameters with these.
     if cloudy_params_addition:
-        additional_photoionisation_fixed_params, additional_photoionisation_variable_params = get_cloudy_params(cloudy_params_addition)
-        fixed_photoionisation_params = fixed_photoionisation_params | additional_photoionisation_fixed_params
-        variable_photoionisation_params = variable_photoionisation_params | additional_photoionisation_variable_params
+        (photoionisation_fixed_params_, photoionisation_variable_params_) = (
+            get_cloudy_params(cloudy_params_addition)
+        )
+        fixed_photoionisation_params |= photoionisation_fixed_params_
+        variable_photoionisation_params |= photoionisation_variable_params_
 
     print(fixed_photoionisation_params)
     print(variable_photoionisation_params)
 
-    # If we have photoionisation parameters that vary we need to calculate the model list
+    # If we have photoionisation parameters that vary we need to calculate the
+    # model list
     if len(variable_photoionisation_params) > 0:
         # doesn't matter about the ordering of these
         photoionisation_axes = list(variable_photoionisation_params.keys())
@@ -242,7 +250,8 @@ if __name__ == "__main__":
             variable_photoionisation_params,
             verbose=True)
 
-    # Else, we still need to record the number of photoionisation models since this is saved in the YAML file
+    # Else, we still need to record the number of photoionisation models since
+    # this is saved in the YAML file
     else:
         photoionisation_n_models = 1
 
@@ -259,11 +268,10 @@ if __name__ == "__main__":
         # Append the new_grid_name with the additional name
         new_grid_name += "-" + cloudy_params_addition_name
 
-
-    # define output directory
+    # Define output directory
     output_directory = f'{cloudy_output_dir}/{new_grid_name}'
 
-    # make output directories
+    # Make output directories
     Path(output_directory).mkdir(parents=True, exist_ok=True)
 
     # Loop over all incident models, extract the spectral energy distribtions,
@@ -310,7 +318,8 @@ if __name__ == "__main__":
             #  included. This will happen for grids with additional axes.
 
             # Append the corresponding reference value from fixed_params
-            reference_values.append(fixed_photoionisation_params["reference_"+k])
+            reference_values.append(
+                fixed_photoionisation_params["reference_"+k])
 
         # Make dictionary to allow unpacking when getting the reference
         # grid point
@@ -329,8 +338,8 @@ if __name__ == "__main__":
     else:
         reference_log10_specific_ionising_lum = None
 
-    for incident_index, (incident_params_tuple, incident_index_tuple) in enumerate(zip(
-        incident_model_list, incident_index_list[:1])):
+    for incident_index, (incident_params_tuple, incident_index_tuple) in (
+        enumerate(zip(incident_model_list, incident_index_list))):
 
         # get dictionary of incident parameters
         incident_parameters = dict(zip(incident_axes, incident_params_tuple))
@@ -383,7 +392,7 @@ if __name__ == "__main__":
                 zip(photoionisation_model_list, photoionisation_index_list)
             ):
 
-                # Get a dictionary of the photoionisation parameters that are 
+                # Get a dictionary of the photoionisation parameters that are
                 # varying for this grid point
                 variable_photoionisation_parameters = dict(
                     zip(photoionisation_axes, photoionisation_params_tuple))
@@ -405,7 +414,7 @@ if __name__ == "__main__":
                     output_directory,
                     )
 
-        # Else, if there is only one photoionisation model there is no need to 
+        # Else, if there is only one photoionisation model there is no need to
         # loop.
         else:
             photoionisation_index = 0
@@ -419,35 +428,7 @@ if __name__ == "__main__":
                 output_directory,
                 )
 
-    if machine == 'artemis':
-
-        # determine the partition to use:
-
-        # short = 2 hours
-        if photoionisation_n_models < 5:
-            partition = 'short'
-
-        # general = 8 hours
-        elif photoionisation_n_models < 33:
-            partition = 'general'
-
-        # long = 8 days
-        else:
-            partition = 'long'
-
-        slurm_job_script = f"""#!/bin/bash
-#SBATCH --job-name=run_cloudy      # Job name
-#SBATCH --output=output/%A_%a.out  # Standard output log (%A = job ID, %a = task ID)
-#SBATCH --error=output/%A_%a.err    # Error log
-#SBATCH --array=1-{int(photoionisation_n_models)}               # Job array range
-#SBATCH --ntasks=1                 # Number of tasks per job
-#SBATCH --cpus-per-task=1          # CPU cores per task
-#SBATCH --mem=4G                   # Memory per task
-#SBATCH --partition={partition}          # Partition/queue name
-
-# Run command
-python run_cloudy.py --grid_name={new_grid_name} --cloudy_output_dir={cloudy_output_dir} --cloudy_path={cloudy_path} --index=${{SLURM_ARRAY_TASK_ID}}
-"""
-
-        open(f"{new_grid_name}.slurm", "w").write(slurm_job_script)
-
+    # If a specific machine is specified run the function in
+    # submission_scripts to generate a submission script.
+    if machine:
+        getattr(submission_scripts, machine)()
