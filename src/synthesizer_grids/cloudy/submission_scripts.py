@@ -19,7 +19,7 @@ def create_slurm_job_script(
 #SBATCH --job-name=run_cloudy      # Job name
 #SBATCH --output=output/%A_%a.out  # Standard output log
 #SBATCH --error=output/%A_%a.err   # Error log
-#SBATCH --array=1-{number_of_models}  # Job array range
+#SBATCH --array=0-{number_of_models-1}  # Job array range
 #SBATCH --ntasks=1                 # Number of tasks per job
 #SBATCH --cpus-per-task=1          # CPU cores per task
 #SBATCH --mem={memory}             # Memory per task
