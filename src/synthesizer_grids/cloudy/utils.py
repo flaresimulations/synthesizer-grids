@@ -2,7 +2,7 @@ import numpy as np
 import yaml
 
 
-def get_cloudy_params(param_file="c23.01-sps", param_dir="params"):
+def get_cloudy_params(param_file="c23.01-sps.yaml", param_dir="params"):
     """
     Read cloudy parameters from a yaml parameter file
 
@@ -20,7 +20,7 @@ def get_cloudy_params(param_file="c23.01-sps", param_dir="params"):
     """
 
     # open paramter file
-    with open(f"{param_dir}/{param_file}.yaml", "r") as stream:
+    with open(f"{param_dir}/{param_file}", "r") as stream:
         try:
             params = yaml.safe_load(stream)
         except yaml.YAMLError as exc:
@@ -110,3 +110,4 @@ def get_grid_props_cloudy(axes, axes_values, verbose=True):
         print(index_list)
 
     return n_axes, shape, n_models, mesh, model_list, index_list
+

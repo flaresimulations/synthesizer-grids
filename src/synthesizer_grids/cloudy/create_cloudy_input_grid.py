@@ -22,7 +22,6 @@ from utils import (
     get_cloudy_params,
     get_grid_props_cloudy,
 )
-
 from synthesizer_grids.parser import Parser
 
 
@@ -30,8 +29,8 @@ def create_cloudy_input(
         incident_index,
         photoionisation_index,
         parameters,
-        output_directory,
         delta_log10_specific_ionising_luminosity,
+        output_directory,
         ):
     """
     Function that creates a cloudy input script for a single photoionisation
@@ -55,7 +54,9 @@ def create_cloudy_input(
 
     # Create synthesizer.Abundance object
     abundances = Abundances(
-        metallicity=float(parameters["metallicity"]),
+
+        # so horrible
+        metallicity=float(parameters["metallicities"]),
         reference=parameters["reference_abundance"],
         alpha=parameters["alpha"],
         abundances=parameters["abundance_scalings"],
@@ -140,65 +141,76 @@ def create_cloudy_input(
 
 
 if __name__ == "__main__":
-    parser = Parser(description="Run a grid of incident cloudy models")
 
-    # The name of the incident grid
-    parser.add_argument("--incident_grid_name", type=str, required=True)
+    parser = Parser(
+        description="Run a grid of incident cloudy models",
+        cloudy_args=True,
+        )
 
-    # The path to the incident grid
-    # parser.add_argument("--incident_grid_dir", type=str, required=True)
-
-    # Path to directory where cloudy runs are stored and run
-    parser.add_argument("--cloudy_output_dir", type=str, required=True)
-
-    # The cloudy reference parameter set
-    parser.add_argument(
-        "--cloudy_params",
-        type=str,
-        required=True,
-        default="c23.01-sps"
-    )
-
-    # A second cloudy parameter set which supersedes the above. This is used
-    # when considering variations on the default parameter set.
-    parser.add_argument(
-        "--cloudy_params_addition",
-        type=str,
-        required=False,
-    )
-
-    # Path to cloudy directory (not the executable; this is assumed to
-    # {cloudy}/{cloudy_version}/source/cloudy.exe)
-    parser.add_argument("--cloudy_path", type=str, required=False)
+    # Add additional parameters which are specific to this script
 
     # Machine (for submission script generation)
-    parser.add_argument("--machine", type=str, required=False)
+    parser.add_argument(
+        "--machine",
+        type=str,
+        required=False,
+        default=None)
+    
+    # Path to cloudy directory (not the executable; this is assumed to
+    # {cloudy}/{cloudy_version}/source/cloudy.exe)
+    parser.add_argument(
+        "--cloudy-executable-path",
+        type=str,
+        required=False,
+        default=None)
 
     # Parse arguments
     args = parser.parse_args()
 
-    incident_grid_name = args.incident_grid_name
+    incident_grid_name = args.incident_grid
     incident_grid_dir = args.grid_dir
     cloudy_output_dir = args.cloudy_output_dir
-    cloudy_params = args.cloudy_params
-    cloudy_params_addition = args.cloudy_params_addition
-    cloudy_path = args.cloudy_path
+    cloudy_paramfile = args.cloudy_paramfile
+    extra_cloudy_paramfile = args.cloudy_paramfile_extra
     machine = args.machine
+    cloudy_executable_path = args.cloudy_executable_path
 
     print(incident_grid_name)
     print(incident_grid_dir)
     print(cloudy_output_dir)
-    print(cloudy_params)
-    print(cloudy_params_addition)
+    print(cloudy_paramfile)
+    print(extra_cloudy_paramfile)
 
-    # Open the incident grid using synthesizer
-    # this is necessary
+    # Get name of new grid (concatenation of incident_grid and cloudy
+    # parameter file)
+    new_grid_name = f"{incident_grid_name}_cloudy-{cloudy_paramfile}"
+
+    # If an additional parameter set append this to the new grid name
+    if extra_cloudy_paramfile:
+        # Ignore the directory part if it exists
+        extra_cloudy_paramfile_name = extra_cloudy_paramfile.split("/")[
+            -1
+        ]
+        # Append the new_grid_name with the additional name
+        new_grid_name += "-" + extra_cloudy_paramfile_name
+
+    # Check for extensions
+    if cloudy_paramfile.split(".")[-1] != "yaml":
+        cloudy_paramfile += ".yaml"
+    if extra_cloudy_paramfile is not None:
+        if extra_cloudy_paramfile.split(".")[-1] != "yaml":
+            extra_cloudy_paramfile += ".yaml"
+    if incident_grid_name.split(".")[-1] != "hdf5":
+        incident_grid_name += ".hdf5"
+
+    # Open the incident grid using synthesizer 
     incident_grid = Grid(
         incident_grid_name,
         grid_dir=incident_grid_dir,
         read_lines=False,
     )
 
+    # Extract axes and axes values from the Grid
     incident_axes = incident_grid.axes
     incident_axes_values = incident_grid._axes_values
 
@@ -217,13 +229,13 @@ if __name__ == "__main__":
 
     # Load the cloudy parameters you are going to run
     fixed_photoionisation_params, variable_photoionisation_params = (
-        get_cloudy_params(cloudy_params))
+        get_cloudy_params(cloudy_paramfile))
 
     # If an additional parameter set is provided supersede the default
     # parameters with these.
-    if cloudy_params_addition:
+    if extra_cloudy_paramfile:
         (photoionisation_fixed_params_, photoionisation_variable_params_) = (
-            get_cloudy_params(cloudy_params_addition)
+            get_cloudy_params(extra_cloudy_paramfile)
         )
         fixed_photoionisation_params |= photoionisation_fixed_params_
         variable_photoionisation_params |= photoionisation_variable_params_
@@ -254,19 +266,6 @@ if __name__ == "__main__":
     # this is saved in the YAML file
     else:
         photoionisation_n_models = 1
-
-    # Get name of new grid (concatenation of incident_grid and cloudy
-    # parameter file)
-    new_grid_name = f"{incident_grid_name}_cloudy-{cloudy_params}"
-
-    # If an additional parameter set append this to the new grid name
-    if args.cloudy_params_addition:
-        # Ignore the directory part if it exists
-        cloudy_params_addition_name = args.cloudy_params_addition.split("/")[
-            -1
-        ]
-        # Append the new_grid_name with the additional name
-        new_grid_name += "-" + cloudy_params_addition_name
 
     # Define output directory
     output_directory = f'{cloudy_output_dir}/{new_grid_name}'
@@ -303,6 +302,9 @@ if __name__ == "__main__":
     with open(f"{output_directory}/grid_parameters.yaml", "w") as file:
         yaml.dump(parameters_to_save, file, default_flow_style=False)
 
+
+    print(fixed_photoionisation_params)
+
     # If the ionisation_parameter_model is the reference model (i.e. not fixed)
     # save the value of the ionising photon luminosity at the reference grid
     # point.
@@ -316,6 +318,12 @@ if __name__ == "__main__":
 
             # We should throw an exception here if a reference value is not
             #  included. This will happen for grids with additional axes.
+
+            # In the parameter file we have a reference age and metallicity but the grid axes are metallicities and ages
+            if k == 'ages':
+                k = 'age'
+            if k == 'metallicities':
+                k = 'metallicity'
 
             # Append the corresponding reference value from fixed_params
             reference_values.append(
@@ -431,4 +439,9 @@ if __name__ == "__main__":
     # If a specific machine is specified run the function in
     # submission_scripts to generate a submission script.
     if machine:
-        getattr(submission_scripts, machine)()
+        getattr(submission_scripts, machine)(
+            number_of_models=photoionisation_n_models,
+            new_grid_name=new_grid_name,
+            cloudy_output_dir=cloudy_output_dir,
+            cloudy_executable_path=cloudy_executable_path,
+            memory="4G")

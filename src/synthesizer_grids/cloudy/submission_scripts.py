@@ -4,11 +4,11 @@ Functions for creating submission scripts for specific machines.
 
 
 def create_slurm_job_script(
-        number_of_models,
-        partition,
-        new_grid_name,
-        cloudy_output_dir,
-        cloudy_path,
+        number_of_models=None,
+        partition=None,
+        new_grid_name=None,
+        cloudy_output_dir=None,
+        cloudy_executable_path=None,
         memory="4G"):
 
     """
@@ -29,18 +29,17 @@ def create_slurm_job_script(
 python run_cloudy.py \\
     --grid_name={new_grid_name} \\
     --cloudy_output_dir={cloudy_output_dir} \\
-    --cloudy_path={cloudy_path} \\
+    --cloudy_path={cloudy_executable_path} \\
     --index=${{SLURM_ARRAY_TASK_ID}}
 """
     return slurm_job_script
 
 
 def artemis(
-    photoionisation_n_models,
-    partition,
-    new_grid_name,
-    cloudy_output_dir,
-    cloudy_path,
+    number_of_models=None,
+    new_grid_name=None,
+    cloudy_output_dir=None,
+    cloudy_executable_path=None,
     memory="4G"):
 
     """
@@ -49,11 +48,11 @@ def artemis(
 
     # determine the partition to use:
     # short = 2 hours
-    if photoionisation_n_models < 5:
+    if number_of_models < 5:
         partition = 'short'
 
     # general = 8 hours
-    elif photoionisation_n_models < 33:
+    elif number_of_models < 33:
         partition = 'general'
 
     # long = 8 days
@@ -62,11 +61,11 @@ def artemis(
 
     # create job script
     slurm_job_script = create_slurm_job_script(
-        photoionisation_n_models,
-        partition,
-        new_grid_name,
-        cloudy_output_dir,
-        cloudy_path,
+        number_of_models=number_of_models,
+        partition=partition,
+        new_grid_name=new_grid_name,
+        cloudy_output_dir=cloudy_output_dir,
+        cloudy_executable_path=cloudy_executable_path,
         memory=memory)
 
     # save job script

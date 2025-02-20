@@ -8,17 +8,30 @@ import argparse
 if __name__ == "__main__":
 
     # Initial parser
-    parser = argparse.ArgumentParser(description="Run the cloudy models")
+    parser = argparse.ArgumentParser(
+        description="Run the cloudy models",)
 
-    # The name of the reprocessed grid
-    parser.add_argument("--grid_name", type=str, required=True)
+    # Add additional parameters which are specific to this script
 
-    # Path to directory where cloudy runs are stored and run
-    parser.add_argument("--cloudy_output_dir", type=str, required=True)
+    parser.add_argument(
+        "--cloudy-output-dir",
+        type=str,
+        required=False,
+        default=None)
+    
+    parser.add_argument(
+        "--grid-name",
+        type=str,
+        required=False,
+        default=None)
 
     # Path to cloudy directory (not the executable; this is assumed to
     # {cloudy}/{cloudy_version}/source/cloudy.exe)
-    parser.add_argument("--cloudy_path", type=str, required=True)
+    parser.add_argument(
+        "--cloudy-executable-path",
+        type=str,
+        required=False,
+        default=None)
 
     # Path to cloudy directory (not the executable; this is assumed to
     # {cloudy}/{cloudy_version}/source/cloudy.exe)
@@ -38,7 +51,7 @@ if __name__ == "__main__":
 
     # set CLOUDY_DATA_PATH environment variable
     os.environ['CLOUDY_DATA_PATH'] = (
-        f"{args.cloudy_path}/{parameters['cloudy_version']}/data/:./")
+        f"{args.cloudy_executable_path}/{parameters['cloudy_version']}/data/:./")
 
     # change directory to the output directory
     os.chdir(f"{output_directory}/{incident_index}")
@@ -48,7 +61,7 @@ if __name__ == "__main__":
 
         input_file = f"{output_directory}/{incident_index}/{i}.in"
         cloudy_executable = (
-            f"{args.cloudy_path}/{parameters['cloudy_version']}"
+            f"{args.cloudy_executable_path}/{parameters['cloudy_version']}"
             "/source/cloudy.exe")
 
         # run the cloudy job
