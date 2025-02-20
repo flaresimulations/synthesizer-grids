@@ -193,6 +193,7 @@ class GridFile:
         description,
         log_on_read,
         verbose=True,
+        no_units=False,
         **extra_attrs,
     ):
         """
@@ -217,6 +218,10 @@ class GridFile:
                 logarithmic space.
             verbose (bool)
                 Are we talking?
+            no_units (bool)
+                An override that flags the dataset shouldn't have any units.
+                This should not be used to avoid having to provide units on
+                datasets with dimensions!
             extra_attrs (dict)
                 Any attributes of the dataset can be passed in the form:
                 attr_key=attr_value.
@@ -230,7 +235,7 @@ class GridFile:
             raise ValueError(f"{key} already exists")
 
         # Ensure we have units on the data
-        if not has_units(data):
+        if not has_units(data) and not no_units:
             raise ValueError(
                 f"Data for {key} has no units. Please provide units."
             )
@@ -244,7 +249,8 @@ class GridFile:
         )
 
         # Set the units attribute
-        dset.attrs["Units"] = str(data.units)
+        if not no_units:
+            dset.attrs["Units"] = str(data.units)
 
         # Include a brief description
         dset.attrs["Description"] = description
