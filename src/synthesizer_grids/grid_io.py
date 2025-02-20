@@ -192,7 +192,6 @@ class GridFile:
         data,
         description,
         log_on_read,
-        no_units=False,
         verbose=True,
         **extra_attrs,
     ):
@@ -216,8 +215,6 @@ class GridFile:
                 A dictionary with Boolean values for each axis, where True
                 indicates that the attribute should be interpolated in
                 logarithmic space.
-            no_units (bool)
-                Overide the need for units.
             verbose (bool)
                 Are we talking?
             extra_attrs (dict)
@@ -232,33 +229,22 @@ class GridFile:
         if self._dataset_exists(key):
             raise ValueError(f"{key} already exists")
 
-        # If we've specified no units (e.g. datasets containing strings) then
-        # don't require them
-        if no_units:
-            dset = self.hdf.create_dataset(
-                key,
-                data=data,
-                shape=data.shape,
-                dtype=data.dtype,
+        # Ensure we have units on the data
+        if not has_units(data):
+            raise ValueError(
+                f"Data for {key} has no units. Please provide units."
             )
 
-        # Otherwise ensure we have units on the data
-        else:
-            if not has_units(data):
-                raise ValueError(
-                    f"Data for {key} has no units. Please provide units."
-                )
+        # Finally, Write it!
+        dset = self.hdf.create_dataset(
+            key,
+            data=data.value,
+            shape=data.shape,
+            dtype=data.dtype,
+        )
 
-            # Finally, Write it!
-            dset = self.hdf.create_dataset(
-                key,
-                data=data.value,
-                shape=data.shape,
-                dtype=data.dtype,
-            )
-
-            # Set the units attribute
-            dset.attrs["Units"] = str(data.units)
+        # Set the units attribute
+        dset.attrs["Units"] = str(data.units)
 
         # Include a brief description
         dset.attrs["Description"] = description
