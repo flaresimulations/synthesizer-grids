@@ -440,7 +440,7 @@ if __name__ == "__main__":
     # submission_scripts to generate a submission script.
     if machine:
         getattr(submission_scripts, machine)(
-            number_of_models=photoionisation_n_models,
+            number_of_models=incident_n_models,
             new_grid_name=new_grid_name,
             cloudy_output_dir=cloudy_output_dir,
             cloudy_executable_path=cloudy_executable_path,
