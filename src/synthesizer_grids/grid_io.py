@@ -302,7 +302,7 @@ class GridFile:
         # Finally, Write it!
         dset = self.hdf.create_dataset(
             key,
-            data=data.value,
+            data=data,
             shape=data.shape,
             dtype=dtype,
         )
