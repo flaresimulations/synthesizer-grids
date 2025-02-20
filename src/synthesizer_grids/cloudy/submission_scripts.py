@@ -31,7 +31,7 @@ python run_cloudy.py \\
     --grid-name={new_grid_name} \\
     --cloudy-output-dir={cloudy_output_dir} \\
     --cloudy-executable-path={cloudy_executable_path} \\
-    --index=${{SLURM_ARRAY_TASK_ID}}
+    --incident-index=${{SLURM_ARRAY_TASK_ID}}
 """
     return slurm_job_script
 
