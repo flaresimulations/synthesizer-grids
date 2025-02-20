@@ -579,12 +579,10 @@ class GridFile:
         )
 
         # Write out the id array
-        self.write_dataset(
+        self.write_string_dataset(
             "lines/id",
             np.array(lines["id"]),
             "Cloudy ID of each emission line",
-            log_on_read=False,
-            no_units=True,
         )
 
         # Write out the lumminosity array
