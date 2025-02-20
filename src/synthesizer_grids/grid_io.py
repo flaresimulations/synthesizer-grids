@@ -581,7 +581,7 @@ class GridFile:
         # Write out the id array
         self.write_string_dataset(
             "lines/id",
-            np.array(lines["id"]),
+            np.array(lines["id"]).astype("object"),
             "Cloudy ID of each emission line",
         )
 
@@ -595,7 +595,7 @@ class GridFile:
 
         # If there are additional entries assume these are continuum 
         # luminosities and save.
-        if len(lines.keys) > 3:
+        if len(lines.keys()) > 3:
             for key, array in lines.items():
                 if key not in ["luminosity", "wavelength", "id"]:
                     print(key)
