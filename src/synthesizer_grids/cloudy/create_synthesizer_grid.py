@@ -5,16 +5,11 @@ synthesizer grid is a HDF5 file that contains the spectra and line luminosities
 from cloudy outputs.
 
 Example usage:
-    python create_synthesizer_grid.py --grid-dir /path/to/grid
-        --cloudy-dir /path/to/cloudy --incident-grid incident_grid.hdf5
-        --cloudy-params c17.03-sps --include-spectra True --replace
-        --line-calc-method linelist
+
 """
 
 import re
 import os
-import shutil
-import h5py
 import numpy as np
 from synthesizer.grid import Grid
 from synthesizer.photoionisation import cloudy17, cloudy23
@@ -65,7 +60,7 @@ def create_empty_grid(
             The newly created grid file.
         incident_grid (GridFile):
             The incident grid file.
-        shape 
+        shape (tuple)
             The shape of the new grid.
     """
     # Open the parent incident grid
@@ -283,7 +278,7 @@ def check_cloudy_runs(
     for incident_index, incident_index_tuple in enumerate(incident_index_list):
         for photoionisation_index, photoionisation_index_tuple in enumerate(
             photoionisation_index_list):
-            
+
             # The infile
             infile = (
                 f"{cloudy_dir}/{new_grid_name}/"
@@ -489,7 +484,6 @@ def add_lines(
     else:
         calculate_continuum = False
 
-
     # Determine the cloudy version...
     cloudy_version = new_grid.read_attribute(
         "cloudy_version",
@@ -535,12 +529,12 @@ def add_lines(
         spectra_ = {}
 
         # Calculate transmitted_contiuum
-        spectra_["transmitted_continuum"] =  spectra["transmitted"]
+        spectra_["transmitted_continuum"] = spectra["transmitted"]
 
         # Calculate nebular_contiuum
         spectra_["nebular_continuum"] = (
             spectra["nebular"] - spectra["linecont"])
-        
+
         # Calculate total_continuum. Note this is not the same as adding
         #  nebular and transmitted since that would include emission lines.
         spectra_["total_continuum"] = (
@@ -550,7 +544,6 @@ def add_lines(
         for continuum_quantity in continuum_quantities:
             lines[continuum_quantity] = np.empty((*new_shape, nlines))
 
-        
     # Loop over incident models and photoionisation models
     for incident_index, incident_index_tuple in enumerate(incident_index_list):
         for photoionisation_index, photoionisation_index_tuple in enumerate(
@@ -663,13 +656,14 @@ if __name__ == "__main__":
         cloudy_param_file += ".yaml"
     else:
         cloudy_param_name = "".join(cloudy_param_file.split(".")[:-1])
-        
+
     if extra_cloudy_param_file is not None:
         if extra_cloudy_param_file.split(".")[-1] != "yaml":
             extra_cloudy_param_name = extra_cloudy_param_file
             extra_cloudy_param_file += ".yaml"
         else:
-            extra_cloudy_param_name = "".join(extra_cloudy_param_file.split(".")[:-1])
+            extra_cloudy_param_name = "".join(
+                extra_cloudy_param_file.split(".")[:-1])
 
     if incident_grid_name.split(".")[-1] != "hdf5":
         incident_grid_file = incident_grid_name + ".hdf5"
