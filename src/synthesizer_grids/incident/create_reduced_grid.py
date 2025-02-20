@@ -7,7 +7,7 @@ Example:
         -original_grid bpass-2.2.1-bin_chabrier03-0.1,300.0 -ages=6.,7.,8.
     python create_reduced_grid.py -grid_dir grids \
         -original_grid bpass-2.2.1-bin_chabrier03-0.1,300.0 \
-        -ages=6.,7. -metallicities=0.001,0.0
+        -ages=6.,7.,8, -metallicities=0.001,0.0
 """
 
 import argparse
@@ -20,21 +20,21 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Reduce a grid")
 
     parser.add_argument(
-        "-grid_dir",
+        "--grid-dir",
         type=str,
         required=True,
         help="path to grids",
     )
 
     parser.add_argument(
-        "-original_grid",
+        "--original-grid",
         type=str,
         required=True,
         help="the name of the original_grid",
     )
 
     parser.add_argument(
-        "-max_age",
+        "--max-age",
         type=float,
         required=False,
         default=None,
@@ -42,19 +42,19 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "-new_ages",
+        "--new-ages",
         type=str,
         required=False,
         default=None,
-        help="set of ages in years, e.g. -ages=6.,7.,8.",
+        help="set of ages in years, e.g. --new-ages=6.,7.,8.",
     )
 
     parser.add_argument(
-        "-metallicities",
+        "--metallicities",
         type=str,
         required=False,
         default=None,
-        help="specific set of metallicities, e.g. -metallicities=0.008,0.01",
+        help="specific set of metallicities, e.g. --metallicities=0.008,0.01",
     )
 
     args = parser.parse_args()
@@ -68,8 +68,10 @@ if __name__ == "__main__":
 
     print(args.new_ages)
 
+    print(original_grid)
+
     if args.new_ages:
-        new_ages = np.array(list(map(float, args.ages.split(","))))
+        new_ages = np.array(list(map(float, args.new_ages.split(","))))
         print(new_ages)
 
     if args.metallicities:
@@ -82,7 +84,7 @@ if __name__ == "__main__":
     new_grid_name = args.original_grid
 
     if args.new_ages:
-        new_grid_name += f"-new_ages:{'{:.0e}'.format(args.new_ages)}"
+        new_grid_name += f"-new_ages:{args.new_ages}"
 
         # currently args.new_ages = 100000000.0
         # but I want this to become a string with #1e8 instead
@@ -101,10 +103,10 @@ if __name__ == "__main__":
         indices = []
         for age in new_ages:
             print(age)
-            indices.append(np.where(original_grid.ages == age)[0][0])
+            indices.append(np.where(original_grid.log10ages == age)[0][0])
         age_indices = np.array(indices)
     elif args.max_age:
-        age_indices = all_age_indices[original_grid.ages <= args.max_age]
+        age_indices = all_age_indices[original_grid.log10ages <= args.max_age]
     else:
         age_indices = all_age_indices
 
@@ -144,6 +146,16 @@ if __name__ == "__main__":
             # copy top-level attributes
             for k, v in hf_original.attrs.items():
                 hf.attrs[k] = v
+
+            # copy over Model group
+            hf_original.copy("/Model", hf, "/Model")
+
+            # Copy attributes manually
+            for attr, value in hf_original["Model"].attrs.items():
+                hf["Model"].attrs[attr] = value
+
+            for k, v in hf['Model'].attrs.items():
+                print(k, v)
 
             # copy axes, modifying the age axis
             hf["axes/metallicities"] = hf_original["axes/metallicities"][
