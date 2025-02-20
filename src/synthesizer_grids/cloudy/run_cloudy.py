@@ -63,7 +63,6 @@ if __name__ == "__main__":
 
     # Shorthand for cloudy_output_dir
     output_directory = f"{args.cloudy_output_dir}/{args.grid_name}"
-    incident_index = args.index
 
     # Open the file containing the details of the photoionisation model
     parameter_file = f"{output_directory}/grid_parameters.yaml"
