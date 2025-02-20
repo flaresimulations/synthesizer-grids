@@ -259,6 +259,66 @@ class GridFile:
 
         self._close_file()
 
+    def write_string_dataset(
+        self,
+        key,
+        data,
+        description,
+        encoding="utf-8",
+        verbose=True,
+        **extra_attrs,
+    ):
+        """
+        Write string data into a dataset.
+
+        Args:
+            key (str)
+                The key to write data at. Must be the full path,
+                i.e. "Group/SubGroup/Dataset".
+            data (array-like)
+                The data to write. Shape will be inferred from this
+                input data.
+            description (str)
+                A short description of the dataset to be stored alongside
+                the data.
+            encoding (str)
+                The string encoding to use.
+            verbose (bool)
+                Are we talking?
+            extra_attrs (dict)
+                Any attributes of the dataset can be passed in the form:
+                attr_key=attr_value.
+        """
+        # Open the file
+        self._open_file()
+
+        # If the dataset exists already we need to throw an error (safe if
+        # we are appending and overwriting as this was handled above)
+        if self._dataset_exists(key):
+            raise ValueError(f"{key} already exists")
+
+        dtype = h5py.string_dtype(encoding=encoding)
+
+        # Finally, Write it!
+        dset = self.hdf.create_dataset(
+            key,
+            data=data.value,
+            shape=data.shape,
+            dtype=dtype,
+        )
+
+        # Include a brief description
+        dset.attrs["Description"] = description
+
+        # log_on_read will always be False for a string dataset
+        dset.attrs["log_on_read"] = False
+
+        # Handle any other attributes passed as kwargs
+        for dset_attr_key, val in extra_attrs.items():
+            dset.attrs[dset_attr_key] = val
+
+        self._close_file()
+
     def read_attribute(self, attr_key, group="/"):
         """
         Read an attribute and return it.
