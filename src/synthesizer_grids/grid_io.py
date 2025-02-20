@@ -593,7 +593,7 @@ class GridFile:
             log_on_read=False,
         )
 
-        # If there are additional entries assume these are continuum 
+        # If there are additional entries assume these are continuum
         # luminosities and save.
         if len(lines.keys()) > 3:
             for key, array in lines.items():
