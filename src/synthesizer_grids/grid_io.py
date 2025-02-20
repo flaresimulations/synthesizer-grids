@@ -192,6 +192,7 @@ class GridFile:
         data,
         description,
         log_on_read,
+        no_units=False,
         verbose=True,
         **extra_attrs,
     ):
@@ -215,6 +216,8 @@ class GridFile:
                 A dictionary with Boolean values for each axis, where True
                 indicates that the attribute should be interpolated in
                 logarithmic space.
+            no_units (bool)
+                Overide the need for units.
             verbose (bool)
                 Are we talking?
             extra_attrs (dict)
@@ -229,22 +232,33 @@ class GridFile:
         if self._dataset_exists(key):
             raise ValueError(f"{key} already exists")
 
-        # Ensure we have units on the data
-        if not has_units(data):
-            raise ValueError(
-                f"Data for {key} has no units. Please provide units."
+        # If we've specified no units (e.g. datasets containing strings) then
+        # don't require them
+        if no_units:
+            dset = self.hdf.create_dataset(
+                key,
+                data=data,
+                shape=data.shape,
+                dtype=data.dtype,
             )
 
-        # Finally, Write it!
-        dset = self.hdf.create_dataset(
-            key,
-            data=data.value,
-            shape=data.shape,
-            dtype=data.dtype,
-        )
+        # Otherwise ensure we have units on the data
+        else:
+            if not has_units(data):
+                raise ValueError(
+                    f"Data for {key} has no units. Please provide units."
+                )
 
-        # Set the units attribute
-        dset.attrs["Units"] = str(data.units)
+            # Finally, Write it!
+            dset = self.hdf.create_dataset(
+                key,
+                data=data.value,
+                shape=data.shape,
+                dtype=data.dtype,
+            )
+
+            # Set the units attribute
+            dset.attrs["Units"] = str(data.units)
 
         # Include a brief description
         dset.attrs["Description"] = description
@@ -494,6 +508,59 @@ class GridFile:
                 log_on_read=False,
             )
 
+    def write_lines(self, lines, weight="initial_masses"):
+        """
+        Write out the lines grids.
+
+        This will write out the spectra grids to the file.
+
+        Args:
+            lines (dict)
+                A dictionary containing the lines grid, including wavelengths
+                and ids.
+            weight (str)
+                The variable to used to normalise the spectra in the grid. For
+                instance, in most SPS models this will initial mass normalised,
+                the Synthesizer property for this is "initial_masses". By
+                default this is set to "initial_masses".
+        """
+        # Write out the wavelength array
+        self.write_dataset(
+            "lines/wavelength",
+            lines["wavelength"],
+            "Wavelength of each emission line",
+            log_on_read=False,
+        )
+
+        # Write out the id array
+        self.write_dataset(
+            "lines/id",
+            np.array(lines["id"]),
+            "Cloudy ID of each emission line",
+            log_on_read=False,
+            no_units=True,
+        )
+
+        # Write out the lumminosity array
+        self.write_dataset(
+            "lines/luminosity",
+            lines["luminosity"],
+            "Line luminosity",
+            log_on_read=False,
+        )
+
+        # If there are additional entries assume these are continuum 
+        # luminosities and save.
+        if len(lines.keys) > 3:
+            for key, array in lines.items():
+                if key not in ["luminosity", "wavelength", "id"]:
+                    print(key)
+                    self.write_dataset(
+                        f"lines/{key}",
+                        lines[key],
+                        f"{' '.join(key.split('_'))} luminosity",
+                        log_on_read=False,)
+
     def add_specific_ionising_lum(self, ions=("HI", "HeII"), limit=100):
         """
         Calculate the specific ionising photon luminosity for different ions.
@@ -612,7 +679,6 @@ class GridFile:
 
             # If the parameter is a dictionary (e.g. as used for abundances)
             if isinstance(v, dict):
-                print(k, v)
                 # Create group for this key
                 nested_grp = cloudy_grp.create_group(k)
 
