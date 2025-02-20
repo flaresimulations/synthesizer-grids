@@ -1,7 +1,10 @@
 """
 Run cloudy.
 
-
+Depending on the choice of --incident-index and --photoionisation-index it is
+possible to run either a single model (setting both), all models for a given
+incident grid point (setting only --incident-index, the recommended approach),
+or all models (setting neither).
 """
 
 import os
