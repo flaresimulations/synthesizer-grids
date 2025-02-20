@@ -27,7 +27,7 @@ def create_slurm_job_script(
 
 # Run command
 python run_cloudy.py \\
-    --grid_-name={new_grid_name} \\
+    --grid-name={new_grid_name} \\
     --cloudy-output-dir={cloudy_output_dir} \\
     --cloudy-executable-path={cloudy_executable_path} \\
     --index=${{SLURM_ARRAY_TASK_ID}}
