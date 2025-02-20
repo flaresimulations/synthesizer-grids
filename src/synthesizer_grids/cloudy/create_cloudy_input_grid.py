@@ -22,6 +22,7 @@ from utils import (
     get_cloudy_params,
     get_grid_props_cloudy,
 )
+
 from synthesizer_grids.parser import Parser
 
 
@@ -155,7 +156,7 @@ if __name__ == "__main__":
         type=str,
         required=False,
         default=None)
-    
+
     # Path to cloudy directory (not the executable; this is assumed to
     # {cloudy}/{cloudy_version}/source/cloudy.exe)
     parser.add_argument(
@@ -203,7 +204,7 @@ if __name__ == "__main__":
     if incident_grid_name.split(".")[-1] != "hdf5":
         incident_grid_name += ".hdf5"
 
-    # Open the incident grid using synthesizer 
+    # Open the incident grid using synthesizer
     incident_grid = Grid(
         incident_grid_name,
         grid_dir=incident_grid_dir,
@@ -302,9 +303,6 @@ if __name__ == "__main__":
     with open(f"{output_directory}/grid_parameters.yaml", "w") as file:
         yaml.dump(parameters_to_save, file, default_flow_style=False)
 
-
-    print(fixed_photoionisation_params)
-
     # If the ionisation_parameter_model is the reference model (i.e. not fixed)
     # save the value of the ionising photon luminosity at the reference grid
     # point.
@@ -317,9 +315,10 @@ if __name__ == "__main__":
         for k in incident_grid.axes:
 
             # We should throw an exception here if a reference value is not
-            #  included. This will happen for grids with additional axes.
+            # included. This will happen for grids with additional axes.
 
-            # In the parameter file we have a reference age and metallicity but the grid axes are metallicities and ages
+            # In the parameter file we have a reference age and metallicity
+            # but the grid axes are metallicities and ages
             if k == 'ages':
                 k = 'age'
             if k == 'metallicities':

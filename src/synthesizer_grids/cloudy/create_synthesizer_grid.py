@@ -8,8 +8,9 @@ Example usage:
 
 """
 
-import re
 import os
+import re
+
 import numpy as np
 from synthesizer.grid import Grid
 from synthesizer.photoionisation import cloudy17, cloudy23
@@ -20,6 +21,7 @@ from utils import (
     get_cloudy_params,
     get_grid_props_cloudy,
 )
+
 from synthesizer_grids.grid_io import GridFile
 from synthesizer_grids.parser import Parser
 

@@ -7,9 +7,10 @@ incident grid point (setting only --incident-index, the recommended approach),
 or all models (setting neither).
 """
 
-import os
-import yaml
 import argparse
+import os
+
+import yaml
 
 if __name__ == "__main__":
 
