@@ -1,10 +1,25 @@
 """
-Download BPASS v2.2.1 and convert to HDF5 synthesizer grid.
+Convert BPASS v2.2.1 outputs to synthesizer grid.
+
+There are two model variants available (with or without binary stars) and
+various IMFs.
+
+Individual models can be specified with --model, or all models can be
+processed by setting --model=all.
+
+Note: there is no automatic download available so models need to be downloaded
+manually from:
+https://warwick.ac.uk/fac/sci/physics/research/astro/research/catalogues/bpass/v2p2
+
+Example:
+    python install_bpass2.2.1.py \
+    --input-dir path/to/input/dir \
+    --grid-dir path/to/grid/dir \
+    --models=all
 """
 
 import os
 import tarfile
-
 import numpy as np
 from unyt import Hz, Msun, angstrom, dimensionless, erg, s, yr
 from utils import get_model_filename
