@@ -386,6 +386,10 @@ if __name__ == "__main__":
                 incident_grid.log10_specific_ionising_lum["HI"][
                     tuple(incident_index_tuple)]
                 - reference_log10_specific_ionising_lum)
+        # We still need to calculate delta_log10_specific_ionising_luminosity
+        # since it is passed to the main function.
+        else:
+            delta_log10_specific_ionising_luminosity = None
 
         # Create cloudy input file for every photoionisation grid point
 
