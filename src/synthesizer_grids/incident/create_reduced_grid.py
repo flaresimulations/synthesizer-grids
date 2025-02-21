@@ -3,8 +3,8 @@ Script to make a reduced grid, for example limiting the number of age bins
 to a specific set or a max age.
 
 Example:
-    python create_reduced_grid.py -grid_dir grids \
-        -original_grid bpass-2.2.1-bin_chabrier03-0.1,300.0 -ages=6.,7.,8.
+    python create_reduced_grid.py --grid-dir path/to/grids \
+        --original-grid bpass-2.2.1-bin_chabrier03-0.1,300.0 --new-ages=6.,7.,8.
     python create_reduced_grid.py -grid_dir grids \
         -original_grid bpass-2.2.1-bin_chabrier03-0.1,300.0 \
         -ages=6.,7.,8, -metallicities=0.001,0.0
