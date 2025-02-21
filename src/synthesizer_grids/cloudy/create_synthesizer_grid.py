@@ -28,10 +28,15 @@ from synthesizer_grids.parser import Parser
 # Create dictionary of commonly used units for grid axes
 axes_units = {
     "reference_ionisation_parameter": dimensionless,
+    "fixed_ionisation_parameter": dimensionless,
+    "depletion_scale": dimensionless,
+    "z": dimensionless,
     "ionisation_parameter": dimensionless,
     "ages": yr,
     "metallicities": dimensionless,
     "hydrogen_density": cm ** (-3),
+    "stop_column_density": dimensionless, 
+    "alpha": dimensionless, 
 }
 
 
