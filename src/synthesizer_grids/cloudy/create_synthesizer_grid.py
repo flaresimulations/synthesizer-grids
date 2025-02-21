@@ -655,6 +655,12 @@ if __name__ == "__main__":
     # line_type = args.line_calc_method
     verbose = args.verbose
 
+    print(' '*80)
+    print('-'*80)
+    print(incident_grid_name)
+    print(cloudy_param_file)
+    print(extra_cloudy_param_file)
+
     # Check for extensions
     # Create _file and _name versions (with and w/o extensions)
 
