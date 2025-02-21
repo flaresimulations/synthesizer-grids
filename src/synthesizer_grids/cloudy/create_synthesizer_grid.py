@@ -35,8 +35,8 @@ axes_units = {
     "ages": yr,
     "metallicities": dimensionless,
     "hydrogen_density": cm ** (-3),
-    "stop_column_density": dimensionless, 
-    "alpha": dimensionless, 
+    "stop_column_density": dimensionless,
+    "alpha": dimensionless,
 }
 
 
