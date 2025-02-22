@@ -37,6 +37,8 @@ axes_units = {
     "hydrogen_density": cm ** (-3),
     "stop_column_density": dimensionless,
     "alpha": dimensionless,
+    "abundance_scalings.nitrogen_to_oxygen": dimensionless,
+    "abundance_scalings.carbon_to_oxygen": dimensionless,
 }
 
 
