@@ -824,11 +824,12 @@ if __name__ == "__main__":
                 norm_by_q=True,
             )
             print('Added spectra')
+            print(spectra.keys())
         else:
             lam = None
             spectra = None
 
-        print(spectra.keys())
+        
 
         # Add lines
         add_lines(
