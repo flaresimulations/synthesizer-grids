@@ -256,7 +256,7 @@ def check_cloudy_runs(
     cloudy_dir,
     incident_index_list,
     photoionisation_index_list,
-    files_to_check=["cont"],
+    files_to_check=["emergent_elin"],
 ):
     """
     Check that all the cloudy runs have run properly.
@@ -303,7 +303,7 @@ def check_cloudy_runs(
             # If they exist also check they have size >0
             if not failed:
                 for ext in files_to_check:
-                    if os.path.getsize(infile + "." + ext) < 1000:
+                    if os.path.getsize(infile + "." + ext) < 100:
                         failed = True
 
             # Record models that have failed
