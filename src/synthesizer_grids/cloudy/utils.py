@@ -2,9 +2,11 @@ import numpy as np
 import yaml
 
 
-def get_cloudy_params(param_file="c23.01-sps.yaml", param_dir="params"):
+def get_cloudy_params(
+        param_file="c23.01-test",
+        param_dir="config"):
     """
-    Read cloudy parameters from a yaml parameter file
+    Read parameters from a yaml parameter file
 
     Arguments:
         param_file (str)
@@ -29,14 +31,23 @@ def get_cloudy_params(param_file="c23.01-sps.yaml", param_dir="params"):
     grid_params = {}
     fixed_params = {}
 
-    # Loop over parameters
+    # loop over parameters
     for k, v in params.items():
-        # If parameter is a list store it in the grid_parameters dictionary
+
+        # if parameter is a list store it in the grid_parameters dictionary
         # and convert to a numpy array
         if isinstance(v, list):
-            grid_params[k] = list(map(float, v))
+            grid_params[k] = np.array(list(map(float, v)))
 
-        # Otherwise store it in fixed_params dictionary
+        # if a dictionary collect any parameters that are also lists
+        elif isinstance(v, dict):
+            for k_, v_ in v.items():
+                if isinstance(v_, list):
+                    grid_params[f'{k}.{k_}'] = np.array(list(map(float, v_)))
+                else:
+                    fixed_params[f'{k}.{k_}'] = v_
+
+        # otherwise store it in fixed_params dictionary
         else:
             fixed_params[k] = v
 
