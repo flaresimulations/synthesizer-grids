@@ -1,5 +1,19 @@
 """
-Download BPASS v2.3 and convert to HDF5 synthesizer grid.
+Process BPASS v2.3 and convert to HDF5 synthesizer grid.
+
+For BPASS v2.3 there is currently only a single variant (bin) and IMF. However
+v2.3 has 5 different values of the alpha enhancement. The processing at the
+moment create grid files for both individual alpha enhancements and then a 3D
+grid where alpha_enhancement is an axis.
+
+Note: there is no automatic download available so models need to be downloaded
+manually from:
+https://warwick.ac.uk/fac/sci/physics/research/astro/research/catalogues/bpass/
+
+Example:
+    python install_bpass2.3.py \
+    --input-dir path/to/input/dir \
+    --grid-dir path/to/grid/dir \
 """
 
 import numpy as np
@@ -14,8 +28,7 @@ def resolve_name(original_model_name, bin, alpha=False):
     """Resolve the original BPASS model name into what we need. This is
     specific to 2.3, e.g. 'bpass_v2.3_imf135_300'"""
 
-    # bpass_imf = original_model_name.split("_")[-1]
-    bpass_imf = "135_300"
+    bpass_imf = original_model_name.split("_")[-1]
     print("bpass imf:", bpass_imf)
     hmc = float(bpass_imf[-3:])  # high-mass cutoff
 
@@ -109,11 +122,11 @@ def make_single_alpha_grid(
     metallicities = np.sort(np.array(list(map_met_to_key.keys())))
 
     # get ages
-    fn_ = f"ionizing-{bs}-imf{bpass_imf}.a{ae}.zem5.dat"
+    fn_ = f"ionizing-{bs}-imf_{bpass_imf}.a{ae}.zem5.dat"
     ages = parse_ionizing_file(f"{input_dir_}/{fn_}")
 
     # open spectra file
-    fn_ = f"spectra-{bs}-imf{bpass_imf}.a{ae}.zem5.dat"
+    fn_ = f"spectra-{bs}-imf_{bpass_imf}.a{ae}.zem5.dat"
     wavelengths, spectra_ = parse_spectra_file(f"{input_dir_}/{fn_}")
     nu = 3e8 / (wavelengths * 1e-10)
 
@@ -134,11 +147,11 @@ def make_single_alpha_grid(
         metallicity_key = map_met_to_key[metallicities[imetal]]
 
         # get ages and remaining fraction
-        fn_ = f"ionizing-{bs}-imf{bpass_imf}.a{ae}.{metallicity_key}.dat"
+        fn_ = f"ionizing-{bs}-imf_{bpass_imf}.a{ae}.{metallicity_key}.dat"
         ages = parse_ionizing_file(f"{input_dir_}/{fn_}")
 
         # open spectra file
-        fn_ = f"spectra-{bs}-imf{bpass_imf}.a{ae}.{metallicity_key}.dat"
+        fn_ = f"spectra-{bs}-imf_{bpass_imf}.a{ae}.{metallicity_key}.dat"
         wavelengths, spectra_ = parse_spectra_file(f"{input_dir_}/{fn_}")
 
         for ia, _ in enumerate(ages):
@@ -213,22 +226,22 @@ def make_full_grid(original_model_name, input_dir, grid_dir, bs="bin"):
     # create alpha-enhancement grid
 
     # list of available alpha enhancements
-    alpha_enhancements = np.array([0.0, 0.2, 0.6])
+    alpha_enhancements = np.array([-0.2, 0.0, 0.2, 0.4, 0.6])
 
     # look up dictionary for filename
-    ae_to_aek = {0.0: "+00", 0.2: "+02", 0.6: "+06"}
+    ae_to_aek = {-0.2: "-02", 0.0: "+00", 0.2: "+02", 0.4: "+04", 0.6: "+06"}
 
     # first metallicity
     metalk = map_met_to_key[metallicities[0]]
 
     # get ages and remaining fraction for first alpha-enhancement and
     # metallicity
-    fn_ = f"""ionizing-{bs}-imf{bpass_imf}.a+00.{metalk}.dat"""
+    fn_ = f"""ionizing-{bs}-imf_{bpass_imf}.a+00.{metalk}.dat"""
     ages = parse_ionizing_file(f"{input_dir_}/{fn_}")
 
     # open spectra file for first alpha-enhancement and
     # metallicity
-    fn_ = f"""spectra-{bs}-imf{bpass_imf}.a+00.{metalk}.dat"""
+    fn_ = f"""spectra-{bs}-imf_{bpass_imf}.a+00.{metalk}.dat"""
     wavelengths, spectra_ = parse_spectra_file(f"{input_dir_}/{fn_}")
     nu = 3e8 / (wavelengths * 1e-10)
 
@@ -251,13 +264,13 @@ def make_full_grid(original_model_name, input_dir, grid_dir, bs="bin"):
             metalk = map_met_to_key[metal]
 
             # --- get remaining and remnant fraction
-            fn_ = f"""ionizing-{bs}-imf{bpass_imf}.a{aek}.{metalk}.dat"""
+            fn_ = f"""ionizing-{bs}-imf_{bpass_imf}.a{aek}.{metalk}.dat"""
 
             # get ages and remaining fraction
             ages = parse_ionizing_file(f"{input_dir_}/{fn_}")
 
             # open spectra file
-            fn_ = f"""spectra-{bs}-imf{bpass_imf}.a{aek}.{metalk}.dat"""
+            fn_ = f"""spectra-{bs}-imf_{bpass_imf}.a{aek}.{metalk}.dat"""
             wavelengths, spectra_ = parse_spectra_file(f"{input_dir_}/{fn_}")
 
             for ia, age in enumerate(ages):
@@ -308,11 +321,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "-models",
         "--models",
-        default="bpass_v2.3_imf135_300",
+        default="bpass_v2.3_chab300",
         type=lambda arg: arg.split(","),
     )
 
-    individual = False
+    # flags whether to build individual grids or the full grid.
+    individual = True
     full = True
 
     # Unpack the arguments
@@ -337,7 +351,7 @@ if __name__ == "__main__":
         for bs in ["bin"]:  # no single star models , 'sin'
             # make a grid with a single alpha enahancement value
             if individual:
-                for ae in ["+00", "+02", "+06"]:
+                for ae in ["-02", "+00", "+02", "+04", "+06"]:
                     print(ae)
                     out_filename = make_single_alpha_grid(
                         model, input_dir, grid_dir, ae=ae, bs=bs
