@@ -4,7 +4,7 @@ import yaml
 
 def get_cloudy_params(
         param_file="c23.01-test",
-        param_dir="config"):
+        param_dir="params"):
     """
     Read parameters from a yaml parameter file
 
