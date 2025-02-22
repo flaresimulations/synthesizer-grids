@@ -53,6 +53,17 @@ def create_cloudy_input(
             The output directory.
     """
 
+    # only add 'abundance_scalings' if its needed
+    if 'abundance_scalings' not in list(parameters.keys()):
+        parameters['abundance_scalings'] = {}
+
+    for k, v in parameters.items():
+        if len(k.split('.')) > 1:
+            if k.split('.')[0] == 'abundance_scalings':
+                kk = k.split('.')[1]
+                # convert to synthesizer standard
+                parameters['abundance_scalings'][kk] = v
+
     # Create synthesizer.Abundance object
     abundances = Abundances(
 
