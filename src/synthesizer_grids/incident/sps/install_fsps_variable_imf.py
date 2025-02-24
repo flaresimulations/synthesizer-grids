@@ -112,7 +112,8 @@ def generate_grid(model):
         wavelength=lam * angstrom,
         spectra={"incident": spec * erg / s / Hz},
         alt_axes=("log10ages", "metallicities", "high_mass_slopes"),
-        descriptions={"high_mass_slope": "high mass (>0.5 Msun) slope of the IMF"},
+        descriptions={
+            "high_mass_slope": "high mass (>0.5 Msun) slope of the IMF"},
         log_on_read=log_on_read,
     )
 

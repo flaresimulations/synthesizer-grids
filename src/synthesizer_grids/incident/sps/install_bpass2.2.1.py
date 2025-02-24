@@ -20,6 +20,7 @@ Example:
 
 import os
 import tarfile
+
 import numpy as np
 from unyt import Hz, Msun, angstrom, dimensionless, erg, s, yr
 from utils import get_model_filename
