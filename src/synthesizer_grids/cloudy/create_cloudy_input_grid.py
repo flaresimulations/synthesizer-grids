@@ -176,6 +176,16 @@ if __name__ == "__main__":
         required=False,
         default=None)
 
+    # By default the job script creates a job for each incident grid points. 
+    # Including this flag makes a job for each photoionisation grid point, 
+    # i.e. the number of cloudy runs per job is the number of incident grid 
+    # points. In most cases this is not the best approach, but for very large 
+    # photoionisation grids it may be,
+    parser.add_argument(
+        "--by-photoionisation-grid-point",
+        action="store_true",
+        default=False)
+
     # Parse arguments
     args = parser.parse_args()
 
@@ -186,6 +196,7 @@ if __name__ == "__main__":
     extra_cloudy_paramfile = args.cloudy_paramfile_extra
     machine = args.machine
     cloudy_executable_path = args.cloudy_executable_path
+    by_photoionisation_grid_point = args.by_photoionisation_grid_point
 
     print(incident_grid_name)
     print(incident_grid_dir)
@@ -459,4 +470,5 @@ if __name__ == "__main__":
             number_of_photoionisation_models=photoionisation_n_models,
             cloudy_output_dir=cloudy_output_dir,
             cloudy_executable_path=cloudy_executable_path,
-            memory="4G")
+            memory="4G",
+            by_photoionisation_grid_point=by_photoionisation_grid_point)
