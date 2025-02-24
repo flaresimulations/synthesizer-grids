@@ -829,7 +829,7 @@ if __name__ == "__main__":
             lam = None
             spectra = None
 
-        
+
 
         # Add lines
         add_lines(

@@ -125,7 +125,7 @@ def artemis(
             cloudy_output_dir=cloudy_output_dir,
             cloudy_executable_path=cloudy_executable_path,
             memory=memory)
-        
+
 
     # save job script
     open(f"{new_grid_name}.slurm", "w").write(slurm_job_script)

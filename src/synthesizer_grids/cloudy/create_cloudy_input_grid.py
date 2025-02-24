@@ -176,10 +176,10 @@ if __name__ == "__main__":
         required=False,
         default=None)
 
-    # By default the job script creates a job for each incident grid points. 
-    # Including this flag makes a job for each photoionisation grid point, 
-    # i.e. the number of cloudy runs per job is the number of incident grid 
-    # points. In most cases this is not the best approach, but for very large 
+    # By default the job script creates a job for each incident grid points.
+    # Including this flag makes a job for each photoionisation grid point,
+    # i.e. the number of cloudy runs per job is the number of incident grid
+    # points. In most cases this is not the best approach, but for very large
     # photoionisation grids it may be,
     parser.add_argument(
         "--by-photoionisation-grid-point",
